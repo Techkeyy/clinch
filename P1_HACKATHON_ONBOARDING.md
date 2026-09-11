@@ -1,6 +1,7 @@
 # CLINCH P1 — Hackathon Onboarding Research
 
-Verification timestamp: 2026-09-11 (UTC). All web sources checked 2026-09-11.
+Verification timestamp: 2026-09-11 (UTC). All web sources checked 2026-09-11;
+second disambiguation pass 2026-09-11 ~22:55 UTC (sections 20-21 added, no S2 surface found).
 Phase: P1 BUILDING. P0 PASS accepted by Director. No product code written. No P2 work.
 
 Fact labels: [CONFIRMED] = read on a current official source (URL + date given).
@@ -435,3 +436,112 @@ unauthenticated fetching). This is the single biggest P1 gap. See sections 3, 6,
    requirements [DONE, gaps listed]. 16. Done-vs-whitespace [DONE]. 17. Contradictions
    recorded [DONE, C1-C4]. 18. No unsupported requirement stated as fact [DONE -
    S2 items labeled UNKNOWN]. 19. No product code [DONE]. 20. P2 not begun [DONE].
+
+## 20. Season Disambiguation Audit (mandatory - second pass 2026-09-11)
+
+Every major source encountered, with the season its CONTENT shows (not its URL),
+current S2 relevance, and disposition. Rule applied: S1 content is historical context
+only; no S1 rule, date, prize, track, video, form, or judging fact is used as S2
+authority. Second-pass additions (2026-09-11 ~22:55 UTC): Arabic activity-hub page,
+Skills Challenge article, repeat S2 deep-search - still no S2 surface.
+
+| Source | Season shown in content | Current / relevant to S2? | Use |
+|---|---|---|---|
+| https://bitget-ai.gitbook.io/hackathon (full fetch incl. .md) | S1 (Base Camp S1, May 27-Jun 30 2026) | NO | Historical (S1 rules baseline + S1 Open Innovation precedent) |
+| https://bitget-ai.gitbook.io/hackathon/llms.txt | S1 only (S1 EN + S1 CN pages) | NO | Historical (proves no S2 doc page published here) |
+| https://www.bitget.com/activity-hub/hackathon (EN + AR + ES + PT + UK locales) | S1 ("Genesis Season 1", 50,000 USDT, May 27-Jun 30; AR page adds "Open track: the uncharted territory") | NO | Historical (S1 program naming "Genesis" + landing-page open-track precedent) |
+| https://www.bitget.com/activity-hub/builder-os | S1 ("Hackathon S1 kini telah dibuka", Builder Base Camp program) | NO | Historical (long-term builder program context) |
+| https://www.bitget.com/campaigns/d8a2a61fd63c4bc2a3c8198ec923da9a | S1 (prize table 6,600/1,500/800/500/50) | NO | Historical (registration via Bitget account + Telegram pattern) |
+| https://github.com/Bitget-AI/agent_hub + /bitget-signal + /agent-sdk + /agent-cli + /agent-mcp + /agent-skill | Current (v3.x line, UTA v3; no season content) | YES | Authoritative for ecosystem/tooling (season-independent) |
+| https://github.com/BitgetLimited/agent_hub | Current (same toolkit, alternate org home) | YES | Authoritative (gitbook-linked home) |
+| https://www.bitget.com/api-doc/uta/reality-trading-guide + Place-Reality-Order page | Current (endpoint reference; whitelist wording possibly lagging Aug-11 opening) | YES with CONFLICT | Authoritative for endpoint classes; access column CONFLICT (C1) |
+| https://www.bitget.com/support/articles/12560603887619 (2026-06-30) | Current at publish (whitelisted spot APIs) | SUPERSEDED by Aug-11 article | Historical for timeline; access claim discarded in favor of newer |
+| https://www.bitget.com/support/articles/12560603891600 (2026-08-11) | Current (fully opened, no whitelist; body lists place+cancel only) | YES with CONFLICT | Authoritative for trading-endpoint opening; scope vs depth ambiguous (C1) |
+| https://www.bitget.com/academy/bitget-rtoken-faq (2026-08-26) | Current (L2 book, 30 r/s, Alpaca routing, weekend internal liquidity) | YES with CONFLICT | Authoritative for product behavior; rate/access vs guide CONFLICT (C1) |
+| https://www.bitget.com/academy/bitget-rtoken-stock-perps-api-guide (2026-08-05) | Current (600+ spot / 250+ perps lineup) | YES | Authoritative for lineup |
+| https://www.bitget.com/academy/bitget-getagent-playbook-introduction-ai-trading-strategies (2026-06-30) | Current (Playbook launched Jun 17 2026) | YES | Authoritative for Playbook |
+| https://www.bitget.com/support/articles/12560603890593 (2026-07-30 SDK/FAQ) | Current (SDK/CLI/MCP/signal suite) | YES | Authoritative for developer suite |
+| https://www.bitget.com/blog/articles/bitget-building-agentic-trading-empower-users-trade-like-wall-street-pros (2026-03-13) | Current strategy (UEX, GetClaw, Agent Hub thesis) | YES (context) | Authoritative for ecosystem direction, not hackathon rules |
+| https://www.bitget.com/blog/articles/bitget-agent-hub-ai-trading-upgrade (2026-03-09) | Current at publish (58 tools era, pre-UTA-v3) | SUPERSEDED on counts | Historical for evolution; counts discarded (C2) |
+| https://www.bitget.com/support/articles/12560603881617 (Skills Challenge, Mar 27-Apr 10) | Separate micro-challenge, not a season | NO | Discarded for S2 (proves Bitget runs parallel small challenges) |
+| https://www.bitget.com/news/detail/12560605377884 (2026-04-21 co-creation) | Pre-S1 plan (Q2 "world's first AI trading hackathon" = S1) | NO | Historical (S1 origin) |
+| npm registry @bitget-ai/* + live `bgc discover` 2026-09-11 | Current (versions + surface introspection) | YES | Authoritative for versions/capabilities (Tier 2) |
+| web3.bitget.com RWA market-data docs | Current (RWA/stockList/kline paths, reality source) | YES | Authoritative for wallet-side RWA API alternative |
+| dorahacks.io (Bitget x Solana 2024 only) | 2024 event, unrelated | NO | Discarded (proves S2 is NOT on DoraHacks publicly) |
+| bitget.hackerearth.com (U-30 2023) | 2023 event, unrelated | NO | Discarded |
+| Botcamp Agent Builders Cup "Race for Bitget" (May-Sep 2026) | Third-party event with Bitget team slot | NO | Discarded for rules (context: parallel AI-trading competitions exist) |
+| WEEX "AI Wars II" Sept-Oct 2026 (htx.com news) | Competitor event, unrelated | NO | Discarded (context only) |
+| Tier-3 press (blockchain.news, dgp.news, thecryptoupdates, twiscan) | S1-era reports | NO | Context only, never authority |
+
+Stale-page handling: bitget.com campaign/activity-hub fetches via this environment
+fail (transport error / bot protection), so landing-page content was verified through
+the search provider's page rendering (AR/ES/PT/UK/EN snippets all show S1) rather
+than direct fetch; recorded as S1/stale, NOT probed further to avoid convention
+creep. No S1 date, prize, track, video, form, or judging element appears anywhere
+in this artifact as an S2 requirement: every S2 cell reads UNKNOWN.
+
+## 21. CLINCH-specific questions - explicit answers
+
+1. Is AI Trading Desk confirmed for Genesis Season 2? NO - not confirmed. No public
+   S2 track list exists. The name appears in no S1 spec and no S2 page found.
+2. Is the human trader explicitly the final decision-maker? No S2 statement exists
+   to confirm or deny. S1 Infra/Open lanes permit non-executing tools (INFERRED
+   compatible, S2 unconfirmed).
+3. Exact S2 AI Trading Desk sub-themes? UNKNOWN - no spec found.
+4. Does Open Theme / Wildcard / equivalent exist inside AI Trading Desk? UNKNOWN for
+   S2. S1 precedents: Track-3 Open Innovation lane (gitbook) + landing-page "Open
+   track: the uncharted territory" (CONFIRMED real in S1, not proof for S2).
+5. Is CLINCH eligible for that lane? CANNOT be determined until the S2 lane and its
+   eligibility text exist. No verified disqualifier found for a CLINCH-shaped
+   Infra/Open entry under S1 rules.
+6. Exact S2 submission deadline date? UNKNOWN. "September 21" is UNVERIFIED.
+7. Exact cutoff time? UNKNOWN - none published on any reachable official surface.
+8. Governing timezone? UNKNOWN - none published (S1 used UTC+8; that is S1 fact,
+   not inherited).
+9. Time/timezone proven? NO - marked UNKNOWN per P0 correction rule.
+10. S2 judging criteria specifically for AI Trading Desk? UNKNOWN.
+11. Are weights published? For S2: UNKNOWN. (S1: explicitly NO fixed weights.)
+12. What Bitget integration is actually required? For S2: UNKNOWN. (S1 Infra lane:
+    runnable tool + verifiable usage record + public repo; no execution mandate.)
+13. Must the app execute trades? No S2 mandate found. Under S1, only the Trading
+    Agent track expected execution; Infra/Open did not.
+14. Are BUY/WAIT/AVOID conclusions allowed while the human decides? No S2 text
+    exists. No S1 prohibition found outside autonomous-execution expectations of
+    the Trading Agent track; bitget-signal itself ships an "investment advice"
+    disclaimer pattern CLINCH should mirror (P2/P8 concern, not a ban).
+15. What current official Bitget research Skills exist? Exactly five in
+    @bitget-ai/bitget-signal 1.2.0: macro-analyst, market-intel, sentiment-analyst,
+    technical-analysis, news-briefing (CONFIRMED via repo + tarball + npm).
+16. Can those Skills be invoked individually/dynamically? YES, feasible: independent
+    prompts + one HTTP MCP backend + public REST fallbacks allow selective calls
+    (INFERRED from architecture; P4 doctor proof required).
+17. Do they require a user's Bitget API credentials? NO - none, no account
+    (CONFIRMED README/FAQ/tarball).
+18. What can CLINCH's backend access without end-user exchange credentials?
+    Signal skills, UTA market verb (16 reads incl. funding/OI/public fills),
+    Reality instruments/ticker/candles, public spot/mix candles via api.bitget.com
+    (CONFIRMED). Reality depth/fills gated by C1 (P4 test).
+19. What current Reality/rToken data can CLINCH realistically access? Ticker,
+    candles (1m/5m/15m/1H/4H/1D, market-type), instruments with isReality flag -
+    all public, no key (CONFIRMED). rNVDA weekend-dip research viable on these.
+20. What remains whitelist-restricted? Per the Trading Guide + endpoint pages:
+    Reality orderbook (REST+WS), platform fills, place/cancel order (CONFLICT -
+    Aug-11/26 sources claim openness; P4 resolves per class).
+21. Are there contradictory official docs about Reality API access? YES - C1
+    (whitelist guide vs fully-opened Aug-11 announcement vs L2-supporting Aug-26
+    FAQ; plus 10/s vs 30/s rate conflict). Both sides preserved; P4 tests reality.
+22. What does Playbook already do? NL idea to runnable strategy, backtest with
+    metrics, deploy to 24/7 execution in isolated sub-accounts, 10+ house
+    strategies, Agent Harness orchestration (CONFIRMED). Relevance: NOT NEEDED.
+23. What does Bitget already ship that CLINCH must NOT rebuild? Market lookup,
+    23-indicator TA, sentiment/positioning, 44-feed news + narrative, macro briefs,
+    on-chain/TVL intel, strategy generation, backtests, auto-execution,
+    account querying, paper sandbox (all CONFIRMED shipped).
+24. What part of Decision Hinge is not found in official Bitget surfaces?
+    Decision-value-ranked next-question selection; skip-with-rationale; halt on low
+    marginal value; stance-tied invalidation triggers; hinge-organized brief
+    (not found in surfaces inspected; absence is not proof of nonexistence).
+25. Does anything discovered force a product-direction change NOW? NO. No verified
+    rule requires autonomy, per-user trading credentials, whitelisted access for
+    CLINCH's read paths, or unavailable tooling. The S2 information gap constrains
+    lane naming/scope confidence (P3 risk), not the concept. Product UNCHANGED.
