@@ -29,7 +29,8 @@ Do not confuse any of the following with product completion:
 - The primary user journey must be complete and reachable in ~90 seconds from arrival to value.
 - No crypto wallet connection is required for core use.
 - No Bitget exchange account connection is required for core use.
-- Core workflows must function for an unauthenticated user using public Bitget market & research capabilities.
+- No user-supplied Bitget exchange API credentials are required for the core experience.
+- Core CLINCH must be usable without the user connecting a wallet or supplying a Bitget exchange account. P1/P4 will verify the official authentication model required between CLINCH's backend and Bitget services.
 
 ### B. Real Integrations & Truthful State
 - External integrations must talk to live Bitget APIs / services unless running in explicit, clearly labeled offline fixture test modes.
@@ -47,10 +48,11 @@ Do not confuse any of the following with product completion:
 - Typography, contrast, and layout must remain comfortable, responsive (desktop & mobile), and accessible.
 - Avoid default generic hackathon templates (no gratuitous gradients, glowing orbs, decorative pills, or fake activity feeds).
 
-### D. Architectural Simplicity & Deterministic Decision Core
+### D. Architectural Simplicity & Decision Hinge Trust Properties (Provisional until P5/P6)
 - Keep architecture simple and modular (one clear job per stage/module).
-- Pure decision logic must be deterministic and testable without network dependencies.
-- Where an LLM is used, it must **narrate, not decide**. Rules and algorithms decide; models polish human prose.
+- CLINCH's Decision Hinge behavior must be stable, inspectable, reproducible enough to trust, and testable against controlled scenarios. P5 determines what combination of model reasoning, structured rules, deterministic scoring, or hybrid logic satisfies that requirement. P6 locks the resulting architecture only after P5 evidence exists.
+- Candidate hybrid (NOT locked): a model may identify hypotheses, evidence, or unresolved questions; structured/deterministic logic may score whether information could change the action. The exact division of responsibility is intentionally unresolved until P5.
+- Do not lock the LLM as purely narrative unless P5 proves that is the best architecture. Do not mandate deterministic logic everywhere unless P5 evidence requires it.
 - Never over-engineer, add unnecessary defensive bloat, or introduce speculative abstractions.
 
 ### E. Security & Least Privilege

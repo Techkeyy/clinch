@@ -6,7 +6,7 @@
 - **Intended Track:** AI Trading Desk
 - **Intended Submission Lane:** Open Theme
 - **Current Phase:** P0 â€” Director Lock
-- **Current Phase Status:** PASS
+- **Current Phase Status:** BUILDING
 - **Current Overall Product Status:** BUILDING
 - **Last Verified Timestamp:** 2026-09-11T16:52:00+01:00
 
@@ -21,8 +21,8 @@ Most AI trading research tools attempt to gather every available piece of market
 
 It targets that single uncertainty ("the Decision Hinge"), executes real research using Bitget capabilities, updates the decision state, determines the next critical unknown if one remains, deliberately skips research paths that cannot alter the conclusion, and halts when additional research has diminishing value.
 
-**Core Value Proposition:**
-- **Deterministic Hinge Evaluation:** Rule-driven question prioritization rather than arbitrary LLM hallucination.
+**Core Value Proposition (provisional; architecture locked only in P6 after P5 evidence):**
+- **Hinge Evaluation (candidate, not locked):** CLINCH's Decision Hinge behavior must be stable, inspectable, reproducible enough to trust, and testable against controlled scenarios. P5 determines what combination of model reasoning, structured rules, deterministic scoring, or hybrid logic satisfies that requirement. Candidate hybrid: a model may identify hypotheses, evidence, or unresolved questions; structured/deterministic logic may score whether information could change the action. Exact division of responsibility is intentionally unresolved until P5.
 - **Auditable Research Brief:** Transparent summary showing current stance, evidence found, what was checked, what was skipped and why, and what future data would invalidate the stance.
 - **Human in the Loop:** The trader remains the final decision-maker. CLINCH is an intelligent research copilot, NOT an autonomous execution bot.
 
@@ -32,15 +32,15 @@ It targets that single uncertainty ("the Decision Hinge"), executes real researc
 
 1. **User opens CLINCH:** Clean, accessible interface loads instantly.
 2. **No Crypto Wallet Required:** Core product never prompts for a Web3 wallet connection.
-3. **No Bitget Account Required:** Core research is fully functional without credentials using public Bitget capabilities.
-4. **Natural Language Input:** Trader describes their trading dilemma (e.g. *"Thinking of going long BTC/USDT on 4h timeframe but worried about funding rate squeeze and orderbook resistance"*).
+3. **No Bitget Account Required:** Core CLINCH must be usable without the user connecting a wallet or supplying a Bitget exchange account. P1/P4 will verify the official authentication model required between CLINCH's backend and Bitget services.
+4. **Natural Language Input:** Trader describes their trading dilemma (e.g. *"rNVDA fell about 4% this weekend. I'm considering buying the dip."*).
 5. **Entity & Intent Extraction:** CLINCH identifies the target asset, intended trade action, and core uncertainty.
 6. **Market Context Retrieval:** CLINCH queries live Bitget market feeds for baseline price, volume, and volatility.
 7. **First Decision Hinge Identification:** CLINCH determines the highest-leverage unanswered question.
 8. **Research Capability Selection:** CLINCH selects the exact Bitget research tool/feed best equipped to resolve that hinge.
 9. **Live Research Execution:** Real research call is executed against live data.
 10. **Evidence Presentation:** CLINCH presents structured findings with clear evidence.
-11. **Decision State Update:** The system updates the probability/conviction state.
+11. **Decision State Update:** The system updates the decision state.
 12. **Next Hinge, Skip, or Halt:** CLINCH determines whether another hinge exists, explicitly skips irrelevant checks with documented rationale, or stops if the decision is settled.
 13. **Comprehensive Research Brief Generated:** Output provides:
     - Current research stance (e.g., Bullish / Bearish / Stand Aside)
@@ -59,7 +59,7 @@ It targets that single uncertainty ("the Decision Hinge"), executes real researc
 
 ### Core CLINCH (Strictly Locked)
 - **Zero Web3 Wallet Connection:** No MetaMask, Bitget Wallet, or private key prompt.
-- **Zero Mandatory Exchange Credentials:** Core research executes anonymously using public Bitget market endpoints and public capabilities.
+- **Zero Mandatory Exchange Credentials:** Core CLINCH must be usable without the user connecting a wallet or supplying a Bitget exchange account. P1/P4 will verify the official authentication model required between CLINCH's backend and Bitget services.
 
 ### Optional Later Personalization (Phase P14 Only)
 - If P14 is authorized and Bitget APIs support read-only exchange account data (e.g., positions, margin mode):
@@ -72,7 +72,7 @@ It targets that single uncertainty ("the Decision Hinge"), executes real researc
 ## 5. Current Assumptions, Unknowns, and Blockers
 
 ### Known Assumptions
-1. Bitget public API endpoints for spot/futures tickers, orderbooks, funding rates, and klines are accessible without authenticated API keys.
+1. Bitget market-data capabilities needed for the Decision Hinge flow are reachable for CLINCH's backend in a form usable for the core experience without the user supplying exchange credentials — TO VERIFY IN P1/P4 (exact endpoints, public vs service-authenticated, payload shapes).
 2. The hackathon accepts submissions under the AI Trading Desk / Open Theme track that focus on intelligent pre-trade decision support.
 3. Windows host machine contains standard Node.js and Git toolchains capable of local development and deployment.
 

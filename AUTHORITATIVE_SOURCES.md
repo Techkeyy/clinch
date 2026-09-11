@@ -11,7 +11,7 @@ This document establishes the official source categories and primary references 
 | Category | Primary Official Target / URL | Verification Scope for P1 | Verification Status |
 | :--- | :--- | :--- | :--- |
 | **Official Hackathon Portal** | Bitget AI Genesis Season 2 official event portal / landing page | Hackathon overview, official schedule, organizer statements | Pending P1 Verification |
-| **Submission Platform** | Official submission portal (e.g. DoraHacks / BeWater / Hackerearth / Bitget Portal) | Official submission form fields, team limits, required assets | Pending P1 Verification |
+| **Submission Platform** | Official submission portal — TO VERIFY IN P1 | Official submission form fields, team limits, required assets | Pending P1 Verification |
 | **AI Trading Desk Track** | Official Track Specification: AI Trading Desk (Open Theme Lane) | Track scope, permissible agent architectures, focus areas | Pending P1 Verification |
 | **Submission Deadlines & Timezone** | Official Hackathon Schedule & Terms | Exact submission cutoff date, hour, minute, and UTC/local timezone | Pending P1 Verification |
 | **Judging Rubric & Weights** | Official Hackathon Scoring Criteria | Exact weighting of technical execution, Bitget integration, originality, UX | Pending P1 Verification |
@@ -23,12 +23,12 @@ This document establishes the official source categories and primary references 
 
 | Category | Primary Official Target / URL | Verification Scope for P1 | Verification Status |
 | :--- | :--- | :--- | :--- |
-| **Bitget Developer Portal** | `https://www.bitget.com/api-doc/` / `https://bitgetlimited.github.io/apidoc/` | Public market data, ticker, orderbook, candlestick, trade streams | Pending P1 Verification |
-| **Bitget Agent Hub** | Official Bitget Agent Hub repository & developer documentation | Agent registry, skill interfaces, agent orchestration protocols | Pending P1 Verification |
-| **Bitget Research Skills** | Official Bitget AI / Agent Skill definitions & market analytics plugins | Research tools, market sentiment indicators, data aggregators | Pending P1 Verification |
-| **Bitget UTA (Unified Trading Account) API** | Official Bitget Unified Trading Account REST & WebSocket APIs | Account balance, position modes, margin info, market queries | Pending P1 Verification |
-| **rToken / Reality Protocol Docs** | Official Bitget / Reality ecosystem documentation (if applicable to track) | Token standards, reality protocol specifications, oracles | Pending P1 Verification |
-| **API Authentication & Permissions** | Bitget API Security Guide (`ACCESS-KEY`, `ACCESS-SIGN`, `ACCESS-TIMESTAMP`) | Public endpoints vs authenticated endpoints, read-only permissions | Pending P1 Verification |
+| **Bitget Developer Portal** | CANDIDATE — CURRENT STATUS TO VERIFY IN P1: `https://www.bitget.com/api-doc/` / `https://bitgetlimited.github.io/apidoc/` | Public market data, ticker, orderbook, candlestick, trade streams | Pending P1 Verification |
+| **Bitget Agent Hub** | CANDIDATE — CURRENT STATUS TO VERIFY IN P1: Official Bitget Agent Hub repository & developer documentation | Agent registry, skill interfaces, agent orchestration protocols | Pending P1 Verification |
+| **Bitget Research Skills** | CANDIDATE — CURRENT STATUS TO VERIFY IN P1: Official Bitget AI / Agent Skill definitions & market analytics plugins | Research tools, market sentiment indicators, data aggregators | Pending P1 Verification |
+| **Bitget UTA (Unified Trading Account) API** | CANDIDATE — CURRENT STATUS TO VERIFY IN P1: Official Bitget Unified Trading Account REST & WebSocket APIs | Account balance, position modes, margin info, market queries | Pending P1 Verification |
+| **rToken / Reality Protocol Docs** | CANDIDATE — CURRENT STATUS TO VERIFY IN P1: Official Bitget / Reality ecosystem documentation (if applicable to track) | Token standards, reality protocol specifications, oracles | Pending P1 Verification |
+| **API Authentication & Permissions** | CANDIDATE — CURRENT STATUS TO VERIFY IN P1: Bitget API Security Guide (`ACCESS-KEY`, `ACCESS-SIGN`, `ACCESS-TIMESTAMP`) | Public endpoints vs authenticated endpoints, read-only permissions | Pending P1 Verification |
 
 ---
 
@@ -38,7 +38,7 @@ This document establishes the official source categories and primary references 
 | :--- | :--- | :--- | :--- |
 | **Repository Requirements** | Open Source / Licensing / Structure | License terms, commit history rules, repository visibility | Pending P1 Verification |
 | **Deployment Requirements** | Live Application Hosting | Hosting rules, domain/HTTPS requirements, uptime expectations | Pending P1 Verification |
-| **Demo Video Rules** | Media Guidelines | Video duration limit (e.g. 2-3 min), hosting (YouTube/Loom), content requirements | Pending P1 Verification |
+| **Demo Video Rules** | Media Guidelines | Record a concise demo video that complies with the CURRENT OFFICIAL duration, format, hosting, and content requirements verified during P1 and rechecked during P25 | Pending P1 Verification |
 | **Prohibited Elements** | Disqualification Criteria | Plagiarism, closed-source blackboxes, fake API mocks, rule violations | Pending P1 Verification |
 
 ---

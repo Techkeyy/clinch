@@ -43,7 +43,7 @@ This registry records the exact locations, operational scope, target phases, and
   - **P4 – P16**: Capability proof, Hinge feasibility, Architecture, Data layers, Hinge engine, Core loop, and Edge validation.
 - **Key Rules for CLINCH:**
   - Build the risky core first (the Decision Hinge engine) and prove it before plumbing.
-  - **Deterministic core, optional intelligence**: Rules decide; LLMs narrate/polish.
+  - **Skill-derived guidance (NOT locked CLINCH architecture):** the `build-process` skill recommends "deterministic core, optional intelligence" ("rules decide; LLMs narrate/polish") as a default pattern. For CLINCH this is a candidate only. CLINCH's Decision Hinge behavior must be stable, inspectable, reproducible enough to trust, and testable against controlled scenarios; P5 determines what combination of model reasoning, structured rules, deterministic scoring, or hybrid logic satisfies that requirement, and P6 locks it only after P5 evidence exists.
   - **Verify against reality**: Every integration gets a `doctor` self-check against live endpoints.
   - **Four states on every flow**: Loading, Empty, Success, and Error.
   - Ninety-second test: Ensure cold users can reach core value in ~90 seconds.
