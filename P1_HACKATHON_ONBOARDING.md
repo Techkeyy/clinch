@@ -1,7 +1,8 @@
 # CLINCH P1 — Hackathon Onboarding Research
 
 Verification timestamp: 2026-09-11 (UTC). All web sources checked 2026-09-11;
-second disambiguation pass 2026-09-11 ~22:55 UTC (sections 20-21 added, no S2 surface found).
+second disambiguation pass 2026-09-11 ~22:55 UTC (sections 20-21 added); third pass
+~23:00 UTC located and direct-read both S2 primary sources (section 22).
 Phase: P1 BUILDING. P0 PASS accepted by Director. No product code written. No P2 work.
 
 Fact labels: [CONFIRMED] = read on a current official source (URL + date given).
@@ -9,14 +10,24 @@ Fact labels: [CONFIRMED] = read on a current official source (URL + date given).
 [UNKNOWN] = not establishable from reachable authoritative sources (search paths recorded).
 [CONFLICT] = two current official sources disagree (both preserved, P4 must test).
 
-Headline finding: NO public official "Bitget AI Genesis Season 2" page, track list,
-deadline, prize table, or submission portal could be verified on 2026-09-11. Everything
-below about "Season 2 / AI Trading Desk / Open Theme / September 21" is therefore
-[UNKNOWN] from the public-official-source standpoint. Season 1 (Base Camp S1, closed
-June 30 2026) is fully documented and is used as [CONFIRMED] S1 fact plus [INFERRED]
-prior for S2. The Director/user must supply the official S2 portal link (likely gated:
-Telegram community, registration email, or bitget.com campaign page, which blocks
-unauthenticated fetching). This is the single biggest P1 gap. See sections 3, 6, 17, 18.
+Headline finding: S2 primary sources found and direct-read 2026-09-11 ~23:00 UTC
+(section 22): S2 landing page + S2 developer guide CONFIRM tracks, Open Theme
+lane, prizes/stacking, judging, submission, and the 2026-09-21 (UTC+8) date.
+Cutoff hour + TBD links remain UNKNOWN. Season 1 material is historical only
+(sections 3-8, disambiguation in section 20). No S1 rule is used as S2 authority.
+
+Required-section map (Director 24-section scheme): 1 Verification Metadata = sec 1;
+2 Source Hierarchy = sec 2; 3 Season Disambiguation Audit = sec 20 (+S2 rows);
+4 S2 Facts = sec 22 (S2 sources/facts); 5 S2 Tracks = sec 22 (tracks);
+6 AI Trading Desk Spec = sec 22 (Track 3); 7 Open Theme/Wildcard = sec 22 (lane);
+8 Deadline = sec 22 (deadline); 9 Judging = sec 22 (judging); 10 Prizes = sec 22
+(prizes); 11 Submission = sec 22 (submission); 12 Ecosystem = sec 9;
+13 Research Skills = sec 10; 14 SDK/CLI/MCP = sec 11; 15 Reality/rToken = sec 12
++ sec 22 (S2 posture); 16 Auth Matrix = sec 13; 17 Playbook = sec 14;
+18 Already Ships + 19 Does Not Clearly Ship = sec 15; 20 Environment = sec 16;
+21 Conflicts + 22 Unknowns = sec 17 (C1-C6, U1-U5); 23 CLINCH Impact = sec 18
++ sec 22 (corrections); 24 Gate Checklist = sec 19. Sec 21 answers the 25 explicit
+CLINCH questions (deltas applied in sec 22).
 
 ---
 
