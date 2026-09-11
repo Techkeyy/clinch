@@ -1,0 +1,3 @@
+event: message
+data: {"jsonrpc":"2.0","id":13,"result":{"content":[{"type":"text","text":"{\"symbol\": \"BTC/USDT\", \"timeframe\": \"4h\", \"rsi\": 40.51, \"period\": 14, \"signal\": \"neutral\"}"}],"isError":false}}
+

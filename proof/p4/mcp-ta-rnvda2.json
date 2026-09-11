@@ -1,0 +1,3 @@
+event: message
+data: {"jsonrpc":"2.0","id":14,"result":{"content":[{"type":"text","text":"{\"error\": \"No OHLCV data for RNVDA/USDT/4h\"}"}],"isError":false}}
+

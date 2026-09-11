@@ -5,13 +5,14 @@
 - **Hackathon:** Bitget AI Â· Genesis Season 2
 - **Intended Track:** AI Trading Desk
 - **Intended Submission Lane:** Open Theme
-- **Current Phase:** P3 Scope Lock
+- **Current Phase:** P4 Bitget Capability Proof
 - **Current Phase Status:** BUILDING
 - **Current Overall Product Status:** BUILDING
-- **Last Verified Timestamp:** 2026-09-11T23:46:10+01:00
+- **Last Verified Timestamp:** 2026-09-11T23:57:12+01:00
 - **P1 Evidence:** `P1_HACKATHON_ONBOARDING.md` (researched 2026-09-11)
 - **P2 Evidence:** `P2_PRODUCT_UNDERSTANDING.md` (accepted by Director)
-- **P3 Evidence:** `P3_SCOPE_LOCK.md` (in progress)
+- **P3 Evidence:** `P3_SCOPE_LOCK.md` (accepted by Director)
+- **P4 Evidence:** `P4_BITGET_CAPABILITY_PROOF.md` + `proof/p4/` (two-path gate PASSED, no go-condition fired; BUILDING pending Director)
 
 ---
 
@@ -75,7 +76,7 @@ It targets that single uncertainty ("the Decision Hinge"), executes real researc
 ## 5. Current Assumptions, Unknowns, and Blockers
 
 ### Known Assumptions
-1. [PARTLY CONFIRMED BY P1] Bitget market-data capabilities needed for the Decision Hinge flow are reachable for CLINCH's backend without the user supplying exchange credentials: bitget-signal skills (no key), UTA market verb (16 public reads, live discover 2026-09-11), Reality ticker/candles/instruments (public per Trading Guide). Reality depth/fills access is [CONFLICT], P4 must test per endpoint class.
+1. [CONFIRMED BY P4] Backend needs no user credentials: Reality discovery/ticker/candles/depth + RWA-perp positioning all live anonymous (general v3 paths need no whitelist; Reality-specific privileged endpoints unneeded). bitget-signal content backends empty on probe night; individual Skills unproven for rToken hinges.
 2. [CONFIRMED BY P1 S2 READS] CLINCH lane: AI Trading Desk Open Theme (S2 guide: Open Theme in every track, 2 winners/track x 500 USDT; Track 3 = NL research workbench, human-final, Demo + 1 research task, no execution). Deadline 2026-09-21 (UTC+8 window; cutoff hour UNKNOWN, submit early).
 3. [CONFIRMED BY P1] Windows host carries Git 2.53.0, Node v24.14.0 (20+ required), npm 11.9.0 with registry access, Python 3.14.3 (pandas/numpy missing, deferred to P4), Docker 29.7.2. bgc 3.0.0 smoke-tested. No upgrades needed.
 

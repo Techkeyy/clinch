@@ -1,0 +1,7 @@
+: ping - 2026-09-11 23:11:09.890692+00:00
+
+: ping - 2026-09-11 23:11:24.891680+00:00
+
+event: message
+data: {"jsonrpc":"2.0","id":19,"result":{"content":[{"type":"text","text":"Error executing tool cross_asset: "}],"isError":true}}
+

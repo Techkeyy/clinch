@@ -1,0 +1,1 @@
+{"bytes":83,"at":"2026-09-11T23:03:47.4966708Z","url":"https://api.bitget.com/api/v3/market/candles?category=SPOT&symbol=RNVDAUSDT&interval=2H&limit=5","name":"fail-badinterval","elapsedMs":1107}
