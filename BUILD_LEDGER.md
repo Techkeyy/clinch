@@ -6,7 +6,7 @@
 - **Intended Track:** AI Trading Desk (Submission Lane: Open Theme)
 - **Concept:** Decision Hinge Engine for Trading Decisions
 - **Current Overall Status:** BUILDING
-- **Current Active Phase:** P0 â€” Director Lock
+- **Current Active Phase:** P1 â€” Director Lock
 
 ---
 
@@ -35,8 +35,8 @@
 
 | Phase | Name | Status | Purpose | Pass Condition | Blockers / Evidence |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **P0** | **Director Lock** | BUILDING | Establish the auditable project foundation, control ledger, skill mappings, and authoritative source registry. | All control files created, skills verified, local git repo initialized, zero product code written, clean tree. | Local skills inspected; repo initialized; control files under Director correction review. |
-| **P1** | **Hackathon Onboarding** | NOT STARTED | Verify official Bitget hackathon rules, dates, tracks, submission requirements, and environment readiness. | Official rules, track details, and toolchain smoke checks verified against primary sources. | Pending P0 Director approval. |
+| **P0** | **Director Lock** | PASS | Establish the auditable project foundation, control ledger, skill mappings, and authoritative source registry. | All control files created, skills verified, local git repo initialized, zero product code written, clean tree. | Local skills inspected; repo initialized; control files under Director correction review. P0 PASS accepted by Director; P1 authorized. |
+| **P1** | **Hackathon Onboarding** | BUILDING | Verify official Bitget hackathon rules, dates, tracks, submission requirements, and environment readiness. | Official rules, track details, and toolchain smoke checks verified against primary sources. | P1 research in progress (P0 PASS accepted by Director). Evidence: P1_HACKATHON_ONBOARDING.md (2026-09-11). S1 rules CONFIRMED; S2 portal/tracks/deadline/prizes UNKNOWN (escalated); ecosystem live-verified (bgc discover, npm versions); 4 conflicts preserved for P4. |
 | **P2** | **Product Understanding** | NOT STARTED | Define the complete product mental model, Decision Hinge mechanics, core user journey, and non-goals. | Clear plain-language product specification, magic moment, and load-bearing assumptions documented. | Pending P1 completion. |
 | **P3** | **Scope Lock** | NOT STARTED | Strictly define MVP boundaries, non-negotiable features, and cut criteria. | Scope document locked with explicit cut list, MVP boundary, and no speculative scope creep. | Pending P2 completion. |
 | **P4** | **Bitget Capability Proof** | NOT STARTED | Prove live access and payload shapes for required Bitget capabilities (exact endpoints and auth model to be verified, not assumed public/anonymous). | Live `doctor`-style call proofs returning verified payload structures without auth mocks. | Pending P3 completion. |

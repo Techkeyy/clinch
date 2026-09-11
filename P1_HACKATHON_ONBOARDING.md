@@ -1,0 +1,437 @@
+# CLINCH P1 — Hackathon Onboarding Research
+
+Verification timestamp: 2026-09-11 (UTC). All web sources checked 2026-09-11.
+Phase: P1 BUILDING. P0 PASS accepted by Director. No product code written. No P2 work.
+
+Fact labels: [CONFIRMED] = read on a current official source (URL + date given).
+[INFERRED] = derived from official sources, not directly stated.
+[UNKNOWN] = not establishable from reachable authoritative sources (search paths recorded).
+[CONFLICT] = two current official sources disagree (both preserved, P4 must test).
+
+Headline finding: NO public official "Bitget AI Genesis Season 2" page, track list,
+deadline, prize table, or submission portal could be verified on 2026-09-11. Everything
+below about "Season 2 / AI Trading Desk / Open Theme / September 21" is therefore
+[UNKNOWN] from the public-official-source standpoint. Season 1 (Base Camp S1, closed
+June 30 2026) is fully documented and is used as [CONFIRMED] S1 fact plus [INFERRED]
+prior for S2. The Director/user must supply the official S2 portal link (likely gated:
+Telegram community, registration email, or bitget.com campaign page, which blocks
+unauthenticated fetching). This is the single biggest P1 gap. See sections 3, 6, 17, 18.
+
+---
+
+## 1. Verification timestamp
+
+- Research performed: 2026-09-11, ~21:30-21:45 UTC.
+- Toolchain smoke checks run live on the build machine on the same date (section 16).
+
+## 2. Source hierarchy (as applied)
+
+- Tier 1 (facts): bitget-ai.gitbook.io hackathon docs, github.com/Bitget-AI/*,
+  github.com/BitgetLimited/agent_hub, bitget.com/api-doc/*, bitget.com/support/*,
+  bitget.com/academy/*, web3.bitget.com developer docs, bitget.com/activity-hub/*.
+- Tier 2 (technical behavior): npm registry metadata + installed package contents
+  (@bitget-ai/* versions resolved live), bgc CLI introspection output, skill markdown.
+- Tier 3 (context only, never authority): blockchain.news, htx.com news, dgp.news,
+  thecryptoupdates.com, twiscan X-mirror. Used only to cross-check S1 existence.
+
+## 3. Hackathon facts
+
+### Season 1 [CONFIRMED] (prior edition, closed)
+
+- Exact official name: "Bitget AI Base Camp Hackathon S1" (gitbook title
+  "Base Camp * Hackathon S1 EN"). Source: https://bitget-ai.gitbook.io/hackathon
+  (checked 2026-09-11). Organizer: Bitget. Strategic sponsor: Alibaba Qwen.
+  Media/ecosystem: Foresight Ventures / Foresight News.
+- Status: ENDED. Duration May 27 - June 30, 2026. Registration May 27 - Jun 14 24:00.
+  Submission window Jun 15 00:00 - Jun 25 24:00. Judging Jun 25-29. Awards Jun 30.
+  All times UTC+8 [CONFIRMED, same source].
+- Format: global, online [CONFIRMED]. Solo or team, teams up to 5, judged equally;
+  UID submitted must match registration UID [CONFIRMED, gitbook Ch.2/FAQ].
+- Total prize pool: 50,000 USDT [CONFIRMED]. Rewards paid to winners' Bitget accounts
+  [CONFIRMED, activity-hub pages].
+- S1 submission mechanism: Google Forms link shared via official social/community/
+  registration email (S1 EN link https://forms.gle/CEGB6fRtuobD3bCj8)
+  [CONFIRMED, gitbook Ch.3]. Registration via bitget.com campaign page with Bitget
+  account (linked email) [CONFIRMED].
+- S1 tracks: Trading Agent / Trading Infra / Stock AI Trading (+Open Innovation lane
+  under Track 3 for early registrants) [CONFIRMED]. There was NO track named
+  "AI Trading Desk", "Alpha Factory", or "Agentic Trading" in S1 [CONFIRMED by absence
+  in the full track specification].
+- S1 video rule: max 3 minutes; optional, REQUIRED only if the demo needs login;
+  public tweet or YouTube accepted [CONFIRMED, per-track checklists].
+- S1 judging: holistic across Depth of thesis / Runnability / Completeness /
+  Novelty and potential. NO fixed weighting formula. "Bitget reserves the right of
+  final interpretation" [CONFIRMED, Scoring Dimensions].
+- S1 awards: 1st 6,600 USDT (all tracks judged together); 2nd 1,500 x3 (1/track);
+  3rd 800 x3; Community Impact 500 x3; Participation +50/team (working demo +
+  qualifying post) [CONFIRMED, prizes table]. No university/Rising Talent award, no
+  People's Choice, no Demo Day in the S1 spec [CONFIRMED by absence].
+- S1 eligibility gates: UID match, all links publicly accessible without login,
+  thesis clearly stated, at least one verifiable usage record (except Open
+  Innovation). Fail any = disqualified, no judging [CONFIRMED, General Rules].
+- No real capital required; sim/paper-trading and backtest records accepted; backtest
+  screenshots alone rejected (code or notebook required, judges may reproduce)
+  [CONFIRMED, FAQ + checklists].
+
+### Season 2 [UNKNOWN] (target event)
+
+- Exact official name "Bitget AI Genesis Season 2": [UNKNOWN]. Note: S1-era
+  activity-hub pages brand the program "Bitget AI Hackathon * Genesis Season 1",
+  so "Genesis" is the program name and S2 naming is plausible but unverified.
+- Season, organizer, status, start date, submission-open date, submission-close date,
+  cutoff time, timezone, voting dates, winner date, reward pool, region restrictions,
+  eligibility, team rules, KYC/account requirements, payout requirements: all
+  [UNKNOWN] from reachable official sources.
+- "September 21" deadline (any year/timezone): [UNKNOWN]. No cutoff time/timezone
+  invented. Searched: web search (multiple queries, deep), gitbook llms.txt index
+  (only S1 EN + S1 CN pages exist), DoraHacks (only 2024 Bitget x Solana event),
+  HackerEarth (only 2023 U-30 event), bitget.com campaign/activity-hub pages
+  (fetch blocked by transport error / bot protection), Bitget_AI X mirror (S1 posts
+  only). Full search paths in section 17.
+- [INFERRED] prior IF S2 follows S1 mechanics: expect UTC+8 times, UID-gated
+  registration, Google-Form-style submission, public-links rule, 3-minute optional
+  video. Do NOT treat as fact.
+
+## 4. Track definitions
+
+### S1 tracks [CONFIRMED] (only official track spec available)
+
+- Trading Agent: AI agent that autonomously perceives market conditions, makes
+  decisions, executes trades, manages risk. Any instrument (perps, spot, on-chain,
+  prediction markets). Live/paper-trading log required (preferred).
+- Trading Infra: infrastructure helping agents perform better or traders work more
+  efficiently (tools, frameworks, dashboards, evaluation/benchmarking). Verifiable
+  usage record required (API log, user records, reproducible sample I/O, or another
+  developer integrated). Deployment link optional. NO trading execution required.
+- Stock AI Trading: AI for tokenized US stocks on Bitget, or traditional US
+  stocks/ETFs; macro/sentiment agents, backtest/deploy on US stock history,
+  Fed-signal rebalancing. Paper-trading log required (preferred).
+- Open Innovation (Track 3 sub-lane, early registrants only): project need NOT be
+  US-stock-related but must state a clear connection to crypto trading or AI and use
+  the registration UID. Usage record optional/preferred. This is the closest S1
+  precedent for an "open theme" lane [CONFIRMED].
+- Why CLINCH is currently "AI Trading Desk rather than Alpha Factory or Agentic
+  Trading": CANNOT be answered from current rules because no official S2 track list
+  exists publicly [UNKNOWN]. Against S1, CLINCH (pre-trade decision support, human
+  executes) does NOT fit Trading Agent (autonomous execution + trade log expected);
+  closest fits are Trading Infra (trader tooling, no execution required) and the
+  Open Innovation lane (explicit non-conforming entry path). S2 track names
+  Alpha Factory / Agentic Trading / AI Trading Desk are UNVERIFIED [UNKNOWN].
+
+## 5. AI Trading Desk full specification
+
+- Exact definition, sub-themes, Open Theme vs Wildcard naming, winner counts,
+  single-lane rules, cross-award eligibility, demo structure, research workflow,
+  integration depth, natural-language/data/Skill requirements, judging dimensions
+  and weights, trade-execution mandates, human-final-decision stance, BUY/WAIT/AVOID
+  permissibility, disclaimer rules: ALL [UNKNOWN] (no public S2 spec found).
+- CLINCH FIT GATE (answered against S1 rules + current ecosystem only):
+  1. Decision Hinge workflow allowed? No prohibition found in S1 Infra/Open
+     Innovation rules [INFERRED fit, S2 unconfirmed].
+  2. Human-final-decision model fit? S1 never mandates autonomy outside the Trading
+     Agent track; Infra/Open Innovation accept non-executing tools [INFERRED fit].
+  3. Open Theme/Wildcard lane real and available? S1 Open Innovation precedent is
+     [CONFIRMED] real; S2 Open Theme/Wildcard is [UNKNOWN]/NOT CONFIRMED.
+  4. Anything about CLINCH outside track rules? Nothing found, S2 rules unknown.
+  5. Anything mandatory missing from the concept? Under S1 Infra rules: verifiable
+     usage record + public repo + runnable demo would be mandatory at submission
+     (P17-P19 already plan for this) [INFERRED].
+- Product UNCHANGED. No S2 conflict exists to redesign around because no S2 rules
+  are verified. Nothing marked BLOCKING FOR DIRECTOR on product substance; the
+  S2-information gap itself is the Director item.
+
+## 6. Prize structure
+
+- S1 table [CONFIRMED] (see section 3). Stacking/exclusivity: not stated in S1 docs
+  [UNKNOWN]; Community Impact scored independently with no effect on technical score
+  [CONFIRMED]; Participation stacks with any placement by its stated condition
+  [INFERRED].
+- S2 overall pool, first/global prize, sub-theme awards, Open Theme/Wildcard awards,
+  People's Choice, social/reach prize, university/Rising Talent award, Demo Day or
+  post-hackathon benefits: ALL [UNKNOWN]. No Rising Talent/university requirement
+  can be recorded; S1 had no such award [CONFIRMED by absence]. If the user has an
+  S2 prize page, supply the link; P25 will re-verify.
+
+## 7. Submission requirements
+
+- S1 checklist [CONFIRMED]: project description (four-part structure incl. thesis;
+  Part 4 AI-trading take optional), public GitHub repo or demo link (README must let
+  another developer run it independently for Infra), per-track evidence (trade log /
+  usage record), backtest optional with code, video max 3 min optional unless login
+  required, engagement-tweet links for community awards, registration-UID match,
+  everything publicly accessible without login.
+- Open-source/license terms: GitHub "must be public"; no explicit license type
+  (e.g. MIT) mandated in the S1 text inspected [CONFIRMED public-only; license type
+  UNKNOWN]. No source-originality / pre-existing-code / code-age rule found in S1
+  text [UNKNOWN]. No disqualifier list beyond the four baseline gates [CONFIRMED
+  scope of what was found].
+- S2 submission platform, fields, repo/license/video/hosting/screenshot/architecture/
+  team/university/social/tag/deck requirements: ALL [UNKNOWN].
+
+## 8. Judging rubric
+
+- S1: four holistic dimensions, no fixed weights, Bitget final interpretation
+  [CONFIRMED]. Runnability ordering explicit: live/paper trading > backtest > pure
+  concept [CONFIRMED]. Honest self-assessment valued over exaggeration [CONFIRMED].
+- S2 criteria/weights: [UNKNOWN].
+
+## 9. Bitget ecosystem inventory (current, 2026-09-11)
+
+- Agent Hub [CONFIRMED SHIPPED]: official open-source AI toolkit, dual-home repos
+  https://github.com/Bitget-AI/agent_hub and https://github.com/BitgetLimited/agent_hub
+  (gitbook links the BitgetLimited home; both live). MIT-licensed. Installer:
+  @bitget-ai/bitget-agent-installer 3.0.0 (npm, live). Five packages, one job each:
+  SDK (developers), CLI `bgc` (terminal AI), MCP (desktop AI), Skill (reasoning
+  guide), Signal (market analysis, no key). Status: SHIPPED. Note per-package
+  versions drift (SDK 3.3.0 / MCP 3.3.0 / Skill 3.2.1 / CLI 3.0.0 / Signal 1.2.0 /
+  Installer 3.0.0, npm 2026-09-11); docs state cross-version drift is supported.
+- Operation count [CONFLICT]: READMEs say "89 UTA v3 operations"; architecture.md
+  says CATALOG_OPERATION_COUNT 109, SPEC 3.0.0; pkgstats mirrors 109. Likely stale
+  README vs regenerated catalog; P4 `discover` output governs. Live `bgc discover`
+  (2026-09-11) reports 7 domains (market, trade, account, funds, subaccount, loan,
+  tax), 14 tools total. Preserved for P4.
+- GetAgent [CONFIRMED SHIPPED]: AI trading assistant (50+ tools at launch),
+  GetAgent Studio, MuleRun publish path. GetClaw [CONFIRMED SHIPPED per Mar 2026
+  upgrade post + Apr 2026 co-creation news]: Telegram-first autonomous agent.
+- Playbook: see section 13.
+- Coming-soon inside bitget-signal README: top-trader-flow, derivatives-structure,
+  large-flow-detect (Bitget-exchange-native signals) [CONFIRMED ANNOUNCED / NOT YET
+  AVAILABLE].
+
+## 10. Research skills inventory (bitget-signal 1.2.0, npm + tarball inspected)
+
+- Exact set [CONFIRMED]: macro-analyst, market-intel, sentiment-analyst,
+  technical-analysis, news-briefing. Install: npx @bitget-ai/bitget-signal
+  --target claude|codex|openclaw|all; Node.js 20+; Python pandas+numpy ONLY for
+  technical-analysis. MIT. No Bitget account, no API key [CONFIRMED, README+FAQ].
+- Inputs/outputs per skill [CONFIRMED from SKILL.md + references]: trigger-phrase
+  routed NL analysis; outputs are time-series/context briefs with output templates.
+  Macro: Fed/FOMC/yields/cross-asset correlation. Market-intel: CoinGecko prices/
+  trending/OHLCV-by-coin-ID, DeFi TVL/fees/yields, DEX pairs, derivatives
+  positioning (top-trader L/S, OI, taker ratio), gas/mempool, 44+ RSS/Atom news feeds.
+  Sentiment: Fear and Greed, L/S ratios, OI, funding, taker ratio, Reddit.
+  Technical: 23 indicators/6 categories, local Python calc on Bitget public candles.
+  News: 44 feeds + social trending + narrative synthesis, keyword routing.
+- Data sources: NOT purely Bitget. Market-intel reference names CoinGecko, DEX
+  aggregators, Reddit; MCP backend hostname is https://datahub.noxiaohao.com/mcp
+  (third-party domain, in install.js + every SKILL.md) while README claims "Bitget's
+  public MCP data service / maintained by Bitget" [CONFLICT - operator attribution
+  unverified; P4 must assess trust implications]. Technical-analysis fetches
+  https://api.bitget.com (official domain) public spot/mix candles [CONFIRMED].
+- Explicit gaps [CONFIRMED, data-availability.md]: ETF net flows, exchange
+  reserves, whale-wallet tracking, unlock schedules, AHR999, Pi Cycle, Coinbase
+  premium, Puell, MVRV all NOT available (proxies or "inform user").
+- rToken/tokenized-stock support: ZERO mentions of rToken/Reality/stocks except
+  incidental words ("AI/semiconductor stocks move crypto", xueqiu feed, "differs
+  from stocks") [CONFIRMED by tarball grep]. bitget-signal is crypto-only.
+- Citations: skill instructs "Vendor Neutrality - present data as market data, never
+  name the source" [CONFIRMED]. CLINCH's auditable source-cited brief CANNOT rely on
+  skill prose for provenance; must cite at the transport layer (endpoint + time).
+- Historical queries: supported where noted (OHLCV history by CoinGecko ID, kline
+  history, funding/OI history) [CONFIRMED].
+- Dynamic per-hinge invocation: YES, feasible. Skills are independent markdown
+  prompts + one HTTP MCP server; a backend can invoke individual MCP tools or the
+  public REST endpoints selectively instead of running all five [INFERRED from
+  architecture; P4 must prove with a doctor call]. Full app-integration proof is P4.
+
+## 11. Agent Hub / SDK / CLI / MCP inventory
+
+- SDK @bitget-ai/bitget-agent-sdk 3.3.0 [CONFIRMED, npm]: TypeScript foundation,
+  UTA v3 catalog, HMAC-SHA256 signing, client-side rate limiting, mock server,
+  14-verb intent surface mountable into LLM tool frameworks. FOR custom developers;
+  this is CLINCH's later integration layer (P4/P6), not a shell-out [INFERRED].
+- CLI @bitget-ai/bitget-agent-cli 3.0.0 (`bgc`) [CONFIRMED + smoke-tested
+  2026-09-11]: terminal surface for Claude Code/Codex/OpenClaw. Grammar
+  `bgc <tool> [--action] [--params]`, `bgc discover`, `bgc raw --operationId`,
+  global `--dry-run/--confirm/--read-only/--paper-trading`. Bundles SDK 3.1.0
+  (skew vs standalone 3.3.0 noted). `discover` works WITHOUT credentials
+  [CONFIRMED live]. `discover --domain market` shows ONE verb `market` (read-only,
+  "no credentials required") fronting 16 reads: tickers, orderbook, kline +
+  history, instruments, funding current/history, OI (+limit), recent public fills,
+  position tier, discount rate, index components, margin loan, proof of reserves,
+  risk reserve [CONFIRMED live output].
+- MCP @bitget-ai/bitget-agent-mcp 3.3.0 [CONFIRMED, npm]: thin stdio adapter over
+  the SDK for Claude Desktop/Cursor/Windsurf/ChatGPT. An AI-HOST integration, not
+  the custom-app path [INFERRED].
+- Skill @bitget-ai/bitget-agent-skill 3.2.1 [CONFIRMED, npm]: pure-markdown
+  reasoning guide (trigger recognition EN+CN, v3 grammar, discover-first workflow,
+  write-safety [CAUTION]+confirm, close-direction rules, demo-trading, error-code
+  table, auth-setup). Must pair with CLI [CONFIRMED].
+- `discover` = live self-describing surface (domains - verbs - actions - schemas);
+  what it reports IS the CLI surface by construction [CONFIRMED, agent-cli README].
+- UTA generation: v3 across SDK/CLI/MCP/skill 3.x line [CONFIRMED].
+- Public market calls require NO user API credentials [CONFIRMED: market module
+  table "No (public data)" + live market-verb description]. Private/account calls
+  require user key + secret + passphrase env vars (or demo-key triple for
+  --paper-trading sandbox) [CONFIRMED, agent-skill auth/demo docs].
+- Safety: --read-only strips write tools; --paper-trading routes to demo env;
+  write ops show [CAUTION] and wait for confirmation; local HMAC signing, no .env
+  parsing [CONFIRMED]. Paper/dry-run relevance to CLINCH: LOW for research (CLINCH
+  never trades), but --read-only is the correct posture for any P4 exploration.
+
+## 12. Reality / rToken findings
+
+- Product naming [CONFIRMED]: "Reality" = tokenized US stock pairs, symbol format
+  r<STOCK>USDT (e.g. rAAPLUSDT), `isReality` flag on instruments. Lineup per academy
+  (2026-08-05): rToken spot 600+ tokens 1:1 vs real stocks routed to US order books
+  via Alpaca in hours + U.S. stock perps 250+ with funding; unified UTA; 24/7 incl.
+  pre/after-hours. US stock OPTIONS launched July 2 2026 (separate product).
+- Market data [CONFIRMED, Reality Trading Guide, api-doc]: instruments, ticker,
+  candlesticks = PUBLIC (reused endpoints, REST+WS). Candles: market-type only;
+  intervals 1m/5m/15m/1H/4H/1D; pre-2026-07-09 volume/turnover may be empty; 1m WS
+  pushes omit volume/turnover.
+- Depth/fills/trading [CONFLICT - the Director-flagged nuance, resolved as far as
+  text allows]: Trading Guide + Place-Reality-Order endpoint page + June 30 support
+  article (whitelisted, contact BD) say orderbook/fills/place/cancel are
+  WHITELIST-only (guide: "All Reality-specific endpoints are currently only open to
+  whitelisted users"; orderbook note: "currently only off-exchange depth... use the
+  OrderBook Channel during non-trading hours"). BUT the Aug 11 support article says
+  Reality stock spot API "fully opened... as of 11 August 2026 (UTC+8). No whitelist
+  registration is required", body listing only place + cancel order. AND the Aug 26
+  rToken FAQ says API supports "order book data (Level 2)" and "up to 30 req/s/UID"
+  (vs 10/sec/UID in the Trading Guide). Newest-dated sources (Aug 11, Aug 26) claim
+  openness; endpoint reference pages still claim whitelist. Resolution: which
+  endpoint CLASSES opened is AMBIGUOUS - plausibly trading (place/cancel) opened
+  while depth/fills pages lagged, or vice versa. P4 must test each class without
+  credentials: tickers, candles, instruments, orderbook, fills. Do NOT design around
+  whitelisted access.
+- Weekend/close behavior [CONFIRMED, rToken FAQ]: in-hours orders route to
+  NASDAQ/NYSE books via Alpaca at underlying price; weekends/holidays liquidity is
+  internal to Bitget (depth/spread/formation may differ). rNVDA weekend dip story:
+  researchable via public ticker/candles; depth unreliable off-hours [INFERRED].
+- rToken feasibility for CLINCH: HIGH for read-only hinge research (public
+  ticker/candles/instruments need no key); MEDIUM overall until P4 resolves the
+  depth/fills conflict; trading access irrelevant (CLINCH never trades).
+
+## 13. Authentication / access matrix
+
+| Capability | Public / no auth | CLINCH service credential | User Bitget API credentials | Wallet | Whitelist | Status |
+|---|---|---|---|---|---|---|
+| bitget-signal 5 skills (via public MCP) | YES | none | none | no | no | CONFIRMED |
+| UTA market verb (tickers, candles, funding, OI, public fills...) | YES | none | none | no | no | CONFIRMED (live discover) |
+| Reality instruments/ticker/candles | YES | none | none | no | no | CONFIRMED (guide) |
+| Reality orderbook/fills | ? | ? | ? | no | guide says YES | CONFLICT (guide vs Aug 11/26) |
+| Reality place/cancel order | no | n/a (CLINCH never trades) | account API key | no | guide yes vs Aug-11 no | CONFLICT, irrelevant to CLINCH |
+| UTA trade/account/funds/loan/tax verbs | no | operator key for P4 tests only | YES for end users of trading tools | no | no | CONFIRMED |
+| Playbook (strategy create/backtest/publish) | no | Playbook API key via sub-account + Telegram admin | YES (sub-account under user UID) | no | admin-gated | CONFIRMED (gitbook Ch.4) |
+| bitget.com campaign/registration pages | n/a (fetch blocked) | none | Bitget account for registration (S1) | no | no | CONFIRMED S1; S2 UNKNOWN |
+- User-facing rule PRESERVED: normal CLINCH user provides NO wallet, NO exchange
+  account, NO API key for core use. All CLINCH research paths verified so far
+  (signal skills, market verb, Reality ticker/candles) need no user credential
+  [CONFIRMED]. Backend/service credentials (operator key for P4, possible MCP/data
+  service terms) are developer-side and compatible [INFERRED].
+- No finding triggers the "every user must supply trading credentials" stop
+  condition. No credentials requested, created, or stored in P1 [CONFIRMED clean].
+
+## 14. Playbook relevance
+
+- What it is [CONFIRMED]: AI quant strategy copilot (launched June 17 2026, academy
+  guide June 30): NL idea - runnable strategy - backtest (PnL/drawdown/Sharpe/win
+  rate) - deploy to 24/7 execution in user-authorized isolated sub-accounts; 10+
+  house strategies; Agent/Trade Harness orchestration; builder path via
+  @bitget-ai/getagent-skill 0.6.4 (npm live) + Playbook API key (sub-account under
+  registered UID + Telegram admin). S1 example: community agent-47 Playbook agent.
+- Classification: NOT NEEDED as a CLINCH integration. Paper test: remove Playbook
+  and CLINCH's pre-trade hinge-research product is unchanged (Playbook generates,
+  backtests, and EXECUTES strategies; CLINCH narrows a human's open decision and
+  never trades). Backtest-as-evidence is not a hinge input P2-P5 currently needs.
+  Revisit only if P2 scope demands strategy-quality evidence. Using it for badge
+  value alone would be integration theatre.
+
+## 15. Bitget Done vs Whitespace
+
+- BITGET ALREADY SHIPS (verified, CLINCH must not duplicate): generic market lookup
+  (tickers/candles/funding/OI), 23-indicator technical analysis, Fear and Greed +
+  positioning sentiment, 44-feed news briefing + narrative synthesis, macro/Fed
+  briefings, on-chain/TVL/ETF-proximate intel, NL strategy generation, backtesting
+  with metrics, live/auto execution (Playbook/GetClaw), account/position querying,
+  paper-trading sandbox, monitoring dashboards (S1 precedent).
+- BITGET DOES NOT CLEARLY SHIP (not found in the official surfaces inspected):
+  identifying WHICH unresolved fact could change a specific trader's decision;
+  ranking the next research question by decision value; explicitly SKIPPING research
+  whose outcomes would not change the action with stated rationale; HALTING on low
+  marginal decision value; invalidation triggers tied to one user's stance ("what
+  future data would flip this"); a brief organized around a decision hinge rather
+  than asset coverage. Absence-of-docs is not proof of nonexistence; P2 will
+  sharpen this into testable differentiation.
+
+## 16. Environment audit (skill Part B, adapted: AI/API build, no chain/wallet needed)
+
+- OS: Windows 11 Pro, build 22621. Shell: PowerShell 7.6.6. Git 2.53.0.windows.2.
+  Node v24.14.0 (requirement: Node 20+ for signal/skill installer, 18+ older MCP
+  doc - SATISFIED). npm 11.9.0 with live registry access. Python 3.14.3 present;
+  pandas/numpy MISSING (needed only for technical-analysis skill - gap noted for
+  P4, install then if needed). Docker 29.7.2 present (optional, not needed).
+- Package availability [CONFIRMED live, npm view 2026-09-11]: sdk 3.3.0, mcp 3.3.0,
+  skill 3.2.1, cli 3.0.0, signal 1.2.0, installer 3.0.0, getagent-skill 0.6.4.
+- Smoke tests (non-destructive, no auth, no product code): `bgc --version` OK
+  (cli 3.0.0 bundling sdk 3.1.0 - skew noted); `bgc discover` OK (7 domains,
+  14 tools, introspection only, no network trade); `bgc discover --domain market`
+  OK (1 read-only verb, 16 fronts, "no credentials required"). No installs beyond
+  npx cache; no global config changed; no credentials touched.
+- Classification: Installed - Git, Node 24, npm, Python 3.14, Docker. Missing -
+  pandas/numpy (deferred to P4). Incompatible - none. Minimum stack for P4:
+  Node 24 + npx + bgc (cached) + optional Python deps. No upgrades needed.
+- Readiness: READY WITH WARNINGS (warnings: S2 portal unverified - not a machine
+  issue; noxiaohao backend attribution; pandas missing; SDK version skew).
+
+## 17. Conflicts and unknowns
+
+- [CONFLICT C1] Reality whitelist: Trading Guide + endpoint pages + June 30 article
+  (whitelist/BD contact) vs Aug 11 article (fully opened, no whitelist) vs Aug 26
+  FAQ (L2 book supported, 30 r/s). P4 tests each endpoint class unauthenticated.
+- [CONFLICT C2] Operation count: Agent Hub READMEs "89 UTA v3 ops" vs
+  architecture.md CATALOG 109 / spec 3.0.0. P4 `discover` governs.
+- [CONFLICT C3] Signal backend attribution: README "Bitget's public MCP data
+  service, maintained by Bitget" vs backend hostname datahub.noxiaohao.com
+  (third-party domain). Operator/ToS implication UNKNOWN; P4/P7 assess.
+- [CONFLICT C4, minor] Node floor: signal/skill require Node 20+; older MCP doc
+  says 18+. Moot (Node 24 installed).
+- [UNKNOWN U1] Entire S2 fact set: portal URL, tracks, dates, Sept-21 deadline +
+  time/timezone, prizes + stacking, video rules, submission fields, judges/weights,
+  KYC, eligibility. Search paths exhausted: web deep-search (6 query families),
+  gitbook llms.txt, DoraHacks, HackerEarth, bitget.com (bot-blocked), X mirror.
+  ACTION: Director/user supplies the official S2 link; P25 re-verifies all of it.
+- [UNKNOWN U2] S2 Open Theme/Wildcard existence and CLINCH lane. S1 Open Innovation
+  is the favorable precedent, not proof.
+- [UNKNOWN U3] S2 license/originality/code-age rules; S2 demo-video duration (S1:
+  max 3 min, conditional).
+- [UNKNOWN U4] Reality depth/fills live behavior without whitelist; fee/rate-limit
+  final numbers (10/s vs 30/s); rToken full instrument list method (instruments
+  endpoint + isReality flag per guide - P4 proves).
+- [UNKNOWN U5] bitget-signal MCP rate limits/ToS for backend-driven (non-AI-host)
+  call patterns; historical-depth limits per skill.
+
+## 18. Implications for CLINCH (no redesign - report only)
+
+- Valid, keep: Decision Hinge concept; human-final-trader; no-wallet/no-account/
+  no-user-key core; rNVDA/rToken story (public data path confirmed); hinge-first
+  research using signal skills + market verb + Reality candles; P16 baseline plan.
+- Adjust later, not now: lane naming must track the real S2 track list once known
+  (S1 suggests Infra/Open-lane framing, never autonomous-agent framing); brief
+  provenance must be transport-level (endpoint+timestamp), never skill prose;
+  bitget-signal covers crypto ONLY so rToken evidence comes from Reality/UTA paths;
+  depth-based hinges are P4-gated by C1.
+- Director intervention needed: (1) supply the official Season 2 portal/rules link -
+  P1 cannot verify the event publicly; (2) confirm whether CLINCH should still
+  assume Sept 21/AI Trading Desk/Open Theme (all currently UNKNOWN); (3) note C3
+  (third-party signal backend) for the P7 trust model. No product STOP condition
+  met: nothing verified requires autonomy, trading credentials per user, or
+  unavailable tooling.
+
+## 19. P1 pass-gate checklist
+
+1. S1 rules extracted from primary sources [DONE]; S2 rules [UNKNOWN, escalated].
+2. AI Trading Desk exact requirements [UNKNOWN, escalated - no public spec].
+3. Open Theme/Wildcard status [NOT CONFIRMED - S1 precedent only].
+4. Deadline date [UNKNOWN - Sept 21 unverified]. 5. Time/timezone [UNKNOWN, none
+   invented]. 6. Prizes/stacking [S1 DONE; S2 UNKNOWN]. 7. Submission map [S1 DONE;
+   S2 UNKNOWN]. 8. Judging [S1 DONE (holistic, unweighted); S2 UNKNOWN].
+9. Required integration depth [S1 DONE (Infra lane: runnable + usage record, no
+   execution); S2 UNKNOWN]. 10. Ecosystem inventoried [DONE]. 11. Skills
+   inventoried to SKILL.md level + tarball [DONE]. 12. SDK/CLI/MCP roles+versions
+   [DONE + live smoke]. 13. rToken mapped with whitelist nuances [DONE + CONFLICT
+   preserved]. 14. Credential matrix user-vs-service [DONE]. 15. Env meets
+   requirements [DONE, gaps listed]. 16. Done-vs-whitespace [DONE]. 17. Contradictions
+   recorded [DONE, C1-C4]. 18. No unsupported requirement stated as fact [DONE -
+   S2 items labeled UNKNOWN]. 19. No product code [DONE]. 20. P2 not begun [DONE].

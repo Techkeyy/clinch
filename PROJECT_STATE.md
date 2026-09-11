@@ -5,10 +5,11 @@
 - **Hackathon:** Bitget AI Â· Genesis Season 2
 - **Intended Track:** AI Trading Desk
 - **Intended Submission Lane:** Open Theme
-- **Current Phase:** P0 â€” Director Lock
+- **Current Phase:** P1 — Hackathon Onboarding â€” Director Lock
 - **Current Phase Status:** BUILDING
 - **Current Overall Product Status:** BUILDING
-- **Last Verified Timestamp:** 2026-09-11T16:52:00+01:00
+- **Last Verified Timestamp:** 2026-09-11T22:45:00+01:00
+- **P1 Evidence:** `P1_HACKATHON_ONBOARDING.md` (researched 2026-09-11)
 
 ---
 
@@ -72,14 +73,15 @@ It targets that single uncertainty ("the Decision Hinge"), executes real researc
 ## 5. Current Assumptions, Unknowns, and Blockers
 
 ### Known Assumptions
-1. Bitget market-data capabilities needed for the Decision Hinge flow are reachable for CLINCH's backend in a form usable for the core experience without the user supplying exchange credentials — TO VERIFY IN P1/P4 (exact endpoints, public vs service-authenticated, payload shapes).
-2. The hackathon accepts submissions under the AI Trading Desk / Open Theme track that focus on intelligent pre-trade decision support.
-3. Windows host machine contains standard Node.js and Git toolchains capable of local development and deployment.
+1. [PARTLY CONFIRMED BY P1] Bitget market-data capabilities needed for the Decision Hinge flow are reachable for CLINCH's backend without the user supplying exchange credentials: bitget-signal skills (no key), UTA market verb (16 public reads, live discover 2026-09-11), Reality ticker/candles/instruments (public per Trading Guide). Reality depth/fills access is [CONFLICT], P4 must test per endpoint class.
+2. [DOWNGRADED TO UNKNOWN BY P1] The hackathon accepts submissions under the AI Trading Desk / Open Theme track: no public official Season 2 page, track list, or deadline found on 2026-09-11. S1 precedent (Trading Infra + Open Innovation lane, no autonomy mandate) is favorable but not proof. Director/user must supply the official S2 portal link. "September 21" deadline is UNVERIFIED.
+3. [CONFIRMED BY P1] Windows host carries Git 2.53.0, Node v24.14.0 (20+ required), npm 11.9.0 with registry access, Python 3.14.3 (pandas/numpy missing, deferred to P4), Docker 29.7.2. bgc 3.0.0 smoke-tested. No upgrades needed.
 
-### Unresolved Questions (To be resolved in P1)
-1. Exact submission deadline date, time, and timezone on the official Bitget hackathon portal.
-2. Specific interfaces and capabilities exposed by Bitget Agent Hub and Bitget AI Skills.
-3. Precise open-source license requirements and judging rubric weighting.
+### Unresolved Questions (P1 outcome 2026-09-11)
+1. [STILL OPEN - needs official S2 link] Exact Season 2 submission deadline date, time, and timezone. "September 21" UNVERIFIED; nothing invented.
+2. [RESOLVED BY P1] Agent Hub (SDK 3.3.0 / CLI 3.0.0 / MCP 3.3.0 / skill 3.2.1 / installer 3.0.0) + bitget-signal 1.2.0 (5 skills, crypto-only, no key, third-party MCP hostname flagged). See P1 doc sections 9-11.
+3. [PARTLY OPEN] S2 license/originality/judging rules UNKNOWN (S1: public repo + runnable README, holistic unweighted judging). S2 video duration/host UNKNOWN (S1: max 3 min, conditional).
+4. [NEW - for Director] Official Season 2 portal/tracks/prizes link required before P3 scope can be trusted against real rules.
 
 ### Active Blockers
 - None.
