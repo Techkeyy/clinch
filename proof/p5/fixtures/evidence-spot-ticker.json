@@ -1,0 +1,9 @@
+{
+  "_label": "TEST FIXTURE - derived from P4 live structure, values frozen for reasoning tests, NOT live data",
+  "ask1": "218.24",
+  "symbol": "RNVDAUSDT",
+  "lastPrice": "218.24",
+  "source": "proof/p4/ticker-RNVDAUSDT.json",
+  "bid1": "218.22",
+  "serverTs": "1789167738062"
+}

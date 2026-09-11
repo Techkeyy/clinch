@@ -1,0 +1,418 @@
+{
+ "_note": "HYBRID INPUTS - scenario copies plus one distractor candidate each (documented).",
+ "scenarios": [
+  {
+   "id": "S01",
+   "family": "A-spot-first",
+   "narrative": "RNVDA jumped 2.1% in twenty minutes after the U.S. close on a thin book. I am thinking of chasing the breakout now. Is this real momentum or just thin off-hours printing?",
+   "asset": "RNVDAUSDT",
+   "action": "enter-now",
+   "read": "undecided",
+   "context": "off-hours, native closed, sudden jump, spread visibly wide",
+   "known": [
+    "RNVDA +2.1% in 20 min post-close",
+    "spread 8 cents (normally 2)",
+    "top-of-book 1-2 lots"
+   ],
+   "candidates": [
+    {
+     "id": "q-spot-real",
+     "q": "Is this a real move or a thin-liquidity print?",
+     "families": [
+      "spot-structure"
+     ],
+     "prunes": [
+      "q-perp-crowd"
+     ],
+     "branches": [
+      {
+       "outcome": "thin print, no follow-through volume",
+       "action": "wait",
+       "moots": [
+        "q-perp-crowd"
+       ]
+      },
+      {
+       "outcome": "real move on rebuilding depth",
+       "action": "enter-now"
+      }
+     ]
+    },
+    {
+     "id": "q-perp-crowd",
+     "q": "Is leveraged positioning crowded against this move?",
+     "families": [
+      "perp-positioning"
+     ],
+     "prunes": [],
+     "branches": [
+      {
+       "outcome": "crowded, fade likely",
+       "action": "wait"
+      },
+      {
+       "outcome": "calm positioning",
+       "action": "enter-now"
+      }
+     ]
+    },
+    {
+     "id": "q-distract",
+     "q": "Would a sixth momentum indicator confirm the breakout?",
+     "families": [
+      "spot-structure"
+     ],
+     "prunes": [],
+     "branches": [
+      {
+       "outcome": "confirms strength",
+       "action": "enter-now"
+      }
+     ]
+    }
+   ],
+   "data": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   }
+  },
+  {
+   "id": "S02",
+   "family": "A-spot-first",
+   "narrative": "RAMD has bled 6% over two quiet weeks with no real headlines. I am wondering if this drift down is exhausted and due a bounce. Should I step in?",
+   "asset": "RAMDUSDT",
+   "action": "enter-now",
+   "read": "undecided",
+   "context": "two-week quiet drift, no news, native open hours example",
+   "known": [
+    "RAMD -6% over 10 sessions",
+    "no company or macro headlines",
+    "volume declining into the drift"
+   ],
+   "candidates": [
+    {
+     "id": "q-structure",
+     "q": "Is this drift exhausted (bounce setup) or the start of a new leg down?",
+     "families": [
+      "spot-structure"
+     ],
+     "prunes": [
+      "q-perp-crowd"
+     ],
+     "branches": [
+      {
+       "outcome": "breakdown through structure on expanding volume",
+       "action": "stand-aside",
+       "moots": [
+        "q-perp-crowd"
+       ]
+      },
+      {
+       "outcome": "exhaustion with support holding",
+       "action": "enter-now"
+      }
+     ]
+    },
+    {
+     "id": "q-perp-crowd",
+     "q": "Is futures positioning stretched in the direction of the drift?",
+     "families": [
+      "perp-positioning"
+     ],
+     "prunes": [],
+     "branches": [
+      {
+       "outcome": "stretched, snap-back risk",
+       "action": "wait"
+      },
+      {
+       "outcome": "calm positioning",
+       "action": "enter-now"
+      }
+     ]
+    },
+    {
+     "id": "q-distract",
+     "q": "What do sell-side price targets say about RAMD?",
+     "families": [
+      "spot-structure"
+     ],
+     "prunes": [],
+     "branches": [
+      {
+       "outcome": "targets still lower",
+       "action": "wait"
+      }
+     ]
+    }
+   ],
+   "data": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   }
+  },
+  {
+   "id": "S04",
+   "family": "C-positioning-first",
+   "narrative": "RNVDA is flat into tomorrow's CPI print and I am thinking of buying ahead of it. Positioning data looks hot though. Is entering before the catalyst reckless?",
+   "asset": "RNVDAUSDT",
+   "action": "enter-now",
+   "read": "undecided",
+   "context": "pre-catalyst calm spot, CPI tomorrow, hot positioning readings",
+   "known": [
+    "spot structure checked: healthy, full book (resolved prior step)",
+    "funding rate elevated vs 30-day norm",
+    "open interest up sharply into the event"
+   ],
+   "candidates": [
+    {
+     "id": "q-crowd",
+     "q": "Is leveraged positioning crowded enough that entering before CPI is materially different from waiting?",
+     "families": [
+      "perp-positioning"
+     ],
+     "prunes": [],
+     "branches": [
+      {
+       "outcome": "extreme crowding",
+       "action": "wait"
+      },
+      {
+       "outcome": "normal positioning",
+       "action": "enter-now"
+      }
+     ]
+    },
+    {
+     "id": "q-spot-health",
+     "q": "Is spot hiding any distribution?",
+     "families": [
+      "spot-structure"
+     ],
+     "prunes": [],
+     "resolved": true,
+     "resolution": "spot checked healthy in prior step",
+     "branches": [
+      {
+       "outcome": "healthy (known)",
+       "action": "undecided"
+      }
+     ]
+    },
+    {
+     "id": "q-distract",
+     "q": "What is the social feed saying about CPI positioning?",
+     "families": [
+      "social-trends"
+     ],
+     "prunes": [],
+     "branches": [
+      {
+       "outcome": "loud CPI fear",
+       "action": "wait"
+      },
+      {
+       "outcome": "quiet feeds",
+       "action": "enter-now"
+      }
+     ]
+    }
+   ],
+   "data": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   }
+  },
+  {
+   "id": "S05",
+   "family": "C-positioning-first",
+   "narrative": "Spot RNVDA sits at 218.30 but the perp mark prints 218.90. That gap looks like free information. Can I trade the dislocation?",
+   "asset": "RNVDAUSDT",
+   "action": "enter-now",
+   "read": "undecided",
+   "context": "stable spot, visible spot-vs-mark gap",
+   "known": [
+    "spot structure stable (resolved)",
+    "mark 0.3% above spot",
+    "funding neutral"
+   ],
+   "candidates": [
+    {
+     "id": "q-disloc",
+     "q": "Is this a tradeable dislocation or a mirage of off-hours quoting?",
+     "families": [
+      "perp-positioning"
+     ],
+     "prunes": [
+      "q-spot-retest"
+     ],
+     "branches": [
+      {
+       "outcome": "mirage, quotes normalize",
+       "action": "wait",
+       "moots": [
+        "q-spot-retest"
+       ]
+      },
+      {
+       "outcome": "persistent, hedgeable gap",
+       "action": "enter-now"
+      }
+     ]
+    },
+    {
+     "id": "q-spot-retest",
+     "q": "Will spot retest lower levels first?",
+     "families": [
+      "spot-structure"
+     ],
+     "prunes": [],
+     "branches": [
+      {
+       "outcome": "retest holds",
+       "action": "enter-now"
+      },
+      {
+       "outcome": "retest holds with patience",
+       "action": "enter-now"
+      }
+     ]
+    },
+    {
+     "id": "q-distract",
+     "q": "Could an undiscovered catalyst explain the gap?",
+     "families": [],
+     "prunes": [],
+     "branches": [
+      {
+       "outcome": "hidden catalyst exists",
+       "action": "enter-now"
+      },
+      {
+       "outcome": "no catalyst",
+       "action": "wait"
+      }
+     ]
+    }
+   ],
+   "data": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   }
+  },
+  {
+   "id": "S07",
+   "family": "sequential",
+   "narrative": "RAMD has drifted down quietly and I am watching for exhaustion, same as ever. Is there a bounce shaping?",
+   "asset": "RAMDUSDT",
+   "action": "enter-now",
+   "read": "undecided",
+   "context": "quiet drift, then new positioning information arrives mid-flow",
+   "known": [
+    "RAMD drifting lower, no headlines"
+   ],
+   "candidates": [
+    {
+     "id": "q-structure",
+     "q": "Is this drift exhausted or a new leg down?",
+     "families": [
+      "spot-structure"
+     ],
+     "prunes": [],
+     "branches": [
+      {
+       "outcome": "breakdown continues",
+       "action": "stand-aside"
+      },
+      {
+       "outcome": "exhaustion, support holding",
+       "action": "enter-now"
+      }
+     ]
+    },
+    {
+     "id": "q-crowd-late",
+     "q": "After the structure check, is positioning now the binding risk?",
+     "families": [
+      "perp-positioning"
+     ],
+     "prunes": [],
+     "branches": [
+      {
+       "outcome": "crowded into the bounce",
+       "action": "wait"
+      },
+      {
+       "outcome": "calm positioning",
+       "action": "enter-now"
+      }
+     ]
+    },
+    {
+     "id": "q-distract",
+     "q": "Does historical trade flow show accumulation?",
+     "families": [],
+     "prunes": [],
+     "dataNeeded": "fills",
+     "branches": [
+      {
+       "outcome": "accumulation visible",
+       "action": "enter-now"
+      },
+      {
+       "outcome": "distribution visible",
+       "action": "stand-aside"
+      }
+     ]
+    }
+   ],
+   "data": {
+    "spot-structure": "fresh",
+    "perp-positioning": "arriving-late"
+   },
+   "midflow": {
+    "after": "q-structure",
+    "reveal": "funding spiked to extreme while structure was being checked",
+    "revealFresh": {
+     "perp-positioning": "fresh"
+    }
+   }
+  },
+  {
+   "id": "S11",
+   "family": "ambiguous",
+   "narrative": "What do you think about RNVDA right now?",
+   "asset": "RNVDAUSDT",
+   "action": "unclear",
+   "read": "undecided",
+   "context": "no decision stated",
+   "known": [
+    "no contemplated action given"
+   ],
+   "candidates": [
+    {
+     "id": "q-distract",
+     "q": "Is RNVDA generally a good company?",
+     "families": [
+      "spot-structure"
+     ],
+     "prunes": [],
+     "branches": [
+      {
+       "outcome": "yes",
+       "action": "enter-now"
+      },
+      {
+       "outcome": "no",
+       "action": "stand-aside"
+      }
+     ]
+    }
+   ],
+   "data": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   }
+  }
+ ]
+}

@@ -1,0 +1,34 @@
+[
+ {
+  "scenario": "S09",
+  "step": 1,
+  "read": "enter-now",
+  "hinge": null,
+  "hinge_q": null,
+  "why": "both hinges resolved leaning in; fills unavailable; indicators agree-only.",
+  "family": null,
+  "action": "STOP",
+  "final": "STOP",
+  "branches": [],
+  "canChange": false,
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "cannot-matter",
+    "reason": "sixth agreement changes nothing"
+   },
+   {
+    "family": "fills",
+    "kind": "no-data",
+    "reason": "feeds known-stale; absent flow is not evidence"
+   }
+  ],
+  "trace": {
+   "method": "MODEL_LED",
+   "candidates": [],
+   "selected": null,
+   "dataSnapshot": {},
+   "resolvedSoFar": []
+  }
+ }
+]

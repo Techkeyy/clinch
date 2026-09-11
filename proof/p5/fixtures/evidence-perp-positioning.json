@@ -1,0 +1,9 @@
+{
+  "_label": "TEST FIXTURE - derived from P4 live structure, NOT live data",
+  "openInterest": "70316.160000000084",
+  "fundingRate": "0.000149",
+  "symbol": "NVDAUSDT",
+  "source": "proof/p4/fut-ticker2.json",
+  "indexPrice": "218.3176021766243511",
+  "markPrice": "218.48"
+}

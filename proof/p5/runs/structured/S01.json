@@ -1,0 +1,86 @@
+[
+ {
+  "scenario": "S01",
+  "step": 1,
+  "read": "undecided",
+  "hinge": "q-spot-real",
+  "hinge_q": "Is this a real move or a thin-liquidity print?",
+  "why": "unresolved flippable hinge (outcomes: wait vs enter-now) answerable by spot-structure",
+  "family": "spot-structure",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "thin print, no follow-through volume",
+    "effect": "wait"
+   },
+   {
+    "outcome": "real move on rebuilding depth",
+    "effect": "enter-now"
+   }
+  ],
+  "canChange": true,
+  "skips": [
+   {
+    "family": "perp-positioning",
+    "kind": "cannot-matter",
+    "reason": "perp-positioning outcomes cannot beat the selected hinge now"
+   }
+  ],
+  "trace": {
+   "candidates": [
+    "q-spot-real",
+    "q-perp-crowd"
+   ],
+   "selected": "q-spot-real",
+   "prunes": [
+    "q-perp-crowd"
+   ],
+   "dataSnapshot": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": []
+  },
+  "narrative": "RNVDA jumped 2.1% in twenty minutes after the U.S. close on a thin book. I am thinking of chasing the breakout now. Is this real momentum or just thin off-hours printing?"
+ },
+ {
+  "scenario": "S01",
+  "step": 2,
+  "read": "wait",
+  "hinge": null,
+  "hinge_q": null,
+  "why": "no unresolved flippable hinge remains; residue: none",
+  "family": null,
+  "action": "STOP",
+  "final": "STOP",
+  "branches": [],
+  "canChange": false,
+  "skips": [
+   {
+    "family": "perp-positioning",
+    "kind": "resolved",
+    "reason": "perp-positioning mooted by an earlier finding"
+   },
+   {
+    "family": "spot-structure",
+    "kind": "resolved",
+    "reason": "no open question needs spot-structure"
+   }
+  ],
+  "trace": {
+   "candidates": [
+    "q-perp-crowd"
+   ],
+   "selected": null,
+   "prunes": [],
+   "dataSnapshot": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": [
+    "q-spot-real"
+   ]
+  }
+ }
+]

@@ -1,0 +1,70 @@
+[
+ {
+  "scenario": "S06",
+  "step": 1,
+  "read": "undecided",
+  "hinge": "q-buildup",
+  "hinge_q": "directional pressure or two-sided hedging?",
+  "why": "OI surge with flat spot is the anomaly; spot has already said all it has to say.",
+  "family": "perp-positioning",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "one-sided crowded buildup",
+    "effect": "wait"
+   },
+   {
+    "outcome": "balanced hedging flow",
+    "effect": "enter-now"
+   }
+  ],
+  "canChange": true,
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "cannot-matter",
+    "reason": "flat spot cannot discriminate buildup intent"
+   }
+  ],
+  "trace": {
+   "method": "MODEL_LED",
+   "candidates": [],
+   "selected": "q-buildup",
+   "dataSnapshot": {},
+   "resolvedSoFar": []
+  }
+ },
+ {
+  "scenario": "S06",
+  "step": 2,
+  "read": "wait",
+  "hinge": null,
+  "hinge_q": null,
+  "why": "one-sided crowding against entry; flat spot adds nothing.",
+  "family": null,
+  "action": "STOP",
+  "final": "STOP",
+  "branches": [],
+  "canChange": false,
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "cannot-matter",
+    "reason": "mooted"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "resolved",
+    "reason": "settled"
+   }
+  ],
+  "trace": {
+   "method": "MODEL_LED",
+   "candidates": [],
+   "selected": null,
+   "dataSnapshot": {},
+   "resolvedSoFar": []
+  }
+ }
+]

@@ -1,0 +1,328 @@
+{
+ "S01": {
+  "id": "S01",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "perp-positioning": "cannot-matter"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected STOP, got [CONTINUE,STOP]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S02": {
+  "id": "S02",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "perp-positioning": "cannot-matter"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected STOP, got [CONTINUE,STOP]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S03": {
+  "id": "S03",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "perp-positioning": "cannot-matter",
+    "spot-structure": "resolved"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected CONTINUE-then-STOP, got [CONTINUE,CONTINUE,STOP]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S04": {
+  "id": "S04",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "spot-structure": "resolved",
+    "perp-positioning": "resolved"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected STOP, got [CONTINUE,STOP]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S05": {
+  "id": "S05",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "spot-structure": "cannot-matter",
+    "perp-positioning": "resolved"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected STOP, got [CONTINUE,STOP]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S06": {
+  "id": "S06",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "spot-structure": "cannot-matter",
+    "perp-positioning": "resolved"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected STOP, got [CONTINUE,STOP]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S07": {
+  "id": "S07",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "perp-positioning": "no-data",
+    "spot-structure": "resolved"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected CONTINUE, got [CONTINUE,CONTINUE,STOP]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S08": {
+  "id": "S08",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "perp-positioning": "cannot-matter",
+    "spot-structure": "resolved"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected CONTINUE-then-STOP-conflict, got [CONTINUE,CONTINUE,STOP]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S09": {
+  "id": "S09",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "spot-structure": "cannot-matter",
+    "fills": "no-data"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected STOP, got [STOP]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S10": {
+  "id": "S10",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "spot-structure": "no-data",
+    "perp-positioning": "no-data"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected CANNOT_RESOLVE, got [CANNOT_RESOLVE]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S11": {
+  "id": "S11",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {},
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected CLARIFY, got [CLARIFY]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S12": {
+  "id": "S12",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "spot-structure": "no-data",
+    "unsupported-ta": "unsupported",
+    "perp-positioning": "resolved"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected CONTINUE, got [CONTINUE,CONTINUE]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "V-PATH": {
+  "id": "V-PATH",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "spot-structure": "resolved",
+    "perp-positioning": "resolved"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected STOP, got [CONTINUE,STOP]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "V-SKIP": {
+  "id": "V-SKIP",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "perp-positioning": "cannot-matter",
+    "spot-structure": "resolved"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected STOP, got [STOP]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "V-STOP": {
+  "id": "V-STOP",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "spot-structure": "cannot-matter",
+    "perp-positioning": "resolved"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected STOP, got [CONTINUE,STOP]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ }
+}

@@ -1,0 +1,128 @@
+[
+ {
+  "scenario": "S08",
+  "step": 1,
+  "read": "undecided",
+  "hinge": "q-spot-trend",
+  "hinge_q": "Does the constructive structure survive the session?",
+  "why": "unresolved flippable hinge (outcomes: enter-now vs wait) answerable by spot-structure",
+  "family": "spot-structure",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "holds firm",
+    "effect": "enter-now"
+   },
+   {
+    "outcome": "fades late",
+    "effect": "wait"
+   }
+  ],
+  "canChange": true,
+  "skips": [
+   {
+    "family": "perp-positioning",
+    "kind": "cannot-matter",
+    "reason": "perp-positioning outcomes cannot beat the selected hinge now"
+   }
+  ],
+  "trace": {
+   "candidates": [
+    "q-spot-trend",
+    "q-crowd-risk"
+   ],
+   "selected": "q-spot-trend",
+   "prunes": [
+    "q-crowd-risk"
+   ],
+   "dataSnapshot": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": []
+  },
+  "narrative": "RNVDA spot structure looks genuinely constructive into tomorrow, higher lows and a firm book, but perp funding just printed extreme and OI keeps climbing. I want to buy. Which side do I believe?"
+ },
+ {
+  "scenario": "S08",
+  "step": 2,
+  "read": "enter-now",
+  "hinge": "q-crowd-risk",
+  "hinge_q": "Does extreme crowding dominate the setup regardless?",
+  "why": "unresolved flippable hinge (outcomes: wait vs enter-now) answerable by perp-positioning",
+  "family": "perp-positioning",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "crowding dominates",
+    "effect": "wait"
+   },
+   {
+    "outcome": "crowding eases",
+    "effect": "enter-now"
+   }
+  ],
+  "canChange": true,
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved",
+    "reason": "no open question needs spot-structure"
+   }
+  ],
+  "trace": {
+   "candidates": [
+    "q-crowd-risk"
+   ],
+   "selected": "q-crowd-risk",
+   "prunes": [],
+   "dataSnapshot": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": [
+    "q-spot-trend"
+   ]
+  }
+ },
+ {
+  "scenario": "S08",
+  "step": 3,
+  "read": "wait",
+  "hinge": null,
+  "hinge_q": null,
+  "why": "no unresolved flippable hinge remains; residue: none",
+  "family": null,
+  "action": "STOP",
+  "final": "STOP",
+  "branches": [],
+  "canChange": false,
+  "skips": [
+   {
+    "family": "perp-positioning",
+    "kind": "resolved",
+    "reason": "no open question needs perp-positioning"
+   },
+   {
+    "family": "spot-structure",
+    "kind": "resolved",
+    "reason": "no open question needs spot-structure"
+   }
+  ],
+  "trace": {
+   "candidates": [],
+   "selected": null,
+   "prunes": [],
+   "dataSnapshot": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": [
+    "q-spot-trend",
+    "q-crowd-risk"
+   ]
+  }
+ }
+]

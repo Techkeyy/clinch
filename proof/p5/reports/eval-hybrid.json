@@ -1,0 +1,130 @@
+{
+ "S01": {
+  "id": "S01",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "perp-positioning": "cannot-matter"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": false,
+   "E6_detail": "expected STOP, got [CONTINUE,CONTINUE]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S02": {
+  "id": "S02",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "perp-positioning": "cannot-matter"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": false,
+   "E6_detail": "expected STOP, got [CONTINUE,CONTINUE]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S04": {
+  "id": "S04",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "social-trends": "unsupported",
+    "spot-structure": "resolved",
+    "perp-positioning": "resolved"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": false,
+   "E6_detail": "expected STOP, got [CONTINUE,CONTINUE]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S05": {
+  "id": "S05",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "spot-structure": "cannot-matter",
+    "perp-positioning": "resolved"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected STOP, got [CONTINUE,STOP]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S07": {
+  "id": "S07",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {
+    "perp-positioning": "cannot-matter",
+    "spot-structure": "resolved"
+   },
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected CONTINUE, got [CONTINUE,CONTINUE,STOP]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ },
+ "S11": {
+  "id": "S11",
+  "E": {
+   "E1_firstHinge": true,
+   "E2_family": true,
+   "E3_flipAware": true,
+   "E4_skips": true,
+   "E4_skipMap": {},
+   "E5_noBlindspot": true,
+   "E6_terminal": true,
+   "E6_detail": "expected CLARIFY, got [CLARIFY]",
+   "E7_abstention": true,
+   "E8_missingDataSafe": true,
+   "E9_fidelity": true,
+   "E10_inspectable": true
+  },
+  "CF": [],
+  "notes": []
+ }
+}

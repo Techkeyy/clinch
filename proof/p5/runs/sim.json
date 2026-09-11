@@ -1,0 +1,42 @@
+{
+ "S01": {
+  "q-spot-real": "thin print, no follow-through volume"
+ },
+ "S02": {
+  "q-structure": "breakdown through structure on expanding volume"
+ },
+ "S03": {
+  "q-real-thin": "credible, depth rebuilt",
+  "q-perp-crowd": "aligned and calm"
+ },
+ "S04": {
+  "q-crowd": "extreme crowding"
+ },
+ "S05": {
+  "q-disloc": "mirage, quotes normalize"
+ },
+ "S06": {
+  "q-buildup": "one-sided crowded buildup"
+ },
+ "S07": {
+  "q-structure": "exhaustion, support holding",
+  "q-crowd-late": "calm positioning"
+ },
+ "S08": {
+  "q-spot-trend": "holds firm",
+  "q-crowd-risk": "crowding dominates"
+ },
+ "S09": {},
+ "S10": {},
+ "S11": {},
+ "S12": {
+  "q-crowd-neg": "worry refuted, path clears"
+ },
+ "V-PATH": {
+  "q-crowd-now": "extreme, wait out the event"
+ },
+ "V-SKIP": {},
+ "V-STOP": {
+  "q-event": "no positioning concern"
+ }
+}

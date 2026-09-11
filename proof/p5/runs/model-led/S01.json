@@ -1,0 +1,65 @@
+[
+ {
+  "scenario": "S01",
+  "step": 1,
+  "read": "undecided",
+  "hinge": "q-spot-real",
+  "hinge_q": "real move or thin print?",
+  "why": "Nothing else matters until we know whether a move exists; positioning on a non-move is moot.",
+  "family": "spot-structure",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "thin print, no follow-through volume",
+    "effect": "wait"
+   },
+   {
+    "outcome": "real move on rebuilding depth",
+    "effect": "enter-now"
+   }
+  ],
+  "canChange": true,
+  "skips": [
+   {
+    "family": "perp-positioning",
+    "kind": "cannot-matter",
+    "reason": "crowding only matters if a move exists"
+   }
+  ],
+  "trace": {
+   "method": "MODEL_LED",
+   "candidates": [],
+   "selected": "q-spot-real",
+   "dataSnapshot": {},
+   "resolvedSoFar": []
+  }
+ },
+ {
+  "scenario": "S01",
+  "step": 2,
+  "read": "wait",
+  "hinge": null,
+  "hinge_q": null,
+  "why": "thin print settled it; no remaining flippable hinge.",
+  "family": null,
+  "action": "STOP",
+  "final": "STOP",
+  "branches": [],
+  "canChange": false,
+  "skips": [
+   {
+    "family": "perp-positioning",
+    "kind": "cannot-matter",
+    "reason": "mooted by thin-print finding"
+   }
+  ],
+  "trace": {
+   "method": "MODEL_LED",
+   "candidates": [],
+   "selected": null,
+   "dataSnapshot": {},
+   "resolvedSoFar": []
+  }
+ }
+]

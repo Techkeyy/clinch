@@ -1,0 +1,80 @@
+[
+ {
+  "scenario": "S12",
+  "step": 1,
+  "read": "undecided",
+  "hinge": "q-crowd-neg",
+  "hinge_q": "does normal funding refute the crowding worry?",
+  "why": "Cheapest decisive check: a clean refutation clears the path; RSI cannot be answered on this asset at all.",
+  "family": "perp-positioning",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "worry refuted, path clears",
+    "effect": "enter-now"
+   }
+  ],
+  "canChange": false,
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "no-data",
+    "reason": "book timed out; retry, never evidence"
+   },
+   {
+    "family": "unsupported-ta",
+    "kind": "unsupported",
+    "reason": "RSI capability cannot answer RNVDA; refused"
+   }
+  ],
+  "trace": {
+   "method": "MODEL_LED",
+   "candidates": [],
+   "selected": "q-crowd-neg",
+   "dataSnapshot": {},
+   "resolvedSoFar": []
+  }
+ },
+ {
+  "scenario": "S12",
+  "step": 2,
+  "read": "enter-now",
+  "hinge": "q-liquid",
+  "hinge_q": "is liquidity impaired right now?",
+  "why": "Worry cleared; entry now hinges on whether the book is real. Attempt, handle absence honestly.",
+  "family": "spot-structure",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "book reloads, healthy",
+    "effect": "enter-now"
+   },
+   {
+    "outcome": "book still impaired",
+    "effect": "wait"
+   }
+  ],
+  "canChange": true,
+  "skips": [
+   {
+    "family": "perp-positioning",
+    "kind": "resolved",
+    "reason": "settled"
+   },
+   {
+    "family": "unsupported-ta",
+    "kind": "unsupported",
+    "reason": "still refused"
+   }
+  ],
+  "trace": {
+   "method": "MODEL_LED",
+   "candidates": [],
+   "selected": "q-liquid",
+   "dataSnapshot": {},
+   "resolvedSoFar": []
+  }
+ }
+]

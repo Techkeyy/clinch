@@ -1,0 +1,100 @@
+[
+ {
+  "scenario": "S03",
+  "step": 1,
+  "read": "undecided",
+  "hinge": "q-real-thin",
+  "hinge_q": "credible breakout or spread artifact?",
+  "why": "A 15-cent spread can fake any breakout; validity first, alignment second.",
+  "family": "spot-structure",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "artifact, spread-driven",
+    "effect": "wait"
+   },
+   {
+    "outcome": "credible, depth rebuilt",
+    "effect": "enter-now"
+   }
+  ],
+  "canChange": true,
+  "skips": [
+   {
+    "family": "perp-positioning",
+    "kind": "cannot-matter",
+    "reason": "alignment only matters if breakout is real"
+   }
+  ],
+  "trace": {
+   "method": "MODEL_LED",
+   "candidates": [],
+   "selected": "q-real-thin",
+   "dataSnapshot": {},
+   "resolvedSoFar": []
+  }
+ },
+ {
+  "scenario": "S03",
+  "step": 2,
+  "read": "enter-now",
+  "hinge": "q-perp-crowd",
+  "hinge_q": "aligned or overcrowded?",
+  "why": "Breakout credible; now crowding decides timing.",
+  "family": "perp-positioning",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "aligned and calm",
+    "effect": "enter-now"
+   },
+   {
+    "outcome": "overcrowded, fade risk",
+    "effect": "wait"
+   }
+  ],
+  "canChange": true,
+  "skips": [],
+  "trace": {
+   "method": "MODEL_LED",
+   "candidates": [],
+   "selected": "q-perp-crowd",
+   "dataSnapshot": {},
+   "resolvedSoFar": []
+  }
+ },
+ {
+  "scenario": "S03",
+  "step": 3,
+  "read": "enter-now",
+  "hinge": null,
+  "hinge_q": null,
+  "why": "both hinges resolved in favor; nothing left flippable.",
+  "family": null,
+  "action": "STOP",
+  "final": "STOP",
+  "branches": [],
+  "canChange": false,
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved",
+    "reason": "settled"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "resolved",
+    "reason": "settled"
+   }
+  ],
+  "trace": {
+   "method": "MODEL_LED",
+   "candidates": [],
+   "selected": null,
+   "dataSnapshot": {},
+   "resolvedSoFar": []
+  }
+ }
+]

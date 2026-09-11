@@ -1,0 +1,70 @@
+[
+ {
+  "scenario": "V-PATH",
+  "step": 1,
+  "read": "undecided",
+  "hinge": "q-crowd-now",
+  "hinge_q": "does extreme pre-event crowding change the entry?",
+  "why": "Structure already settled healthy; only the new crowding information can flip this.",
+  "family": "perp-positioning",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "extreme, wait out the event",
+    "effect": "wait"
+   },
+   {
+    "outcome": "normalizes quickly",
+    "effect": "enter-now"
+   }
+  ],
+  "canChange": true,
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved",
+    "reason": "settled healthy"
+   }
+  ],
+  "trace": {
+   "method": "MODEL_LED",
+   "candidates": [],
+   "selected": "q-crowd-now",
+   "dataSnapshot": {},
+   "resolvedSoFar": []
+  }
+ },
+ {
+  "scenario": "V-PATH",
+  "step": 2,
+  "read": "wait",
+  "hinge": null,
+  "hinge_q": null,
+  "why": "event crowding dominates resolved-healthy spot.",
+  "family": null,
+  "action": "STOP",
+  "final": "STOP",
+  "branches": [],
+  "canChange": false,
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved",
+    "reason": "settled"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "resolved",
+    "reason": "settled"
+   }
+  ],
+  "trace": {
+   "method": "MODEL_LED",
+   "candidates": [],
+   "selected": null,
+   "dataSnapshot": {},
+   "resolvedSoFar": []
+  }
+ }
+]

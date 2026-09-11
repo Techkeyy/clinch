@@ -1,0 +1,42 @@
+[
+ {
+  "scenario": "V-SKIP",
+  "step": 1,
+  "read": "stand-aside",
+  "hinge": null,
+  "hinge_q": null,
+  "why": "no unresolved flippable hinge remains; residue: none",
+  "family": null,
+  "action": "STOP",
+  "final": "STOP",
+  "branches": [],
+  "canChange": false,
+  "skips": [
+   {
+    "family": "perp-positioning",
+    "kind": "cannot-matter",
+    "reason": "every plausible perp-positioning outcome leaves the read unchanged"
+   },
+   {
+    "family": "spot-structure",
+    "kind": "resolved",
+    "reason": "spot-structure questions already settled in a prior step"
+   }
+  ],
+  "trace": {
+   "candidates": [
+    "q-crowd-moot"
+   ],
+   "selected": null,
+   "prunes": [],
+   "dataSnapshot": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": [
+    "q-spot-done"
+   ]
+  },
+  "narrative": "RNVDA pre-CPI update: spot just printed clear distribution with expanding sell volume. I was considering entering. Does positioning still matter?"
+ }
+]

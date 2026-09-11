@@ -1,0 +1,105 @@
+[
+ {
+  "scenario": "S12",
+  "step": 1,
+  "read": "undecided",
+  "hinge": "q-crowd-neg",
+  "hinge_q": "Does normal funding refute the crowding worry?",
+  "why": "unresolved flippable hinge (outcomes: enter-now) answerable by perp-positioning",
+  "family": "perp-positioning",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "worry refuted, path clears",
+    "effect": "enter-now"
+   }
+  ],
+  "canChange": true,
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "no-data",
+    "reason": "spot-structure data missing; reroute, never evidence"
+   },
+   {
+    "family": "unsupported-ta",
+    "kind": "unsupported",
+    "reason": "unsupported-ta cannot answer this asset; refused, never faked"
+   }
+  ],
+  "trace": {
+   "candidates": [
+    "q-liquid",
+    "q-crowd-neg",
+    "q-rsi-unsupported"
+   ],
+   "selected": "q-crowd-neg",
+   "prunes": [],
+   "dataSnapshot": {
+    "spot-structure": "missing",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": []
+  },
+  "narrative": "RNVDA dipped 1.5% post-close and I am considering buying. Three things are on my mind: the book snapshot failed to load, funding looks normal which argues against my crowding worry, and I also want an RSI reading on RNVDA."
+ },
+ {
+  "scenario": "S12",
+  "step": 2,
+  "read": "enter-now",
+  "hinge": "q-liquid",
+  "hinge_q": "Is liquidity impaired right now?",
+  "why": "attempt blocked: spot-structure data missing; retry-or-wait, never evidence",
+  "family": "spot-structure",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "book reloads, healthy",
+    "effect": "enter-now"
+   },
+   {
+    "outcome": "book still impaired",
+    "effect": "wait"
+   }
+  ],
+  "canChange": true,
+  "skips": [
+   {
+    "family": "perp-positioning",
+    "kind": "resolved",
+    "reason": "no open question needs perp-positioning"
+   },
+   {
+    "family": "spot-structure",
+    "kind": "no-data",
+    "reason": "spot-structure data missing; reroute, never evidence"
+   },
+   {
+    "family": "unsupported-ta",
+    "kind": "unsupported",
+    "reason": "unsupported-ta cannot answer this asset; refused, never faked"
+   }
+  ],
+  "trace": {
+   "candidates": [
+    "q-liquid",
+    "q-rsi-unsupported"
+   ],
+   "selected": "q-liquid",
+   "prunes": [],
+   "dataSnapshot": {
+    "spot-structure": "missing",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": [
+    "q-crowd-neg"
+   ]
+  },
+  "blocked": {
+   "family": "spot-structure",
+   "handling": "retry-or-wait, not evidence"
+  }
+ }
+]

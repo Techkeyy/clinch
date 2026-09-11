@@ -1,0 +1,126 @@
+[
+ {
+  "scenario": "S07",
+  "step": 1,
+  "read": "undecided",
+  "hinge": "q-structure",
+  "hinge_q": "Is this drift exhausted or a new leg down?",
+  "why": "unresolved flippable hinge (outcomes: stand-aside vs enter-now) answerable by spot-structure",
+  "family": "spot-structure",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "breakdown continues",
+    "effect": "stand-aside"
+   },
+   {
+    "outcome": "exhaustion, support holding",
+    "effect": "enter-now"
+   }
+  ],
+  "canChange": true,
+  "skips": [
+   {
+    "family": "perp-positioning",
+    "kind": "cannot-matter",
+    "reason": "perp-positioning outcomes cannot beat the selected hinge now"
+   }
+  ],
+  "trace": {
+   "candidates": [
+    "q-structure",
+    "q-crowd-late"
+   ],
+   "selected": "q-structure",
+   "prunes": [],
+   "dataSnapshot": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": []
+  },
+  "narrative": "RAMD has drifted down quietly and I am watching for exhaustion, same as ever. Is there a bounce shaping?"
+ },
+ {
+  "scenario": "S07",
+  "step": 2,
+  "read": "enter-now",
+  "hinge": "q-crowd-late",
+  "hinge_q": "After the structure check, is positioning now the binding risk?",
+  "why": "unresolved flippable hinge (outcomes: wait vs enter-now) answerable by perp-positioning",
+  "family": "perp-positioning",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "crowded into the bounce",
+    "effect": "wait"
+   },
+   {
+    "outcome": "calm positioning",
+    "effect": "enter-now"
+   }
+  ],
+  "canChange": true,
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved",
+    "reason": "no open question needs spot-structure"
+   }
+  ],
+  "trace": {
+   "candidates": [
+    "q-crowd-late"
+   ],
+   "selected": "q-crowd-late",
+   "prunes": [],
+   "dataSnapshot": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": [
+    "q-structure"
+   ]
+  }
+ },
+ {
+  "scenario": "S07",
+  "step": 3,
+  "read": "enter-now",
+  "hinge": null,
+  "hinge_q": null,
+  "why": "no unresolved flippable hinge remains; residue: none",
+  "family": null,
+  "action": "STOP",
+  "final": "STOP",
+  "branches": [],
+  "canChange": false,
+  "skips": [
+   {
+    "family": "perp-positioning",
+    "kind": "resolved",
+    "reason": "no open question needs perp-positioning"
+   },
+   {
+    "family": "spot-structure",
+    "kind": "resolved",
+    "reason": "no open question needs spot-structure"
+   }
+  ],
+  "trace": {
+   "candidates": [],
+   "selected": null,
+   "prunes": [],
+   "dataSnapshot": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": [
+    "q-structure",
+    "q-crowd-late"
+   ]
+  }
+ }
+]
