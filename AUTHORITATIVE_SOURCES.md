@@ -3,8 +3,9 @@
 This document establishes the official source categories and primary references for the **Bitget AI · Genesis Season 2** hackathon. 
 
 > **Phase Boundary Note:** P0 defined the taxonomy. P1 (researched 2026-09-11, see
-> `P1_HACKATHON_ONBOARDING.md`) verified each entry below. Season 1 facts are
-> CONFIRMED; Season 2 items are UNKNOWN - no public official S2 page found.
+> `P1_HACKATHON_ONBOARDING.md`) verified each entry below. S2 landing + S2 developer
+> guide direct-read 2026-09-11 (section 22): tracks, Open lane, prizes/stacking,
+> judging, submission, 9/21 UTC+8 date CONFIRMED. Cutoff hour + TBD links UNKNOWN.
 
 ---
 
@@ -12,12 +13,12 @@ This document establishes the official source categories and primary references 
 
 | Category | Primary Official Target / URL | Verification Scope for P1 | Verification Status |
 | :--- | :--- | :--- | :--- |
-| **Official Hackathon Portal** | S1: https://bitget-ai.gitbook.io/hackathon (Bitget AI Team, verified 2026-09-11) - S1 Base Camp May 27-Jun 30 2026, 50,000 USDT, UTC+8 | Hackathon overview, official schedule, organizer statements | [CONFIRMED] S1. S2 portal [UNKNOWN] - gitbook index lists S1 only; bitget.com campaign pages bot-blocked |
-| **Submission Platform** | S1: Google Forms via official social/community/registration email (verified 2026-09-11) | Official submission form fields, team limits, required assets | [CONFIRMED] S1 mechanism. S2 platform [UNKNOWN] |
-| **AI Trading Desk Track** | No public S2 track spec found (verified 2026-09-11); S1 spec has Trading Agent / Trading Infra / Stock AI Trading + Open Innovation, no AI Trading Desk | Track scope, permissible agent architectures, focus areas | [UNKNOWN] S2. S1 tracks [CONFIRMED] |
-| **Submission Deadlines & Timezone** | S1: Jun 25 24:00 UTC+8 (verified 2026-09-11). "September 21" S2 deadline unverified | Exact submission cutoff date, hour, minute, and UTC/local timezone | [CONFIRMED] S1. S2 date/time/timezone [UNKNOWN], nothing invented |
-| **Judging Rubric & Weights** | S1: thesis / runnability / completeness / novelty, holistic, NO fixed weights, Bitget final interpretation (verified 2026-09-11) | Exact weighting of technical execution, Bitget integration, originality, UX | [CONFIRMED] S1. S2 rubric [UNKNOWN] |
-| **Prize Structure & Eligibility** | S1: 1st 6,600 (all tracks); 2nd 1,500 x3; 3rd 800 x3; Community Impact 500 x3; Participation +50/team; solo ok, teams to 5, UID match (verified 2026-09-11) | Track prize pool, bonus criteria, feedback rewards, payout terms | [CONFIRMED] S1. S2 prizes/stacking/Rising Talent [UNKNOWN] |
+| **Official Hackathon Portal** | S2: https://www.bitget.com/activity-hub/hackathon (Bitget, direct-read 2026-09-11: Genesis Season 2, 9/3 launch, 9/21 deadline, 10/8 winners) + S1 gitbook historical | Hackathon overview, official schedule, organizer statements | [CONFIRMED] S2 landing. S1 gitbook historical only |
+| **Submission Platform** | S2: Google Form https://forms.gle/GyWZCMCPocgJdJon6 (S2 guide Ch.III-IV, direct-read 2026-09-11); submission = participation, max 2 themes, same UID | Official submission form fields, team limits, required assets | [CONFIRMED] S2 mechanism + fields |
+| **AI Trading Desk Track** | S2 guide Ch.IV Track 3 (direct-read 2026-09-11): NL research workbench, human-final, Demo + 1 research task; 5 named sub-themes + Open Theme (2 winners/track) | Track scope, permissible agent architectures, focus areas | [CONFIRMED] S2 spec + Open lane |
+| **Submission Deadlines & Timezone** | S2: 2026-09-21, window 9/3-9/21 UTC+8 (S2 guide Ch.I/III, direct-read 2026-09-11). Cutoff hour unpublished | Exact submission cutoff date, hour, minute, and UTC/local timezone | [CONFIRMED] date + UTC+8 window. Hour [UNKNOWN] |
+| **Judging Rubric & Weights** | S2 Track 3: pure subjective - feature depth (Skill count/effectiveness), research quality, LUI fluency, thesis; parts 1-3 weigh most; no numeric weights (S2 guide Ch.IV) | Exact weighting of technical execution, Bitget integration, originality, UX | [CONFIRMED] S2 focus, weights N/A |
+| **Prize Structure & Eligibility** | S2 (guide Ch.II + landing, direct-read 2026-09-11): pool 50,000; Grand 3,000 x1; Theme 500 x15; Open 500 x6; University 500 x10 (fill name; excl. main winners); Spread 300 x3; Fan Favorite 300 x3 (stacks); Demo Day opt-in; Qwen/K3 credits | Track prize pool, bonus criteria, feedback rewards, payout terms | [CONFIRMED] S2 prizes + stacking |
 
 ---
 
@@ -38,9 +39,9 @@ This document establishes the official source categories and primary references 
 
 | Category | Requirement Type | Verification Scope for P1 | Verification Status |
 | :--- | :--- | :--- | :--- |
-| **Repository Requirements** | S1: GitHub must be public with runnable README; all links login-free (verified 2026-09-11). License type / originality / code-age rules not found | License terms, commit history rules, repository visibility | [CONFIRMED] public-only. S2 specifics [UNKNOWN] |
+| **Repository Requirements** | S2: "accessible Demo" required for Track 3; materials link takes Demo/GitHub/video/docs/logs; description must live IN the form (S2 guide Ch.IV, direct-read 2026-09-11). No license-type or originality rule beyond S1-reuse bar | License terms, commit history rules, repository visibility | [CONFIRMED] S2 fields. License silence = no constraint (P25 confirms) |
 | **Deployment Requirements** | S1: deployment link optional for Infra; demo must be real and runnable (verified 2026-09-11) | Live Application Hosting | [CONFIRMED] S1. S2 live-URL rule [UNKNOWN] |
-| **Demo Video Rules** | S1: max 3 minutes; optional unless demo needs login; tweet/YouTube accepted (verified 2026-09-11) | Record a concise demo video that complies with the CURRENT OFFICIAL duration, format, hosting, and content requirements verified during P1 and rechecked during P25 | [CONFIRMED] S1. S2 duration/host [UNKNOWN] |
+| **Demo Video Rules** | S2: video only ever OPTIONAL material (Demo/code/video/docs/logs field; Track 3 "Demo + optional screen recording"). No duration/host rule published (S2 guide, direct-read 2026-09-11). S1 max-3-min conditional is historical | Record a concise demo video that complies with the CURRENT OFFICIAL duration, format, hosting, and content requirements verified during P1 and rechecked during P25 | [CONFIRMED] S2 silence = no constraint. P25 re-checks |
 | **Prohibited Elements** | S1 baseline gates only: UID match, public links, stated thesis, verifiable usage record (verified 2026-09-11) | Plagiarism, closed-source blackboxes, fake API mocks, rule violations | [CONFIRMED] scope found. S2 disqualifiers [UNKNOWN] |
 
 ---

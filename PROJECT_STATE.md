@@ -8,7 +8,7 @@
 - **Current Phase:** P1 Hackathon Onboarding
 - **Current Phase Status:** BUILDING
 - **Current Overall Product Status:** BUILDING
-- **Last Verified Timestamp:** 2026-09-11T22:56:41+01:00
+- **Last Verified Timestamp:** 2026-09-11T23:06:17+01:00
 - **P1 Evidence:** `P1_HACKATHON_ONBOARDING.md` (researched 2026-09-11)
 
 ---
@@ -74,14 +74,14 @@ It targets that single uncertainty ("the Decision Hinge"), executes real researc
 
 ### Known Assumptions
 1. [PARTLY CONFIRMED BY P1] Bitget market-data capabilities needed for the Decision Hinge flow are reachable for CLINCH's backend without the user supplying exchange credentials: bitget-signal skills (no key), UTA market verb (16 public reads, live discover 2026-09-11), Reality ticker/candles/instruments (public per Trading Guide). Reality depth/fills access is [CONFLICT], P4 must test per endpoint class.
-2. [DOWNGRADED TO UNKNOWN BY P1] The hackathon accepts submissions under the AI Trading Desk / Open Theme track: no public official Season 2 page, track list, or deadline found on 2026-09-11. S1 precedent (Trading Infra + Open Innovation lane, no autonomy mandate) is favorable but not proof. Director/user must supply the official S2 portal link. "September 21" deadline is UNVERIFIED.
+2. [CONFIRMED BY P1 S2 READS] CLINCH lane: AI Trading Desk Open Theme (S2 guide: Open Theme in every track, 2 winners/track x 500 USDT; Track 3 = NL research workbench, human-final, Demo + 1 research task, no execution). Deadline 2026-09-21 (UTC+8 window; cutoff hour UNKNOWN, submit early).
 3. [CONFIRMED BY P1] Windows host carries Git 2.53.0, Node v24.14.0 (20+ required), npm 11.9.0 with registry access, Python 3.14.3 (pandas/numpy missing, deferred to P4), Docker 29.7.2. bgc 3.0.0 smoke-tested. No upgrades needed.
 
 ### Unresolved Questions (P1 outcome 2026-09-11)
-1. [STILL OPEN - needs official S2 link] Exact Season 2 submission deadline date, time, and timezone. "September 21" UNVERIFIED; nothing invented.
+1. [PARTLY OPEN] S2 cutoff hour on 9/21 (date + UTC+8 window CONFIRMED; hour unpublished - submit early), TBD links (voting/X posts), judges full list. P25 re-verifies all.
 2. [RESOLVED BY P1] Agent Hub (SDK 3.3.0 / CLI 3.0.0 / MCP 3.3.0 / skill 3.2.1 / installer 3.0.0) + bitget-signal 1.2.0 (5 skills, crypto-only, no key, third-party MCP hostname flagged). See P1 doc sections 9-11.
 3. [PARTLY OPEN] S2 license/originality/judging rules UNKNOWN (S1: public repo + runnable README, holistic unweighted judging). S2 video duration/host UNKNOWN (S1: max 3 min, conditional).
-4. [NEW - for Director] Official Season 2 portal/tracks/prizes link required before P3 scope can be trusted against real rules.
+4. [NEW - for Director] S2 portal found and verified; cutoff hour + TBD posts + judges list remain for P25. P2 may proceed on the CONFIRMED AI Trading Desk Open Theme lane.
 
 ### Active Blockers
 - None.
