@@ -5,7 +5,7 @@
 - **Hackathon:** Bitget AI Â· Genesis Season 2
 - **Intended Track:** AI Trading Desk
 - **Intended Submission Lane:** Open Theme
-- **Current Phase:** P1 — Hackathon Onboarding â€” Director Lock
+- **Current Phase:** P1 Hackathon Onboarding
 - **Current Phase Status:** BUILDING
 - **Current Overall Product Status:** BUILDING
 - **Last Verified Timestamp:** 2026-09-11T22:45:00+01:00
