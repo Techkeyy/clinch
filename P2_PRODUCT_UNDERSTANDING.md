@@ -276,6 +276,13 @@ second memorable beat, not the first.
 
 ## 14. Four scenario walkthroughs (P5 seeds)
 
+Research-category note (applies to all four): labels like "news-first" or
+"technicals-first" name the kind of evidence the hinge requires, NOT a guaranteed
+`bitget-signal` implementation path. "Macro-first" means the hinge requires macro
+evidence; P4 determines which verified Bitget capability can actually provide that
+evidence for the rToken use case. Likewise for sentiment, technicals, and news.
+No scenario pre-selects an implementation.
+
 Scenario 1, weekend rNVDA decline (canonical): input as above. Hinge 1:
 NVDA-specific vs sector-wide. Research: sector basket context plus weekend tariff
 news. Finding: sector-wide, thesis breaks, read moves to hold off. Hinge 2: is
@@ -370,11 +377,18 @@ and stop logic is exactly the product being refused.
 Reality and rToken data: supplies the decision ground. Weekend price action on the
 actual contemplated asset, session awareness (native closed, internal liquidity),
 and candle structure for timing hinges. Without it the S2 story collapses and every
-scenario becomes hypothetical crypto chat. bitget-signal Skills: supply the
-per-hinge research muscle. News/macro for cause hinges, sentiment/positioning for
-crowding hinges, technicals for structure hinges, market-intel for flow context.
-Each maps to a hinge class, which is what makes the Skill count load-bearing rather
-than decorative. Agent Hub: the later execution surface for capability plumbing in
+scenario becomes hypothetical crypto chat. Research capabilities: CLINCH needs real
+Bitget research and data capabilities able to answer a selected hinge with
+source-grounded evidence rather than unsupported model opinion. The current
+`bitget-signal` Skills (macro-analyst, market-intel, sentiment-analyst,
+technical-analysis, news-briefing) are PROVISIONAL RESEARCH CANDIDATES PENDING P4:
+P1 proved they exist and are crypto-only with zero rToken support, so their exact
+product role depends on P4 proving whether each can answer a real hinge for our
+rToken target user, whether a crypto-oriented result is materially relevant to that
+hinge, whether it can be invoked independently, and whether its evidence is
+attributable and current. If two prove useful, CLINCH uses two. If one, one.
+Decorative ones are excluded. No count is promised and none is optimized for.
+Agent Hub: the later execution surface for capability plumbing in
 P4/P6 (discover, market reads, read-only posture); conceptually the toolbox the
 researcher reaches into, method undecided. Playbook: NOT needed. It generates,
 backtests, and deploys executable strategies; CLINCH researches open human
@@ -382,23 +396,27 @@ decisions and never executes. Removing Playbook changes nothing about the promis
 experience, so it stays out. Optional account personalization (P14): a later,
 opt-in, read-only convenience that must never enter the core flow or the demo.
 
-Removal test: if Bitget disappeared tomorrow, CLINCH would lose live rToken context
-(the entire S2 thesis setting), all five research Skill dimensions (the judging
-criterion called feature depth), and the market-data grounding that makes briefs
-auditable. What remained would be an input box with opinions: a generic chatbot.
-Bitget is load-bearing because the product's three hardest promises (live context,
-researched evidence, S2-native relevance) all run on it.
+Removal test: without real Bitget-grounded market and research evidence, CLINCH
+could still describe Decision Hinge logic, but it could not fulfill the promised
+live Bitget-powered research experience for the target user. It would become an
+ungrounded reasoning interface rather than the product being submitted. This keeps
+Bitget load-bearing (grounding plus real research evidence) without pretending
+every current Bitget component is equally necessary.
 
 ## 19. Load-bearing classification
 
-LOAD-BEARING (remove it and CLINCH stops being CLINCH): Decision Hinge selection;
-dynamic research ordering by decision value; skip logic with stated reasons; stop
-logic; natural-language input; final research brief; live Bitget market context;
-Bitget research Skills; rToken focus; human-final decision rule.
+LOAD-BEARING (remove it and CLINCH stops being CLINCH): Decision Hinge
+identification; decision-value-based research ordering; skip logic with stated
+reasons; stop logic; natural-language decision input; concise final research
+brief; live Bitget-grounded market context; at least one real research capability
+that can resolve relevant hinges (which ones, proven in P4); rToken / tokenized
+U.S.-stock product focus; human-final-decision rule.
 
-IMPORTANT (major value, identity survives): session persistence with honest
-freshness; transport-level source citations; worked example dilemmas; clarifying
-question for ambiguous intent; disclaimer and invalidation triggers.
+IMPORTANT / PROVISIONAL (major value or pending proof, identity survives):
+individual `bitget-signal` Skills, each pending P4 proof of rToken-hinge
+usefulness; transport-level source citations; session persistence with honest
+freshness; clarifying questions; observable change and invalidation conditions;
+research-support disclaimer.
 
 CONVENIENCE (smoother, replaceable): one-tap re-check; data timestamps display;
 input history; mobile-responsive layout basics.
@@ -466,10 +484,12 @@ copy avoids long dashes, engineering terms (verbs, endpoints, fixtures), and jar
 
 ## 24. Rubric map
 
-Feature depth and integrations: each hinge class maps to a distinct Bitget
-capability (Reality context, news/macro, sentiment/positioning, technicals,
-market-intel), and the demo visibly exercises several while skipping at least one
-with reason, so count reads as coverage with discipline. Research quality: every
+Feature depth and integrations: each hinge class must be served by a distinct
+PROVEN Bitget capability, and the demo visibly exercises the proven ones while
+skipping at least one with reason, so count reads as coverage with discipline.
+Effectiveness beats raw count: CLINCH maximizes only genuinely load-bearing
+capabilities after P4 proves them, and no sponsor integration is added to inflate
+a number. This is a P3/P4 selection constraint. Research quality: every
 finding carries source plus timestamp, the read follows the evidence through visible
 updates, and invalidation triggers prove the research was falsifiable. LUI fluency:
 free-text dilemma in, one-line restatement back, plain-language hinges and brief
@@ -500,12 +520,13 @@ Plain: CLINCH answers the one question that decides your trade, then stops.
 Judge: Hinge-first AI research workbench on Bitget: NL dilemma in, decision-ranked
 live research, visible skips, auditable brief, human decides. Technical but
 readable: decision-value-ranked sequential research over live Bitget market and
-Skill evidence with explicit skip/stop policy and a falsifiable brief. Why not
+proven research evidence with explicit skip/stop policy and a falsifiable brief. Why not
 ChatGPT: ChatGPT summarizes everything it can find; CLINCH decides what is worth
 finding, shows what it refused to check and why, and stops when nothing left could
 change your action. Why Bitget: the rToken 7x24 market creates the exact
-partial-information decisions CLINCH resolves, and Bitget's market data plus five
-research Skills supply every hinge class with live evidence. Why novel, carefully:
+partial-information decisions CLINCH resolves, and live Bitget market context plus
+whichever research capabilities P4 proves genuinely useful supply each earning
+hinge class with live evidence. Why novel, carefully:
 in the official Bitget surfaces inspected for P1, no shipped capability ranks
 research by decision value, skips with stated reason, or halts on low marginal
 value; CLINCH's novelty claim rests on that documented gap, and P16 will test
@@ -518,7 +539,12 @@ remaining three); brief length ceiling; whether re-check is in MVP or P15;
 X-post and submission copy ownership. To P4: endpoint-by-endpoint proof (C1 depth
 and fills classes first), per-skill invocation proof plus citation capture method,
 Reality instrument discovery for rNVDA-class symbols, latency envelope for the 90
-second budget. To P5: hinge reliability fixture design from section 14 scenarios,
+second budget. Explicit P4 question: which current Bitget research capabilities can
+genuinely answer rToken-specific or rToken-relevant Decision Hinges for CLINCH's
+primary user? Broken into: Reality ticker/instruments/candles; Reality depth/fills
+if accessible; Agent Hub market capabilities; each relevant `bitget-signal` Skill
+individually; any S2-supported Bitget data surface discovered during capability
+proof. P4 must prove usefulness to a hinge, not merely successful API responses. To P5: hinge reliability fixture design from section 14 scenarios,
 stability criterion, pre-registered skip/stop expectations, negative-case handling.
 To P8: disclaimer wording, empty/loading/error/skip/stop microcopy without long
 dashes, freshness-marking visuals. To P25: cutoff-hour watch, TBD-link capture,
