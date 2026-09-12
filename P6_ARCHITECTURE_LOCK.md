@@ -18,7 +18,7 @@ TypeScript throughout, Postgres (Neon serverless) via Drizzle, Zod-shared
 schemas, Vitest. A bounded server orchestrator runs the proven authority chain
 (NL intent via model, deterministic market normalization, semantic compiler,
 structured kernel, one-family-at-a-time Bitget research, state update, loop with
-iteration cap 6) with per-step persistence, SSE progress, and a final brief
+iteration cap 6) with per-step persistence, streamed POST command responses, and a final brief
 reconstructed from structured state. Model use is fenced to intent parsing,
 wording polish, and proposed uncertainty phrasing; skip/stop/eligibility/provenance
 authority stays in deterministic code. Bitget transport is direct REST through one
@@ -40,7 +40,7 @@ mock presented as live, ever. Boring infrastructure, novel mechanism.
 
 Option A (CHOSEN): single Next.js App Router repo. UI pages + Route Handler API
 in one deployable; server components for first paint, client components for the
-research stream; secrets stay in server runtime; streaming via SSE route;
+research stream; secrets stay in server runtime; streamed POST responses;
 Drizzle-Neon persistence; one dependency tree; one deploy target.
 Option B (REJECTED): Vite SPA + separate Hono/Express API server. Loses on two
 deployables, CORS and session-cookie plumbing across origins, duplicated
@@ -60,7 +60,7 @@ release-candidate: unsuitable stability for a deadline build). Model via AI SDK
 `ai` 7.0.98 + `@ai-sdk/openai-compatible` 3.0.48 against Qwen DashScope
 OpenAI-compatible endpoint (docs-verified 2026-09-12: regional
 `{workspace}.maas.aliyuncs.com/compatible-mode/v1`, `DASHSCOPE_API_KEY`;
-fallback OpenAI direct, same interface). Testing Vitest 5.0.0 (+ tsx 4.23.13 dev
+single provider, no fallback credential). Testing Vitest 5.0.0 (+ tsx 4.23.13 dev
 runner). Bitget transport: global fetch with AbortController (stdlib, no client
 lib). Nothing else at lock time; P9 justifies any addition.
 
@@ -69,7 +69,7 @@ lib). Nothing else at lock time; P9 justifies any addition.
 ```text
 Browser (no secrets, no decisions)
   ↓ HTTPS
-Next.js application on Vercel (UI + Route Handlers, SSE streams)
+Next.js application on Vercel (UI + Route Handlers, streamed responses)
   ↓                ↓                     ↓
 Neon Postgres   Bitget public REST   Qwen/OpenAI-compatible model API
 (serverless)    (api.bitget.com)     (server-side key only)
@@ -95,7 +95,7 @@ credential). No user exchange key, no wallet, no execution anywhere in v1.
 
 `app/` routes + components (input, restatement, hinge, progress, findings, skips,
 stop, brief, recovery states). `server/api` Route Handlers (start, continue,
-clarify-respond, session-get, stream, retry-step). `domain/intent` (model parse +
+clarify-respond, session-get, retry-step, stream-emit helper). `domain/intent` (model parse +
 validation + ambiguity rule). `domain/market` (deterministic normalizers +
 calculators). `domain/semantics` (versioned rules + compiler). `domain/kernel`
 (pure selection/skip/stop + traces). `research/orchestrator` (bounded loop).
@@ -108,15 +108,23 @@ one-file wrapper directories; domain testable without HTTP/UI.
 
 ## 9. Request lifecycle
 
-Cold start: POST dilemma + idempotency key → validate → session row created
-(AWAITING) → intent parse (model, schema-validated; failure → CLARIFY path or
+Cold start is a STREAMED COMMAND RESPONSE that removes any session surprised-by-stream problem. POST dilemma + idempotency key → validate → session row created
+(AWAITING) → FIRST streamed event carries sessionId plus authoritative initial
+state/version, so the browser holds session identity before any research progress
+needs rendering → intent parse (model, schema-validated; failure → CLARIFY path or
 FAILED with retry) → baseline fetch (ticker + discovery check, parallel where
 independent) → CONTEXT → orchestrator loop (compile → kernel → RESEARCH one
-family → normalize → persist step → EVALUATING → next) → STOP/UNRESOLVED/FAILED
-→ brief assembly → prose polish (non-blocking for truth: structured brief always
-returned) → STOPPED/UNRESOLVED with brief. Continue/clarify/retry/session-get
-act on the same session row with version-checked transitions. SSE stream mirrors
-state transitions; stream is a view, never the authority.
+family → normalize → persist step → EVALUATING → next) with each persisted step
+emitted as a stream event → STOP/UNRESOLVED/FAILED → brief assembly → prose
+polish (non-blocking for truth: structured brief always returned) →
+STOPPED/UNRESOLVED with brief as the terminal event. The browser consumes the
+stream with streaming `fetch()` (SSE-formatted events over the POST response;
+the native EventSource API is NOT required). Continue/clarify/retry follow the
+same command-stream principle where live progress is useful. GET session is the
+authoritative refresh/resume path and emits no progress stream of its own in v1:
+no two overlapping streaming systems. The stream is a view; Postgres is the
+authority. Server behavior on browser disconnect is UNPROVEN until P18: v1
+claims only persisted-step survival plus safe resume, never continued execution.
 
 ## 10. Normalized decision state
 
@@ -145,11 +153,21 @@ anything. Every model output is schema-validated; malformed JSON, missing fields
 unsupported asset, invented symbols, invalid action, timeout, refusal, or
 inconsistent extraction → retry bounded once → CLARIFY or FAILED with truthful
 UX. Structured kernel owns eligibility, effects, dependencies, skip/stop
-invariants, no-data handling, provenance validity. Provider strategy: Qwen
-primary (hackathon credits, OpenAI-compatible), OpenAI direct fallback, both
-behind the narrow interface; switching provider rewrites config, not the engine.
-No multi-provider abstraction. No credential exists yet: P9/P18 prerequisite
-(model key + workspace/region binding).
+invariants, no-data handling, provenance validity. Provider strategy: ONE
+configured provider at a time, Qwen
+through DashScope OpenAI-compatible API behind the narrow interface; switching
+provider rewrites config, not the engine.
+No multi-provider abstraction. V1 runs ONE configured provider at a time: Qwen
+through DashScope OpenAI-compatible API. There is NO automatic OpenAI fallback
+in v1 (no second credential, billing path, failure mode, or output-behavior
+variance). If Qwen is unavailable, the product returns truthful model-service
+failure/retry behavior; a provider change is a configuration plus validation
+plus deployment decision, never a silent runtime switch. No credential exists
+yet: P9/P18 prerequisite (model key + workspace/region binding). Exact Qwen
+model name stays P9 responsibility (owner workspace, region, credits, strict
+JSON Schema support, latency, reliability); all model output is Zod-validated
+server-side regardless, with provider-side strict schema used as extra
+protection only where supported, never depended on by the kernel.
 
 ## 13. Semantic compiler
 
@@ -253,24 +271,37 @@ personal data; retention minimal per P7.
 
 ## 24. API/actions
 
-Tiny surface: POST start (dilemma + idempotency key), POST continue/clarify
-(session + payload + expected version), GET session (resume/refresh), POST
-retry-step (safe cases only), GET stream (SSE progress). Each returns the
-authoritative session state. Nothing else in v1.
+Tiny surface. POST start (dilemma + idempotency key) RETURNS a streamed command
+response: first event carries sessionId plus authoritative initial state/version,
+then progress events through research to the terminal event. POST continue /
+clarify-respond / retry-step follow the same command-stream principle where live
+progress is useful. GET session is the authoritative refresh/resume path (no
+progress stream of its own in v1). Nothing else in v1. No separate GET streaming
+endpoint is retained for core: one streaming mechanism, no overlaps.
 
 ## 25. Progress transport
 
-SSE primary: GET stream emits state-transition events with human-readable status
-("Checking whether the move is real..."); EventSource auto-reconnect plus
-explicit retry-step action; session-get polling is the fallback and the refresh
-path. No WebSockets. Stream never authoritative.
+Streamed POST responses consumed with streaming `fetch()` (SSE-formatted events;
+native EventSource NOT required). Every meaningful research step is persisted
+BEFORE its success event is emitted, so the stream can die without losing truth.
+Disconnect/reconnect: re-issue GET session for authoritative state; resume via
+the appropriate command when resumable. No WebSockets. Stream never authoritative.
+No queue, Redis, worker, background `waitUntil`, or continued-execution claim:
+interrupted runs resume; P18 proves host disconnect/streaming behavior and P15
+hardens recovery.
 
 ## 26. Idempotency
 
 One active run per session enforced by idempotency_key unique constraint plus
-version-checked transitions inside Drizzle transactions: duplicate start returns
-the existing run; continue requires expected stateVersion, mismatch returns
-current state with a refresh directive. Atomic transitions only.
+version-checked transitions inside Drizzle transactions: duplicate POST start
+with the same key returns/reconnects to the existing authoritative session
+(including joining its in-progress stream view where practical) and never starts
+another run; continue requires expected stateVersion, mismatch returns
+current state with a refresh directive. Concurrent commands on an active session
+are rejected or answered from current state by the version/state guard: no
+forked research path. Atomic transitions only. Streaming changes nothing about
+these guarantees: the key is checked before any run begins, and the stream is
+keyed to the single authoritative run.
 
 ## 27. Concurrency
 
@@ -357,7 +388,15 @@ Framework-free logic keeps suites fast and hermetic.
 
 ## 37. Failure walkthroughs
 
-Happy path: chain sec 9 end to end. Ambiguous input: intent low-confidence →
+Happy path: chain sec 9 end to end. Normal start: POST begins → session persists
+→ first stream event delivers session ID → progress events → terminal event.
+Disconnect before first research result: session already exists; no fake
+completion; GET session returns current persisted state. Disconnect after a
+completed step: that step survives (persisted before emission); resume begins
+from authoritative next state. Duplicate start during active stream: same
+idempotency key → same authoritative session, no duplicate run. Refresh during
+research: GET session reconstructs actual progress; P15 proves/hardens exact
+resume behavior. Ambiguous input: intent low-confidence →
 CLARIFYING, one question, resume. Unsupported asset: adapter discovery miss →
 plain coverage message + nearest alternative, no fake analysis. Ticker failure:
 transient → bounded retry → FAILED/UNRESOLVED honestly. Orderbook unavailable:
@@ -377,8 +416,11 @@ Autonomous agents (no executor exists); microservices/queues/Kafka/Redis/K8s/bus
 agents); vector/graph DBs (no retrieval problem); mandatory exchange auth
 (product rule); browser-direct Bitget research (secret/cors/state chaos);
 model-only hinge authority (P0/P5 evidence); deterministic-only NL (NL needs a
-model); job queues/workers (bounded in-request loop suffices); WebSockets
-(SSE covers progress); VPS-first (no advantage over serverless-first; fallback
+model); job queues/workers/background-`waitUntil`/Redis (bounded in-request loop
+suffices; no continued-execution claim without P18 proof); WebSockets and dual
+overlapping streams (streamed POST responses cover progress); second model
+provider fallback credential (one provider, truthful failure instead); VPS-first
+(no advantage over serverless-first; fallback
 only); Agent Hub transport (interface over equivalent data; direct REST is
 simpler); bitget-signal dependency (unproven content); Prisma v8 RC (stability);
 Python split-stack (no v1 need); MCP (AI-host oriented).
@@ -389,13 +431,15 @@ ADR-01 stack: Next.js single repo + TS + Postgres/Drizzle + Zod + Vitest (one
 deployable, shared types, deadline speed) over split SPA+API. ADR-02 topology:
 Vercel serverless + Neon primary (per-step model fits limits; streaming native),
 single-host fallback; P18 proves DNS/streaming/timeouts. ADR-03 model boundary:
-Qwen-primary OpenAI-compatible via narrow interface (credits + switchability),
+Qwen-only OpenAI-compatible via narrow interface (credits + replaceability,
+single credential, truthful failure over silent fallback),
 model fenced to language tasks, kernel authoritative. ADR-04 hinge authority:
 P5 kernel + P5B compiler pattern in deterministic code; model proposes phrasing
 only. ADR-05 persistence: anonymous UUID sessions, two tables, versioned
 compare-and-set (no accounts, minimal data). ADR-06 Bitget transport: direct
-REST typed adapter (P4 paths; least weight, most control). ADR-07 progress: SSE
-primary with session-get fallback (simplest visible progress).
+REST typed adapter (P4 paths; least weight, most control). ADR-07 progress: streamed POST command responses with session ID as first event
+(solves subscribe-before-progress without a second system) plus authoritative
+GET session for refresh/resume (simplest visible progress).
 
 ## 40. Phase implementation handoff
 
@@ -412,7 +456,7 @@ key, DATABASE_URL).
 
 Exact Qwen workspace region/model name (needs owner console + credits; P9).
 Neon project/branch setup (P9/P18). Vercel timeout tier confirmation (P18).
-Numeric threshold calibration (P10/P12/P16). SSE reconnect edge cases (P13).
+Numeric threshold calibration (P10/P12/P16). Stream reconnect edge cases (P13).
 Rate-limit policy numbers (P7). None block P7/P8 start.
 
 ## 42. P6 pass checklist
