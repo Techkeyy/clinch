@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, jsonb, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, jsonb, uuid, bigint } from "drizzle-orm/pg-core";
 
 // Minimal two-table model (P6 sec 23). Anonymous sessions only.
 export const researchSessions = pgTable("research_sessions", {
@@ -29,4 +29,11 @@ export const researchSteps = pgTable("research_steps", {
   provenance: jsonb("provenance"),
   startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
   finishedAt: timestamp("finished_at", { withTimezone: true }),
+});
+
+// Short-lived abuse-control buckets (P7: pseudonymous HMAC keys, 24h max).
+export const rateCounters = pgTable("rate_counters", {
+  bucketKey: text("bucket_key").primaryKey(),
+  windowStartMs: bigint("window_start_ms", { mode: "number" }).notNull(),
+  count: integer("count").notNull(),
 });

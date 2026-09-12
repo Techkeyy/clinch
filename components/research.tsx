@@ -32,9 +32,10 @@ export function HingeCard({ n, question, why, changes }: { n: number; question: 
 }
 
 export function SkipRecord({ check, reason }: { check: string; reason: string }) {
+  const label = check === "spot-structure" ? "Spot market structure" : check === "perp-positioning" ? "Positioning context" : check;
   return (
-    <section className="skip-card" aria-label={`Skipped ${check}`}>
-      <p className="micro-label">Skipped: {check}</p>
+    <section className="skip-card" aria-label={`Skipped ${label}`}>
+      <p className="micro-label">Skipped: {label}</p>
       <p className="body-text">Why skipped: {reason}</p>
     </section>
   );

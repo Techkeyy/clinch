@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Freshness, Provenance, ResearchFamily } from "../domain/types";
+import { BANDS } from "../config/thresholds";
 import { BitgetError } from "./bitget/errors";
 import type { FetchImpl } from "./bitget/client";
 import {
@@ -18,16 +19,6 @@ export interface ResearchResult {
   evidence: { freshness: Freshness; provenance: Provenance }[];
   error?: { code: string; message: string };
 }
-
-// Provisional qualitative bands (P10/P12/P16 calibrate against live data).
-// Labeled provisional; numeric facts always preserved alongside bands.
-export const BANDS = {
-  SPREAD_WIDE_BPS: 10,
-  DISLOCATION_WIDE_BPS: 15,
-  MOVE_LARGE_PCT: 2,
-  FUNDING_ELEVATED: 0.0005,
-  FUNDING_EXTREME: 0.001,
-} as const;
 
 export type SpotNeed = "ticker" | "candles" | "depth";
 export type PerpNeed = "ticker" | "candles";

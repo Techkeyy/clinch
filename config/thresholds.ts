@@ -19,5 +19,15 @@ export const FRESHNESS_BUDGET_MS = {
   positioning: 300_000,
 } as const;
 
+// Provisional qualitative bands (P10/P12/P16 calibrate against live data).
+// Labeled provisional; numeric facts always preserved alongside bands.
+export const BANDS = {
+  SPREAD_WIDE_BPS: 10,
+  DISLOCATION_WIDE_BPS: 15,
+  MOVE_LARGE_PCT: 2,
+  FUNDING_ELEVATED: 0.0005,
+  FUNDING_EXTREME: 0.001,
+} as const;
+
 // Initial qualitative bands; numeric cutoffs calibrate later. Never invent precision.
 export const SPREAD_BAND = { normal: "tight", wide: "wide" } as const;
