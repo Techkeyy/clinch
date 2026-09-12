@@ -93,8 +93,8 @@ preserved). No syntax, no settings, no timeframe pickers up front.
 ## 10. Restatement
 
 A compact confirmation strip, not a form: "Your decision" heading, asset chip
-(RNVDA), action line ("Considering: enter now"), context line ("Off-hours
-decline"), timestamp of interpretation, and a quiet "Not quite right? Edit or
+(RNVDA), action line ("Considering: enter now"), context line ("Evening decline",
+user-statable wording with no session claim), timestamp of interpretation, and a quiet "Not quite right? Edit or
 add detail" affordance. High-confidence interpretations proceed without forcing
 confirmation; the strip stays visible as the contract for everything below.
 
@@ -102,15 +102,24 @@ confirmation; the strip stays visible as the contract for everything below.
 
 Only when no contemplated action exists: one calm question ("What are you
 deciding about RNVDA?") with compact bounded choices (Enter now, Exit, Wait for
-a better moment, Just researching) plus a free-text correction line. One
-question at a time, selection resumes immediately, never a questionnaire.
+a better moment, I am not deciding yet) plus a free-text correction line. One
+question at a time, selection of an action resumes immediately, never a
+questionnaire. Selecting "I am not deciding yet" does NOT enter the Hinge
+workflow and fabricates no action: CLINCH shows a small truthful state ("CLINCH
+works from a decision you are considering. Tell me what you might do, such as
+enter now, exit, or wait.") with dilemma editing. No research-chat fallback.
 
 ## 12. Market context
 
 A slim context strip proving live grounding: instrument (RNVDA, Reality
-tokenized stock), current price with tabular numerals, recent move, session note
-("U.S. market closed, off-hours pricing"), observed timestamp, freshness badge.
-S skeleton shimmer only while fetching; failure degrades to a named state, never
+tokenized stock), current price with tabular numerals, recent move, session note,
+observed timestamp, freshness badge. Session labels such as "U.S. market closed,
+off-hours pricing" may render ONLY when the server holds enough truthful
+session and freshness evidence to support them for that specific instrument and
+time; the string is never hardcoded into the component. When session status
+cannot be truthfully established, show only supported neutral context such as
+"Observed 23:04 UTC". P10 defines production eligibility and session logic; P8
+locks only this truth rule. S skeleton shimmer only while fetching; failure degrades to a named state, never
 a fake number. Optional tiny sparkline allowed ONLY if P9/P13 comprehension
 testing favors it; never required to understand anything.
 
@@ -176,8 +185,13 @@ declined and why.
 
 Explicit stop statement in full voice: "CLINCH is stopping here. The checks
 still available are unlikely to change this read." Followed by open questions
-and the named future trigger ("A sector-green open above 1.5% would reopen
-this."). Never "complete with 100% confidence". Stopping reads as discipline,
+and the named future trigger ("A narrower spread with sustained price
+stabilization would reopen this read." or "If positioning normalizes while spot
+liquidity remains healthy, this decision is worth re-checking."). Future-change
+conditions must be observable through Reality spot structure, corresponding
+stock-perp positioning, or a clearly external condition CLINCH does not claim to
+monitor automatically. No numeric thresholds are locked here; P10/P12/P16
+calibrate them. Never "complete with 100% confidence". Stopping reads as discipline,
 not exhaustion.
 
 ## 21. Cannot resolve
@@ -350,6 +364,18 @@ CLINCH never places trades." Freshness: "Observed 23:04 UTC", "14 min old",
 throughout: calm, specific, plain, confident about process, humble about
 markets. No hype verbs, no bro slang, no jargon, no long dashes.
 
+First-open example concepts (chips above): rNVDA off-hours dip (spot structure
+first), thin rTSLA move (spot validity first, positioning a later candidate for
+an explicit skip), crowded rAAPL entry (positioning first). Each dilemma is
+answerable using only spot market structure and positioning context. No example
+may name macro events, news, sentiment, sectors, earnings, or catalysts.
+
+Copy-truth invariant: every visible research claim, example, progress label,
+future-change condition, and source label must be derivable from a currently
+registered and proven research family, unless explicitly presented as
+information CLINCH does not have. Applies to examples, progress, findings,
+stops, cannot-resolve, briefs, history, and demo copy alike.
+
 ## 39. Why this next UX
 
 Every live Hinge carries a compact "Why this matters" line expressing the live
@@ -483,7 +509,7 @@ Initial workspace:
 |   +--------------------------------------------------+   |
 |   | rNVDA fell hard after the close...               |   |
 |   +--------------------------------------------------+   |
-|   [ rNVDA dip ] [ Pre-CPI entry ] [ Quiet drift ]        |
+|   [ rNVDA dip ] [ Thin rTSLA move ] [ Crowded rAAPL ]   |
 |   [ CHECK THIS TRADE ]                                   |
 |   Research only. No wallet. No exchange account.         |
 +----------------------------------------------------------+
@@ -491,7 +517,7 @@ Initial workspace:
 Decision understood:
 ```text
 | Your decision                                    [Edit]  |
-| RNVDA | Considering: enter now | Off-hours decline    |
+| RNVDA | Considering: enter now | Evening decline        |
 | RNVDA 218.24 (-0.4%) | U.S. closed | Observed 23:04 UTC  |
 ```
 Active Hinge:
@@ -536,9 +562,11 @@ Stop plus final brief:
 Cannot resolve:
 ```text
 | Cannot resolve with current evidence                     |
-| Checked: ticker, candles. Missing: usable history,       |
-| verifiable event communication.                          |
-| Re-check after the native open.                          |
+| Checked: spot market structure. Missing: usable          |
+| positioning coverage for this instrument.                |
+| CLINCH cannot resolve this decision with the evidence    |
+| currently available. Re-check when both evidence         |
+| families are available.                                  |
 ```
 Interrupted/recovery:
 ```text
@@ -564,7 +592,11 @@ and recent surfaces; responsive rules; accessibility contract. Styling direction
 per locked stack (P9 chooses the implementation vehicle: CSS modules or
 equivalent minimal approach; no library installed in P8). No endpoint, model,
 or database work inside P9 beyond the foundation scaffold and static rendering
-of states with fixtures.
+of states with fixtures. P9 must use P8 copy constants ONLY after this
+capability-truth audit: no invented financial examples, and fixture states for
+static rendering must use only spot-structure facts, perp-positioning facts, or
+missing/unavailable versions of those facts, labeled internally as development
+fixtures. No macro/news fixture. No fake live UI.
 
 ## 57. What may change
 
