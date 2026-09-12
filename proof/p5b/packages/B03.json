@@ -1,0 +1,75 @@
+{
+ "id": "B03",
+ "narrative": "RNVDA is flat into tomorrow's CPI print and I am thinking of buying ahead of it. Positioning data looks hot though. Is entering before the catalyst reckless?",
+ "asset": "RNVDAUSDT",
+ "action": "enter-now",
+ "read": "undecided",
+ "context": "pre-catalyst calm spot, CPI tomorrow",
+ "known": [
+  "spot structure checked healthy earlier",
+  "funding elevated vs 30-day norm",
+  "open interest up sharply into the event"
+ ],
+ "candidates": [
+  {
+   "id": "q-b-crowd-timing",
+   "topic": "crowd-timing",
+   "q": "Does leveraged crowding change the timing of this action?",
+   "families": [
+    "perp-positioning"
+   ],
+   "prunes": [],
+   "branches": [
+    {
+     "outcome": "extreme crowding [crowded]",
+     "action": "wait",
+     "moots": []
+    },
+    {
+     "outcome": "normal positioning [calm]",
+     "action": "enter-now",
+     "moots": []
+    }
+   ],
+   "derivation": {
+    "template": "T-CROWD",
+    "firedFacts": [
+     "positioning.funding=extreme"
+    ],
+    "effectRule": "template-outcome-table+R-ABSORB-TERMINAL"
+   }
+  },
+  {
+   "id": "q-structure-direction-settled",
+   "topic": "structure-direction",
+   "q": "(settled earlier: structure-direction)",
+   "families": [
+    "spot-structure"
+   ],
+   "resolved": true,
+   "resolution": "settled before this step",
+   "prunes": [],
+   "branches": [
+    {
+     "outcome": "settled (known)",
+     "action": "undecided"
+    }
+   ],
+   "derivation": {
+    "template": "PRIOR-SETTLEMENT",
+    "firedFacts": [
+     "resolved[] contains structure-direction"
+    ],
+    "effectRule": "none"
+   }
+  }
+ ],
+ "data": {
+  "spot-structure": "fresh",
+  "perp-positioning": "fresh"
+ },
+ "derivation": [
+  "T-CROWD fired on {positioning.funding=extreme}",
+  "prior settlement passed through: structure-direction"
+ ]
+}

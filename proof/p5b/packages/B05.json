@@ -1,0 +1,74 @@
+{
+ "id": "B05",
+ "narrative": "RAMD drift update: structure has now been checked and is healthy with support holding, but funding just printed extreme into tomorrow's CPI. I still want to enter. What matters now?",
+ "asset": "RAMDUSDT",
+ "action": "enter-now",
+ "read": "undecided",
+ "context": "spot resolved healthy, positioning newly extreme",
+ "known": [
+  "structure checked healthy, support holding",
+  "funding extreme into CPI tomorrow"
+ ],
+ "candidates": [
+  {
+   "id": "q-b-crowd-timing",
+   "topic": "crowd-timing",
+   "q": "Does leveraged crowding change the timing of this action?",
+   "families": [
+    "perp-positioning"
+   ],
+   "prunes": [],
+   "branches": [
+    {
+     "outcome": "extreme crowding [crowded]",
+     "action": "wait",
+     "moots": []
+    },
+    {
+     "outcome": "normal positioning [calm]",
+     "action": "enter-now",
+     "moots": []
+    }
+   ],
+   "derivation": {
+    "template": "T-CROWD",
+    "firedFacts": [
+     "positioning.funding=extreme"
+    ],
+    "effectRule": "template-outcome-table+R-ABSORB-TERMINAL"
+   }
+  },
+  {
+   "id": "q-structure-direction-settled",
+   "topic": "structure-direction",
+   "q": "(settled earlier: structure-direction)",
+   "families": [
+    "spot-structure"
+   ],
+   "resolved": true,
+   "resolution": "settled before this step",
+   "prunes": [],
+   "branches": [
+    {
+     "outcome": "settled (known)",
+     "action": "undecided"
+    }
+   ],
+   "derivation": {
+    "template": "PRIOR-SETTLEMENT",
+    "firedFacts": [
+     "resolved[] contains structure-direction"
+    ],
+    "effectRule": "none"
+   }
+  }
+ ],
+ "data": {
+  "spot-structure": "fresh",
+  "perp-positioning": "fresh"
+ },
+ "derivation": [
+  "T-CROWD fired on {positioning.funding=extreme}",
+  "prior settlement passed through: structure-direction"
+ ]
+}

@@ -13,7 +13,7 @@
 - **P2 Evidence:** `P2_PRODUCT_UNDERSTANDING.md` (accepted by Director)
 - **P3 Evidence:** `P3_SCOPE_LOCK.md` (accepted by Director)
 - **P4 Evidence:** `P4_BITGET_CAPABILITY_PROOF.md` + `proof/p4/` (accepted by Director; two-path gate PASSED)
-- **P5 Evidence:** `P5_HINGE_FEASIBILITY.md` + `proof/p5/` (BUILDING pending Director; HYBRID direction recommended)
+- **P5 Evidence:** `P5_HINGE_FEASIBILITY.md` + `proof/p5/` + `P5B_SEMANTIC_ACQUISITION.md` + `proof/p5b/` (BUILDING pending Director; HYBRID direction recommended)
 
 ---
 

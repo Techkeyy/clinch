@@ -1,0 +1,50 @@
+{
+ "id": "H-A",
+ "narrative": "RNVDA jumped 2.1% in twenty minutes after the close, but this time the book is healthy and the spread is normal. Funding into tomorrow's CPI looks extreme though. Chase the breakout or respect the crowding?",
+ "asset": "RNVDAUSDT",
+ "action": "enter-now",
+ "read": "undecided",
+ "context": "off-hours jump on HEALTHY book plus pre-event crowding",
+ "known": [
+  "RNVDA +2.1% in 20 min",
+  "spread normal, book healthy",
+  "funding extreme into CPI"
+ ],
+ "candidates": [
+  {
+   "id": "q-b-crowd-timing",
+   "topic": "crowd-timing",
+   "q": "Does leveraged crowding change the timing of this action?",
+   "families": [
+    "perp-positioning"
+   ],
+   "prunes": [],
+   "branches": [
+    {
+     "outcome": "extreme crowding [crowded]",
+     "action": "wait",
+     "moots": []
+    },
+    {
+     "outcome": "normal positioning [calm]",
+     "action": "enter-now",
+     "moots": []
+    }
+   ],
+   "derivation": {
+    "template": "T-CROWD",
+    "firedFacts": [
+     "positioning.funding=extreme"
+    ],
+    "effectRule": "template-outcome-table+R-ABSORB-TERMINAL"
+   }
+  }
+ ],
+ "data": {
+  "spot-structure": "fresh",
+  "perp-positioning": "fresh"
+ },
+ "derivation": [
+  "T-CROWD fired on {positioning.funding=extreme}"
+ ]
+}

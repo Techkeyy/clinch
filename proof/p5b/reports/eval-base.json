@@ -1,0 +1,272 @@
+{
+ "B01": {
+  "id": "B01",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want STOP, got [CONTINUE,STOP]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ },
+ "B02": {
+  "id": "B02",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want STOP, got [CONTINUE,STOP]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ },
+ "B03": {
+  "id": "B03",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want STOP, got [CONTINUE,STOP]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ },
+ "B04": {
+  "id": "B04",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want STOP, got [CONTINUE,STOP]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ },
+ "B05": {
+  "id": "B05",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want STOP, got [CONTINUE,STOP]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ },
+ "B06a": {
+  "id": "B06a",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want STOP, got [CONTINUE,STOP]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ },
+ "B06b": {
+  "id": "B06b",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want STOP, got [STOP]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ },
+ "B07a": {
+  "id": "B07a",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want STOP, got [CONTINUE,STOP]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ },
+ "B07b": {
+  "id": "B07b",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want STOP, got [STOP]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ },
+ "B08": {
+  "id": "B08",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want STOP, got [CONTINUE,CONTINUE,STOP]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ },
+ "B09": {
+  "id": "B09",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want CANNOT_RESOLVE, got [CANNOT_RESOLVE]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ },
+ "B10": {
+  "id": "B10",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want CLARIFY, got [CLARIFY]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ },
+ "H-A": {
+  "id": "H-A",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want STOP, got [CONTINUE,STOP]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ },
+ "H-B": {
+  "id": "H-B",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want STOP, got [CONTINUE,STOP]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ },
+ "H-C": {
+  "id": "H-C",
+  "SA": {
+   "SA1_generated": true,
+   "SA2_branches": true,
+   "SA3_effects": true,
+   "SA4_familyMapping": true,
+   "SA5_dependencies": true,
+   "SA6_firstHinge": true,
+   "SA7_skip": true,
+   "SA8_stop": true,
+   "SA8_detail": "want STOP, got [CONTINUE,STOP]",
+   "SA9_holdout": true,
+   "SA10_inspectable": true
+  },
+  "SCF": [],
+  "notes": []
+ }
+}

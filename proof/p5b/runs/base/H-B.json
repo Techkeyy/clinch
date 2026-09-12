@@ -1,0 +1,84 @@
+[
+ {
+  "scenario": "H-B",
+  "step": 1,
+  "read": "enter-now",
+  "hinge": "q-b-crowd-timing",
+  "hinge_q": "Does leveraged crowding change the timing of this action?",
+  "why": "unresolved flippable hinge (outcomes: wait vs enter-now) answerable by perp-positioning",
+  "family": "perp-positioning",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "extreme crowding [crowded]",
+    "effect": "wait"
+   },
+   {
+    "outcome": "normal positioning [calm]",
+    "effect": "enter-now"
+   }
+  ],
+  "canChange": true,
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved",
+    "reason": "spot-structure questions already settled in a prior step"
+   }
+  ],
+  "trace": {
+   "candidates": [
+    "q-b-crowd-timing"
+   ],
+   "selected": "q-b-crowd-timing",
+   "prunes": [],
+   "dataSnapshot": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": [
+    "q-structure-direction-settled"
+   ]
+  },
+  "narrative": "RNVDA tonight: structure checked healthy, positioning was normal an hour ago and I was about to stop researching. Fresh print just showed funding spiking to extreme with OI surging. Still nothing to do?"
+ },
+ {
+  "scenario": "H-B",
+  "step": 2,
+  "read": "wait",
+  "hinge": null,
+  "hinge_q": null,
+  "why": "no unresolved flippable hinge remains; residue: none",
+  "family": null,
+  "action": "STOP",
+  "final": "STOP",
+  "branches": [],
+  "canChange": false,
+  "skips": [
+   {
+    "family": "perp-positioning",
+    "kind": "resolved",
+    "reason": "no open question needs perp-positioning"
+   },
+   {
+    "family": "spot-structure",
+    "kind": "resolved",
+    "reason": "spot-structure questions already settled in a prior step"
+   }
+  ],
+  "trace": {
+   "candidates": [],
+   "selected": null,
+   "prunes": [],
+   "dataSnapshot": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": [
+    "q-structure-direction-settled",
+    "q-b-crowd-timing"
+   ]
+  }
+ }
+]

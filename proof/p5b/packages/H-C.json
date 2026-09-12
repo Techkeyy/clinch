@@ -1,0 +1,75 @@
+{
+ "id": "H-C",
+ "narrative": "I am holding RNVDA overnight into tomorrow's CPI and wondering whether to sell it now. Spot is flat and calm but perp desks look extremely crowded long. Take profit tonight or let it ride?",
+ "asset": "RNVDAUSDT",
+ "action": "exit-now",
+ "read": "undecided",
+ "context": "holding into catalyst, exit timing question",
+ "known": [
+  "holding RNVDA overnight",
+  "spot flat and calm",
+  "funding extreme, crowded long"
+ ],
+ "candidates": [
+  {
+   "id": "q-b-crowd-timing",
+   "topic": "crowd-timing",
+   "q": "Does leveraged crowding change the timing of this action?",
+   "families": [
+    "perp-positioning"
+   ],
+   "prunes": [],
+   "branches": [
+    {
+     "outcome": "extreme crowding [crowded]",
+     "action": "exit-now",
+     "moots": []
+    },
+    {
+     "outcome": "normal positioning [calm]",
+     "action": "wait",
+     "moots": []
+    }
+   ],
+   "derivation": {
+    "template": "T-CROWD",
+    "firedFacts": [
+     "positioning.funding=extreme"
+    ],
+    "effectRule": "template-outcome-table+R-ABSORB-TERMINAL"
+   }
+  },
+  {
+   "id": "q-structure-direction-settled",
+   "topic": "structure-direction",
+   "q": "(settled earlier: structure-direction)",
+   "families": [
+    "spot-structure"
+   ],
+   "resolved": true,
+   "resolution": "settled before this step",
+   "prunes": [],
+   "branches": [
+    {
+     "outcome": "settled (known)",
+     "action": "undecided"
+    }
+   ],
+   "derivation": {
+    "template": "PRIOR-SETTLEMENT",
+    "firedFacts": [
+     "resolved[] contains structure-direction"
+    ],
+    "effectRule": "none"
+   }
+  }
+ ],
+ "data": {
+  "spot-structure": "fresh",
+  "perp-positioning": "fresh"
+ },
+ "derivation": [
+  "T-CROWD fired on {positioning.funding=extreme}",
+  "prior settlement passed through: structure-direction"
+ ]
+}

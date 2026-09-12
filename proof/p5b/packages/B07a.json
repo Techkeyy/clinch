@@ -1,0 +1,75 @@
+{
+ "id": "B07a",
+ "narrative": "RNVDA tonight: structure checked healthy, but nobody has looked at the CPI calendar yet and CPI lands tomorrow morning. I am leaning in. Anything left?",
+ "asset": "RNVDAUSDT",
+ "action": "enter-now",
+ "read": "enter-now",
+ "context": "one question open, event tomorrow",
+ "known": [
+  "structure checked healthy",
+  "event calendar unchecked",
+  "CPI tomorrow morning"
+ ],
+ "candidates": [
+  {
+   "id": "q-b-crowd-timing",
+   "topic": "crowd-timing",
+   "q": "Does leveraged crowding change the timing of this action?",
+   "families": [
+    "perp-positioning"
+   ],
+   "prunes": [],
+   "branches": [
+    {
+     "outcome": "extreme crowding [crowded]",
+     "action": "wait",
+     "moots": []
+    },
+    {
+     "outcome": "normal positioning [calm]",
+     "action": "enter-now",
+     "moots": []
+    }
+   ],
+   "derivation": {
+    "template": "T-CROWD",
+    "firedFacts": [
+     "positioning.funding=elevated"
+    ],
+    "effectRule": "template-outcome-table+R-ABSORB-TERMINAL"
+   }
+  },
+  {
+   "id": "q-structure-direction-settled",
+   "topic": "structure-direction",
+   "q": "(settled earlier: structure-direction)",
+   "families": [
+    "spot-structure"
+   ],
+   "resolved": true,
+   "resolution": "settled before this step",
+   "prunes": [],
+   "branches": [
+    {
+     "outcome": "settled (known)",
+     "action": "enter-now"
+    }
+   ],
+   "derivation": {
+    "template": "PRIOR-SETTLEMENT",
+    "firedFacts": [
+     "resolved[] contains structure-direction"
+    ],
+    "effectRule": "none"
+   }
+  }
+ ],
+ "data": {
+  "spot-structure": "fresh",
+  "perp-positioning": "fresh"
+ },
+ "derivation": [
+  "T-CROWD fired on {positioning.funding=elevated}",
+  "prior settlement passed through: structure-direction"
+ ]
+}

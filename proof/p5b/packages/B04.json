@@ -1,0 +1,50 @@
+{
+ "id": "B04",
+ "narrative": "Spot RNVDA sits at 218.30 but the perp mark prints 218.90. That gap looks like free information. Can I trade the dislocation?",
+ "asset": "RNVDAUSDT",
+ "action": "enter-now",
+ "read": "undecided",
+ "context": "stable spot, visible spot-vs-mark gap",
+ "known": [
+  "spot structure stable",
+  "mark 0.3% above spot",
+  "funding neutral"
+ ],
+ "candidates": [
+  {
+   "id": "q-b-dislocation",
+   "topic": "dislocation",
+   "q": "Is this a tradeable dislocation or a quoting mirage?",
+   "families": [
+    "perp-positioning"
+   ],
+   "prunes": [],
+   "branches": [
+    {
+     "outcome": "mirage, quotes normalize [mirage]",
+     "action": "wait",
+     "moots": []
+    },
+    {
+     "outcome": "persistent, hedgeable gap [persistent]",
+     "action": "enter-now",
+     "moots": []
+    }
+   ],
+   "derivation": {
+    "template": "T-DISLOC",
+    "firedFacts": [
+     "positioning.dislocation=\"wide\""
+    ],
+    "effectRule": "template-outcome-table+R-ABSORB-TERMINAL"
+   }
+  }
+ ],
+ "data": {
+  "spot-structure": "fresh",
+  "perp-positioning": "fresh"
+ },
+ "derivation": [
+  "T-DISLOC fired on {positioning.dislocation=\"wide\"}"
+ ]
+}

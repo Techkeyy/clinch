@@ -1,0 +1,81 @@
+[
+ {
+  "scenario": "B04",
+  "step": 1,
+  "read": "undecided",
+  "hinge": "q-b-dislocation",
+  "hinge_q": "Is this a tradeable dislocation or a quoting mirage?",
+  "why": "unresolved flippable hinge (outcomes: wait vs enter-now) answerable by perp-positioning",
+  "family": "perp-positioning",
+  "action": "RESEARCH",
+  "final": "CONTINUE",
+  "branches": [
+   {
+    "outcome": "mirage, quotes normalize [mirage]",
+    "effect": "wait"
+   },
+   {
+    "outcome": "persistent, hedgeable gap [persistent]",
+    "effect": "enter-now"
+   }
+  ],
+  "canChange": true,
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved",
+    "reason": "no open question needs spot-structure"
+   }
+  ],
+  "trace": {
+   "candidates": [
+    "q-b-dislocation"
+   ],
+   "selected": "q-b-dislocation",
+   "prunes": [],
+   "dataSnapshot": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": []
+  },
+  "narrative": "Spot RNVDA sits at 218.30 but the perp mark prints 218.90. That gap looks like free information. Can I trade the dislocation?"
+ },
+ {
+  "scenario": "B04",
+  "step": 2,
+  "read": "wait",
+  "hinge": null,
+  "hinge_q": null,
+  "why": "no unresolved flippable hinge remains; residue: none",
+  "family": null,
+  "action": "STOP",
+  "final": "STOP",
+  "branches": [],
+  "canChange": false,
+  "skips": [
+   {
+    "family": "perp-positioning",
+    "kind": "resolved",
+    "reason": "no open question needs perp-positioning"
+   },
+   {
+    "family": "spot-structure",
+    "kind": "resolved",
+    "reason": "no open question needs spot-structure"
+   }
+  ],
+  "trace": {
+   "candidates": [],
+   "selected": null,
+   "prunes": [],
+   "dataSnapshot": {
+    "spot-structure": "fresh",
+    "perp-positioning": "fresh"
+   },
+   "resolvedSoFar": [
+    "q-b-dislocation"
+   ]
+  }
+ }
+]

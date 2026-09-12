@@ -1,0 +1,47 @@
+{
+ "id": "B09",
+ "narrative": "RANTHROPICUSDT looks interesting and thinly talked about. Should I take a starter position tonight?",
+ "asset": "RANTHROPICUSDT",
+ "action": "enter-now",
+ "read": "undecided",
+ "context": "exotic thin name, closed native market, almost no history",
+ "known": [
+  "1-2 prints per hour",
+  "single unverified rumor post",
+  "no usable candle history"
+ ],
+ "candidates": [
+  {
+   "id": "q-unknown-cause",
+   "topic": "unknown-cause",
+   "q": "Is there any verifiable cause to act on?",
+   "families": [],
+   "dataNeeded": "fresh evidence family + verifiable event communication",
+   "prunes": [],
+   "branches": [
+    {
+     "outcome": "verified cause found",
+     "action": "enter-now"
+    },
+    {
+     "outcome": "nothing verifiable",
+     "action": "wait"
+    }
+   ],
+   "derivation": {
+    "template": "T-UNRESOLVED",
+    "firedFacts": [
+     "no-template-fired+read-undecided"
+    ],
+    "effectRule": "template-outcome-table"
+   }
+  }
+ ],
+ "data": {
+  "spot-structure": "missing",
+  "perp-positioning": "missing"
+ },
+ "derivation": [
+  "T-UNRESOLVED fired (nothing else matched, read undecided)"
+ ]
+}

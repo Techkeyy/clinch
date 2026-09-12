@@ -226,3 +226,18 @@ baseline, ablation]. Repeatability measured within environment limits [DONE].
 E1-E10 + CF-1..CF-7 scored mechanically [DONE]. Reversals (path/skip/stop),
 conflict, ambiguity, failure-separation covered [DONE]. No live calls, no product
 code, no model lock [DONE]. P6 NOT started [DONE].
+
+## P5B Addendum — Semantic Acquisition (appended 2026-09-12, P5A history untouched)
+
+Director required proof that hinge semantics need not be hand-encoded per
+scenario. New separate evidence under `proof/p5b/` + `P5B_SEMANTIC_ACQUISITION.md`:
+a frozen global-semantics file plus a general compiler derive questions,
+branches, effects, prunes, and moots from raw normalized factual state; the
+unmodified P5A kernel then runs 12 base + 3 post-freeze holdout scenarios to
+15/15 fully clean with zero SCF (holdout oracle predicted before running;
+compiler/global hashes identical before and after). One documented oracle
+correction (B10 skips; kernel CLARIFY path emits no skips by construction). P5A's conditional proof remains valid for the calculus itself;
+the manual-dependency gap is closed by derivation (terminal absorption,
+tiebreaks, prior settlements, action-conditioned effects all general).
+Recommendation: P5 PASS with HYBRID direction for P6 (kernel authority + model
+NL/proposal/mooting/prose + compiler pattern as third input).

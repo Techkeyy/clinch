@@ -1,0 +1,100 @@
+{
+ "id": "B06a",
+ "narrative": "RNVDA is quiet and healthy on the tape and I am considering entering, but perp desks are getting crowded into tomorrow's CPI. Does the crowding change anything?",
+ "asset": "RNVDAUSDT",
+ "action": "enter-now",
+ "read": "undecided",
+ "context": "healthy spot, crowding building pre-event",
+ "known": [
+  "spot checked healthy on two prior questions",
+  "funding extreme",
+  "OI surging"
+ ],
+ "candidates": [
+  {
+   "id": "q-b-crowd-timing",
+   "topic": "crowd-timing",
+   "q": "Does leveraged crowding change the timing of this action?",
+   "families": [
+    "perp-positioning"
+   ],
+   "prunes": [],
+   "branches": [
+    {
+     "outcome": "extreme crowding [crowded]",
+     "action": "wait",
+     "moots": []
+    },
+    {
+     "outcome": "normal positioning [calm]",
+     "action": "enter-now",
+     "moots": []
+    }
+   ],
+   "derivation": {
+    "template": "T-CROWD",
+    "firedFacts": [
+     "positioning.funding=extreme"
+    ],
+    "effectRule": "template-outcome-table+R-ABSORB-TERMINAL"
+   }
+  },
+  {
+   "id": "q-structure-direction-settled",
+   "topic": "structure-direction",
+   "q": "(settled earlier: structure-direction)",
+   "families": [
+    "spot-structure"
+   ],
+   "resolved": true,
+   "resolution": "settled before this step",
+   "prunes": [],
+   "branches": [
+    {
+     "outcome": "settled (known)",
+     "action": "undecided"
+    }
+   ],
+   "derivation": {
+    "template": "PRIOR-SETTLEMENT",
+    "firedFacts": [
+     "resolved[] contains structure-direction"
+    ],
+    "effectRule": "none"
+   }
+  },
+  {
+   "id": "q-move-reality-settled",
+   "topic": "move-reality",
+   "q": "(settled earlier: move-reality)",
+   "families": [
+    "spot-structure"
+   ],
+   "resolved": true,
+   "resolution": "settled before this step",
+   "prunes": [],
+   "branches": [
+    {
+     "outcome": "settled (known)",
+     "action": "undecided"
+    }
+   ],
+   "derivation": {
+    "template": "PRIOR-SETTLEMENT",
+    "firedFacts": [
+     "resolved[] contains move-reality"
+    ],
+    "effectRule": "none"
+   }
+  }
+ ],
+ "data": {
+  "spot-structure": "fresh",
+  "perp-positioning": "fresh"
+ },
+ "derivation": [
+  "T-CROWD fired on {positioning.funding=extreme}",
+  "prior settlement passed through: structure-direction",
+  "prior settlement passed through: move-reality"
+ ]
+}

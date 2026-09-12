@@ -1,0 +1,317 @@
+{
+ "_note": "P5B GOLD ORACLE - pre-registered before any candidate run. Referenced by TOPIC (compiler-generated ids are deterministic: q-a-<topic> spot, q-b-<topic> perp). Never imported by compiler or kernel.",
+ "B01": {
+  "firstTopic": "move-reality",
+  "firstFamily": "spot-structure",
+  "simulate": {
+   "q-a-move-reality": "thin print, no follow-through [thin-artifact]"
+  },
+  "afterSim": {
+   "read": "wait",
+   "final": "STOP",
+   "stopWhy": "thin print settles entry question; positioning mooted"
+  },
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "cannot-matter"
+   }
+  ]
+ },
+ "B02": {
+  "firstTopic": "structure-direction",
+  "firstFamily": "spot-structure",
+  "simulate": {
+   "q-a-structure-direction": "breakdown on expanding volume [breakdown]"
+  },
+  "afterSim": {
+   "read": "stand-aside",
+   "final": "STOP",
+   "stopWhy": "breakdown terminal for dip-buy"
+  },
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "cannot-matter"
+   }
+  ]
+ },
+ "B03": {
+  "firstTopic": "crowd-timing",
+  "firstFamily": "perp-positioning",
+  "simulate": {
+   "q-b-crowd-timing": "extreme crowding [crowded]"
+  },
+  "afterSim": {
+   "read": "wait",
+   "final": "STOP",
+   "stopWhy": "pre-event crowding settles it"
+  },
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "resolved"
+   }
+  ]
+ },
+ "B04": {
+  "firstTopic": "dislocation",
+  "firstFamily": "perp-positioning",
+  "simulate": {
+   "q-b-dislocation": "mirage, quotes normalize [mirage]"
+  },
+  "afterSim": {
+   "read": "wait",
+   "final": "STOP",
+   "stopWhy": "no dislocation, no trade"
+  },
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "cannot-matter"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "resolved"
+   }
+  ]
+ },
+ "B05": {
+  "firstTopic": "crowd-timing",
+  "firstFamily": "perp-positioning",
+  "simulate": {
+   "q-b-crowd-timing": "extreme crowding [crowded]"
+  },
+  "afterSim": {
+   "read": "wait",
+   "final": "STOP",
+   "stopWhy": "event crowding dominates resolved-healthy spot"
+  },
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "resolved"
+   }
+  ]
+ },
+ "B06a": {
+  "firstTopic": "crowd-timing",
+  "firstFamily": "perp-positioning",
+  "simulate": {
+   "q-b-crowd-timing": "extreme crowding [crowded]"
+  },
+  "afterSim": {
+   "read": "wait",
+   "final": "STOP",
+   "stopWhy": "crowded buildup against entry"
+  },
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "resolved"
+   }
+  ]
+ },
+ "B06b": {
+  "firstTopic": null,
+  "firstFamily": null,
+  "simulate": {},
+  "afterSim": {
+   "read": "stand-aside",
+   "final": "STOP",
+   "stopWhy": "entry dead; all positioning outcomes stand-aside"
+  },
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "cannot-matter"
+   }
+  ]
+ },
+ "B07a": {
+  "firstTopic": "crowd-timing",
+  "firstFamily": "perp-positioning",
+  "simulate": {
+   "q-b-crowd-timing": "normal positioning [calm]"
+  },
+  "afterSim": {
+   "read": "enter-now",
+   "final": "STOP",
+   "stopWhy": "event cleared; nothing flippable left"
+  },
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "resolved"
+   }
+  ]
+ },
+ "B07b": {
+  "firstTopic": null,
+  "firstFamily": null,
+  "simulate": {},
+  "afterSim": {
+   "read": "enter-now",
+   "final": "STOP",
+   "stopWhy": "all hinges resolved; no flippable question"
+  },
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "resolved"
+   }
+  ]
+ },
+ "B08": {
+  "firstTopic": "structure-direction",
+  "firstFamily": "spot-structure",
+  "simulate": {
+   "q-a-structure-direction": "exhaustion, support holding [exhaustion]",
+   "q-b-crowd-timing": "extreme crowding [crowded]"
+  },
+  "afterSim": {
+   "read": "wait",
+   "final": "STOP",
+   "stopWhy": "conflict on record (firm structure vs extreme crowding); conditional wait, no averaging"
+  },
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "cannot-matter"
+   }
+  ]
+ },
+ "B09": {
+  "firstTopic": null,
+  "firstFamily": null,
+  "simulate": {},
+  "afterSim": {
+   "read": "undecided",
+   "final": "CANNOT_RESOLVE",
+   "stopWhy": "no capable family with fresh data; needs first native session + verified communication"
+  },
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "cannot-matter"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "cannot-matter"
+   }
+  ]
+ },
+ "B10": {
+  "firstTopic": null,
+  "firstFamily": null,
+  "simulate": {},
+  "afterSim": {
+   "read": "undecided",
+   "final": "CLARIFY",
+   "stopWhy": "no contemplated action stated"
+  },
+  "skips": []
+ },
+ "H-A": {
+  "firstTopic": "crowd-timing",
+  "firstFamily": "perp-positioning",
+  "simulate": {
+   "q-b-crowd-timing": "extreme crowding [crowded]"
+  },
+  "afterSim": {
+   "read": "wait",
+   "final": "STOP",
+   "stopWhy": "healthy-book jump stands; pre-event crowding kills entry timing"
+  },
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "cannot-matter"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "resolved"
+   }
+  ]
+ },
+ "H-B": {
+  "firstTopic": "crowd-timing",
+  "firstFamily": "perp-positioning",
+  "simulate": {
+   "q-b-crowd-timing": "extreme crowding [crowded]"
+  },
+  "afterSim": {
+   "read": "wait",
+   "final": "STOP",
+   "stopWhy": "new extreme crowding reopens and settles the evening"
+  },
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "resolved"
+   }
+  ]
+ },
+ "H-C": {
+  "firstTopic": "crowd-timing",
+  "firstFamily": "perp-positioning",
+  "simulate": {
+   "q-b-crowd-timing": "extreme crowding [crowded]"
+  },
+  "afterSim": {
+   "read": "exit-now",
+   "final": "STOP",
+   "stopWhy": "crowded long into CPI favors taking profit tonight"
+  },
+  "skips": [
+   {
+    "family": "spot-structure",
+    "kind": "resolved"
+   },
+   {
+    "family": "perp-positioning",
+    "kind": "resolved"
+   }
+  ]
+ }
+}

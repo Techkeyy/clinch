@@ -1,0 +1,37 @@
+{
+ "_note": "P5B world outcomes keyed by compiler-generated question ids. World facts only; never selection answers.",
+ "B01": {
+  "q-a-move-reality": "thin print, no follow-through [thin-artifact]"
+ },
+ "B02": {
+  "q-a-structure-direction": "breakdown on expanding volume [breakdown]"
+ },
+ "B03": {
+  "q-b-crowd-timing": "extreme crowding [crowded]"
+ },
+ "B04": {
+  "q-b-dislocation": "mirage, quotes normalize [mirage]"
+ },
+ "B05": {
+  "q-b-crowd-timing": "extreme crowding [crowded]"
+ },
+ "B06a": {
+  "q-b-crowd-timing": "extreme crowding [crowded]"
+ },
+ "B07a": {
+  "q-b-crowd-timing": "normal positioning [calm]"
+ },
+ "B08": {
+  "q-a-structure-direction": "exhaustion, support holding [exhaustion]",
+  "q-b-crowd-timing": "extreme crowding [crowded]"
+ },
+ "H-A": {
+  "q-b-crowd-timing": "extreme crowding [crowded]"
+ },
+ "H-B": {
+  "q-b-crowd-timing": "extreme crowding [crowded]"
+ },
+ "H-C": {
+  "q-b-crowd-timing": "extreme crowding [crowded]"
+ }
+}
