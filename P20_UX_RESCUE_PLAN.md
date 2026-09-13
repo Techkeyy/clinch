@@ -51,3 +51,22 @@ The follow-up audit found two state-truth issues in the completion flow. Delete 
 The completion flow now uses an inline accessible confirmation, preserves the brief when deletion fails, and resets the full workspace only after the delete endpoint confirms success. The stop copy removes its lead-in with an escaped period and whitespace expression. No backend, provider, persistence, or market-data code changed.
 
 Second-pass verification: typecheck, lint, Vitest (109 passed, 4 skipped), production build, no long-dash copy, and a fixture-backed mobile browser check all pass. The browser check confirmed no native dialog, the keep action preserves the brief, successful deletion returns to the initial empty workspace, the stop body has no duplicate lead-in, CTA height remains 50px, and mobile has no horizontal overflow. The change was deployed in Vercel production at commit `9b5d162`, and a fresh public mobile journey completed in 47.1 seconds with real research, no console errors, no native dialog, a correct stop body, inline confirmation, successful reset, and no overflow.
+
+## Owner-authorized P20 UX restructure
+
+Date: 2026-09-13
+
+The Owner rejected the prior interface before UAT and explicitly authorized a close structural transfer from the live JustFair reference at `https://justfair-theta.vercel.app/#dashboard`. This supersedes the earlier single-workspace and no-dashboard direction. P20 is now treated as UX RESTRUCTURE, and after deployment the gate returns to OWNER UAT REQUIRED. P21 remains untouched.
+
+Reference mapping:
+
+- JustFair header and mode switch -> CLINCH wordmark, Dashboard/App controls, learn-more anchors, Recent research, and Open App action.
+- JustFair split hero -> CLINCH decision-first hero with a compact Decision -> Hinge -> Targeted research -> Human decision proof panel.
+- JustFair three-value section -> Find the Decision Hinge, Research only what matters, and Know when to stop.
+- JustFair four-step workflow -> Describe the decision, Find the Hinge, Research selectively, and Stop with a brief.
+- JustFair proof/API slot -> Live Evidence. Human Decision. CLINCH explains Bitget data, Qwen language understanding, deterministic control, and no trade execution without inventing an API.
+- JustFair App workflow -> CLINCH App with stage tracker, natural-language decision input, optional verified quick starts, live result overview, evidence families, skip state, stop rationale, final brief, and expandable Research Evidence & Sources.
+
+The restructure preserves the natural-language backend contract and does not advertise a closed market universe. Quick starts are the existing verified rNVDA, rTSLA, and rAAPL examples, while users can still describe any currently supported Reality instrument in their own words.
+
+Screenshot evidence is stored under `proof/design-pass/`: `clinch-dashboard-desktop.png`, `clinch-dashboard-mobile.png`, `clinch-app-fresh-desktop.png`, `clinch-app-active-desktop.png`, `clinch-app-completed-desktop.png`, and `clinch-app-completed-mobile.png`, alongside the captured JustFair Dashboard and App reference states.

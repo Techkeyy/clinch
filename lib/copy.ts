@@ -1,14 +1,14 @@
 // P8 copy constants. No em/en dashes anywhere (design-skill hard rule).
 // Every research claim here is derivable from spot-structure or perp-positioning.
 export const COPY = {
-  heroQuestion: "What trade are you considering?",
+  heroQuestion: "What are you deciding?",
   heroSupport:
-    "CLINCH finds the unanswered question most likely to change your decision, researches it with live market data, and stops when more checking would no longer matter.",
+    "CLINCH finds the unanswered question most capable of changing your decision, researches it with live Bitget data, and stops when more research is unlikely to matter.",
   inputPlaceholder:
     "Example: rNVDA fell hard after the close. I am thinking of buying the dip. Real opportunity or wait?",
   inputLabel: "Describe the trade you are considering",
-  ctaCheck: "Check this trade",
-  trustLine: "Research only. No wallet. No exchange account.",
+  ctaCheck: "Find the Decision Hinge",
+  trustLine: "CLINCH researches the decision. It does not place trades.",
   restatementTitle: "Your decision",
   confirmHint: "Is that right?",
   clarifierQuestion: "What are you deciding about this asset?",

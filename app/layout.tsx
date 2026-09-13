@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CLINCH - hinge-first research for tokenized-stock decisions",
+  title: "CLINCH | Selective AI Trading Desk",
   description:
-    "CLINCH finds the unanswered question most likely to change your trading decision, researches it with live market data, and stops when more checking would no longer matter.",
+    "CLINCH finds the question most likely to change a trading decision, researches it with live Bitget data, and stops when more research is unlikely to matter.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

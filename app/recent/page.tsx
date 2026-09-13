@@ -51,10 +51,11 @@ export default function RecentPage() {
 
   return (
     <div className="app-shell">
-      <header className="site-header">
-        <a className="wordmark" href="/" aria-label="CLINCH home">CLINCH</a>
-        <p className="header-context">Your saved research</p>
-        <a className="header-link" href="/">New decision</a>
+      <header className="site-header reference-header">
+        <a className="wordmark wordmark-button" href="/#dashboard" aria-label="CLINCH dashboard">CLINCH <span>Research desk</span></a>
+        <nav className="mode-nav" aria-label="Primary"><a className="mode-link" href="/#dashboard">Dashboard</a><a className="mode-link" href="/#app">App</a></nav>
+        <nav className="secondary-nav" aria-label="Learn more"><a className="text-nav-link" href="/#how-it-works">How it Works</a><a className="text-nav-link" href="/#research-method">Research Method</a><a className="text-nav-link" href="/recent" aria-current="page">Recent research</a></nav>
+        <a className="header-cta" href="/#app">Open App <span aria-hidden="true">↗</span></a>
       </header>
       <main className="workspace recent-workspace">
         <section className="recent-intro">
@@ -68,7 +69,7 @@ export default function RecentPage() {
             <span className="empty-history-marker" aria-hidden="true">+</span>
             <h2 className="section-title">No saved research here yet</h2>
             <p className="body-text">Start a decision and CLINCH will keep its brief available in this browser for 30 days.</p>
-            <a className="cta-primary" href="/">Start a decision <span aria-hidden="true">↗</span></a>
+            <a className="cta-primary" href="/#app">Start a decision <span aria-hidden="true">↗</span></a>
           </section>
         )}
         {!loading && items.length > 0 && (
@@ -81,7 +82,7 @@ export default function RecentPage() {
                   <p className="recent-decision">{item.decision}</p>
                 </div>
                 <div className="recent-row-read"><span className="secondary-text">Current read</span><strong>{item.read}</strong>{item.updatedAt && <span className="secondary-text">{shortDate(item.updatedAt)}</span>}</div>
-                <a className="button-secondary" href={"/?s=" + encodeURIComponent(item.id)}>Open research</a>
+                <a className="button-secondary" href={"/?s=" + encodeURIComponent(item.id) + "#app"}>Open research</a>
               </article>
             ))}
           </section>

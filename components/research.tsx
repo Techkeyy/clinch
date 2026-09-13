@@ -31,7 +31,7 @@ export function SkipRecord({ check, reason }: { check: string; reason: string })
   return (
     <article className="skip-card" aria-label={"Skipped " + label}>
       <div className="skip-marker" aria-hidden="true">S</div>
-      <div><p className="eyebrow">SKIPPED</p><h3 className="skip-title">{label}</h3><p className="body-text">{reason}</p></div>
+      <div><p className="eyebrow"><span className="state-tag state-skipped">SKIPPED</span></p><h3 className="skip-title">{label}</h3><p className="body-text">{reason}</p></div>
     </article>
   );
 }

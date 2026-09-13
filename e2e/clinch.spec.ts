@@ -4,19 +4,19 @@ import { expect, test } from "@playwright/test";
 // details affordance, mobile integrity. Live backend required.
 test.describe("CLINCH core loop", () => {
   test("loads with hero, input, CTA and trust line", async ({ page }) => {
-    await page.goto("/");
-    await expect(page.getByRole("heading", { name: "What trade are you considering?" })).toBeVisible();
+    await page.goto("/#app");
+    await expect(page.getByRole("heading", { name: "Research a Decision" })).toBeVisible();
     await expect(page.getByLabel("Describe the trade you are considering")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Check this trade" })).toBeVisible();
-    await expect(page.getByText("Research only. No wallet. No exchange account.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Find the Decision Hinge" })).toBeVisible();
+    await expect(page.getByText("CLINCH researches the decision. It does not place trades.")).toBeVisible();
   });
 
   test("full dilemma-to-brief run with real Bitget evidence", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/#app");
     await page.getByLabel("Describe the trade you are considering").fill(
       "rNVDA fell hard after the close. I am thinking of buying the dip. Real opportunity or wait?",
     );
-    await page.getByRole("button", { name: "Check this trade" }).click();
+    await page.getByRole("button", { name: "Find the Decision Hinge" }).click();
     await expect(page.getByText("Your decision")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Live context")).toBeVisible({ timeout: 60_000 });
     await expect(page.getByText("Decision Hinge 1", { exact: false }).first()).toBeVisible({ timeout: 60_000 });
@@ -25,16 +25,16 @@ test.describe("CLINCH core loop", () => {
   });
 
   test("unsupported asset shows truthful guidance, not a crash", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/#app");
     await page.getByLabel("Describe the trade you are considering").fill("Should I buy some ZZZCOIN today?");
-    await page.getByRole("button", { name: "Check this trade" }).click();
+    await page.getByRole("button", { name: "Find the Decision Hinge" }).click();
     await expect(page.getByText("not a currently supported Reality instrument")).toBeVisible({ timeout: 90_000 });
   });
 
   test("ambiguous dilemma asks one clarification", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/#app");
     await page.getByLabel("Describe the trade you are considering").fill("What do you think about rNVDA right now?");
-    await page.getByRole("button", { name: "Check this trade" }).click();
+    await page.getByRole("button", { name: "Find the Decision Hinge" }).click();
     await expect(page.getByText("What are you deciding", { exact: false }).first()).toBeVisible({ timeout: 60_000 });
   });
 
@@ -50,40 +50,40 @@ test.describe("CLINCH core loop", () => {
     await page.route("**/api/research/start", async (route) => {
       await route.fulfill({ status: 200, headers: { "Content-Type": "text/event-stream" }, body: canned });
     });
-    await page.goto("/");
+    await page.goto("/#app");
     await page.getByLabel("Describe the trade you are considering").fill("rNVDA is sliding tonight, dip-buy or wait?");
-    await page.getByRole("button", { name: "Check this trade" }).click();
-    await expect(page.getByText("Skipped: Positioning context")).toBeVisible({ timeout: 30_000 });
+    await page.getByRole("button", { name: "Find the Decision Hinge" }).click();
+    await expect(page.getByRole("heading", { name: "Positioning context" })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Even calm positioning would not change", { exact: false }).first()).toBeVisible();
-    await expect(page.getByText("CLINCH is stopping here", { exact: false }).first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Why CLINCH stopped here" })).toBeVisible();
   });
 
   test("refresh after a completed run preserves the brief truthfully", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/#app");
     await page.getByLabel("Describe the trade you are considering").fill(
       "rNVDA drifted lower this evening and I wonder about a small entry.");
-    await page.getByRole("button", { name: "Check this trade" }).click();
+    await page.getByRole("button", { name: "Find the Decision Hinge" }).click();
     await expect(page.getByText("Research finished. The trading decision is yours.")).toBeVisible({ timeout: 150_000 });
     await page.reload();
     await expect(page.getByLabel("Describe the trade you are considering")).toBeVisible({ timeout: 30_000 });
   });
 
   test("delete removes the brief and recent history entry", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/#app");
     await page.getByLabel("Describe the trade you are considering").fill("rAAPL is quiet tonight, tiny entry?");
-    await page.getByRole("button", { name: "Check this trade" }).click();
+    await page.getByRole("button", { name: "Find the Decision Hinge" }).click();
     await expect(page.getByText("Research finished. The trading decision is yours.")).toBeVisible({ timeout: 150_000 });
-    page.on("dialog", (d) => d.accept());
     await page.getByRole("button", { name: "Delete this research" }).click();
+    await page.getByRole("button", { name: "Delete it" }).click();
     await expect(page.getByText("Research finished. The trading decision is yours.")).toBeHidden({ timeout: 15_000 });
     await page.goto("/recent");
-    await expect(page.getByText("No saved research in this browser yet.")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("No saved research here yet")).toBeVisible({ timeout: 30_000 });
   });
 
   test("recent page lists this browser's completed research", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/#app");
     await page.getByLabel("Describe the trade you are considering").fill("rNVDA evening drift, small entry?");
-    await page.getByRole("button", { name: "Check this trade" }).click();
+    await page.getByRole("button", { name: "Find the Decision Hinge" }).click();
     await expect(page.getByText("Research finished. The trading decision is yours.")).toBeVisible({ timeout: 150_000 });
     await page.goto("/recent");
     await expect(page.getByText("RNVDA", { exact: false }).first()).toBeVisible({ timeout: 30_000 });
@@ -91,10 +91,10 @@ test.describe("CLINCH core loop", () => {
 
   test("mobile has no horizontal overflow and CTA stays usable", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "mobile", "mobile-only layout check");
-    await page.goto("/");
+    await page.goto("/#app");
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow).toBeLessThanOrEqual(1);
-    const cta = page.getByRole("button", { name: "Check this trade" });
+    const cta = page.getByRole("button", { name: "Find the Decision Hinge" });
     await expect(cta).toBeVisible();
     const box = await cta.boundingBox();
     expect(box?.height).toBeGreaterThanOrEqual(40);

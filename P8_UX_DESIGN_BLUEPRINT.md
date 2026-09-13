@@ -9,6 +9,18 @@ budgets, redaction). No product code. No P9 work. Copy rule: no em dash or en
 dash characters appear in this artifact's user-facing copy examples, and none
 may appear in product copy (design-skill hard failure).
 
+## Owner-authorized supersession
+
+On 2026-09-13 the Owner explicitly superseded the original single-workspace
+direction in this blueprint. The old rule that CLINCH should be one guided
+workspace and not a dashboard no longer governs the frontend. The authorized
+direction is now a JustFair-structured Dashboard plus App architecture: the
+Dashboard explains the product and method, while the App is the focused research
+desk. CLINCH retains its own identity, wording, paper / ink / petrol / amber /
+slate / red palette, anonymous ownership, and research-only boundary. Backend
+contracts and product truth remain unchanged. This record is an exception to
+sections 2, 28, 30, and 60 where they prohibit a Dashboard.
+
 ## 2. Design-skill inheritance
 
 Applied from `design-skill` v2.0.0 (read in full): product determines interface

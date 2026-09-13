@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { COPY } from "@/lib/copy";
 import { trackRecent, untrackRecent } from "@/lib/recent";
-import { FreshnessBadge, HingeCard, SkipRecord, CurrentRead } from "@/components/research";
+import { FreshnessBadge, SkipRecord } from "@/components/research";
 import { STALE_RUN_MS } from "@/config/thresholds";
 
 interface StreamEvent { type: string; data: Record<string, unknown>; }
@@ -82,6 +82,98 @@ function parseSSE(buffer: string): { events: StreamEvent[]; rest: string } {
   return { events, rest };
 }
 
+type Surface = "dashboard" | "app";
+
+function SiteHeader({ surface, onNavigate }: { surface: Surface; onNavigate: (surface: Surface, anchor?: string) => void }) {
+  return (
+    <header className="site-header reference-header">
+      <button type="button" className="wordmark wordmark-button" onClick={() => onNavigate("dashboard", "dashboard")} aria-label="CLINCH dashboard">
+        CLINCH <span>Research desk</span>
+      </button>
+      <nav className="mode-nav" aria-label="Primary">
+        <button type="button" className={surface === "dashboard" ? "mode-link is-active" : "mode-link"} onClick={() => onNavigate("dashboard", "dashboard")} aria-current={surface === "dashboard" ? "page" : undefined}>Dashboard</button>
+        <button type="button" className={surface === "app" ? "mode-link is-active" : "mode-link"} onClick={() => onNavigate("app", "app")} aria-current={surface === "app" ? "page" : undefined}>App</button>
+      </nav>
+      <nav className="secondary-nav" aria-label="Learn more">
+        <button type="button" className="text-nav-link" onClick={() => onNavigate("dashboard", "how-it-works")}>How it Works</button>
+        <button type="button" className="text-nav-link" onClick={() => onNavigate("dashboard", "research-method")}>Research Method</button>
+        <a className="text-nav-link" href="/recent">Recent research</a>
+      </nav>
+      <button type="button" className="header-cta" onClick={() => onNavigate("app", "app")}>Open App <span aria-hidden="true">↗</span></button>
+    </header>
+  );
+}
+
+function ProductFooter() {
+  return (
+    <footer className="product-foot reference-footer">
+      <p>Private by design. No account, no wallet.</p>
+      <p>Research support only. CLINCH never places trades.</p>
+    </footer>
+  );
+}
+
+function DashboardView({ onOpenApp, onJump }: { onOpenApp: () => void; onJump: (anchor: string) => void }) {
+  const values = [
+    { number: "01", title: "Find the Decision Hinge", copy: "CLINCH identifies the unresolved question most likely to change the decision." },
+    { number: "02", title: "Research only what matters", copy: "It selectively checks relevant live market evidence instead of gathering everything available." },
+    { number: "03", title: "Know when to stop", copy: "When more research is unlikely to alter the decision, CLINCH stops and explains why." },
+  ];
+  const steps = [
+    { number: "01", title: "Describe the decision", copy: "Tell CLINCH what tokenized U.S. stock trade you are considering." },
+    { number: "02", title: "Find the Hinge", copy: "CLINCH determines the unanswered question most capable of changing that decision." },
+    { number: "03", title: "Research selectively", copy: "It uses live Bitget evidence from the relevant supported research path." },
+    { number: "04", title: "Stop with a brief", copy: "CLINCH stops when further research is unlikely to matter and gives you a concise decision brief." },
+  ];
+  return (
+    <main id="dashboard" className="dashboard-page">
+      <section className="dashboard-hero" aria-labelledby="dashboard-title">
+        <div className="dashboard-hero-copy">
+          <p className="eyebrow hero-eyebrow">SELECTIVE AI TRADING DESK</p>
+          <h1 id="dashboard-title" className="display dashboard-title">Before you act on the trade, find what matters.</h1>
+          <p className="dashboard-lede">CLINCH finds the unanswered question most capable of changing your decision, researches it with live Bitget data, and stops when more research is unlikely to matter.</p>
+          <div className="hero-actions">
+            <button type="button" className="cta-primary" onClick={onOpenApp}>Open CLINCH <span aria-hidden="true">↗</span></button>
+            <button type="button" className="button-secondary hero-secondary" onClick={() => onJump("how-it-works")}>See How It Works</button>
+          </div>
+          <p className="hero-note"><span className="status-mark" aria-hidden="true" /> Real market evidence. Human decision.</p>
+        </div>
+        <div className="hero-proof" aria-label="CLINCH research sequence">
+          <div className="hero-proof-top"><span className="eyebrow">THE RESEARCH DESK</span><span className="proof-live">LIVE EVIDENCE</span></div>
+          <div className="hero-proof-line"><span>Decision</span><strong>01</strong></div>
+          <div className="hero-proof-line"><span>Decision Hinge</span><strong>02</strong></div>
+          <div className="hero-proof-line"><span>Targeted research</span><strong>03</strong></div>
+          <div className="hero-proof-line is-final"><span>Human decision</span><strong>04</strong></div>
+          <p className="hero-proof-caption">A focused path from uncertainty to a more honest next step.</p>
+        </div>
+      </section>
+
+      <section className="dashboard-section value-section" aria-labelledby="value-title">
+        <div className="section-kicker-row"><p className="eyebrow">THE CLINCH DIFFERENCE</p><span className="section-rule" /></div>
+        <h2 id="value-title" className="dashboard-section-title">A trading decision is clearer when the research has a reason.</h2>
+        <div className="value-grid">
+          {values.map((value) => <article className="value-card" key={value.number}><span className="value-number">{value.number}</span><h3>{value.title}</h3><p>{value.copy}</p></article>)}
+        </div>
+      </section>
+
+      <section id="how-it-works" className="dashboard-section method-steps" aria-labelledby="steps-title">
+        <div className="section-kicker-row"><p className="eyebrow">HOW IT WORKS</p><span className="section-rule" /></div>
+        <div className="section-intro-split"><h2 id="steps-title" className="dashboard-section-title">From a live dilemma to a deliberate stop.</h2><p>CLINCH keeps the path visible. You always know what it is checking, why that check matters, and what remains yours to decide.</p></div>
+        <div className="steps-list">
+          {steps.map((step) => <article className="step-row" key={step.number}><span className="step-number">{step.number}</span><div><h3>{step.title}</h3><p>{step.copy}</p></div><span className="step-arrow" aria-hidden="true">↗</span></article>)}
+        </div>
+      </section>
+
+      <section id="research-method" className="dashboard-section trust-section" aria-labelledby="trust-title">
+        <div className="trust-copy"><p className="eyebrow">LIVE EVIDENCE. HUMAN DECISION.</p><h2 id="trust-title" className="dashboard-section-title">Built to research, not trade for you.</h2><p>CLINCH reads real Bitget market data. Qwen helps understand the language of your dilemma. Deterministic CLINCH logic controls research selection, the Decision Hinge, SKIP, and STOP.</p><p className="trust-strong">The trade is never executed. The human keeps the final call.</p></div>
+        <div className="method-flow" aria-label="CLINCH research method"><div><span>01</span><strong>Decision</strong></div><i aria-hidden="true">↓</i><div><span>02</span><strong>Hinge</strong></div><i aria-hidden="true">↓</i><div><span>03</span><strong>Targeted research</strong></div><i aria-hidden="true">↓</i><div><span>04</span><strong>Stop</strong></div><i aria-hidden="true">↓</i><div className="flow-final"><span>05</span><strong>Human decision</strong></div></div>
+      </section>
+
+      <section className="dashboard-cta" aria-labelledby="dashboard-cta-title"><p className="eyebrow">START WITH THE QUESTION</p><h2 id="dashboard-cta-title" className="display">Ready to research the trade that actually matters?</h2><p>Bring the decision in your own words. CLINCH will find the next useful question.</p><button type="button" className="cta-primary" onClick={onOpenApp}>Open CLINCH App <span aria-hidden="true">↗</span></button></section>
+    </main>
+  );
+}
+
 export default function Page() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [dilemma, setDilemma] = useState("");
@@ -105,7 +197,26 @@ export default function Page() {
   const [resumeNote, setResumeNote] = useState<string | null>(null);
   const [deletePending, setDeletePending] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [surface, setSurface] = useState<Surface>("dashboard");
+  const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
   const keyRef = useRef<string | null>(null);
+
+  const navigateSurface = useCallback((next: Surface, anchor: string = next) => {
+    setSurface(next);
+    try {
+      window.history.pushState(null, "", `${window.location.pathname}${window.location.search}#${anchor}`);
+    } catch { /* non-browser render */ }
+  }, []);
+
+  useEffect(() => {
+    const readSurface = () => {
+      const hash = window.location.hash.replace(/^#/, "");
+      setSurface(hash === "app" || new URLSearchParams(window.location.search).has("s") ? "app" : "dashboard");
+    };
+    readSurface();
+    window.addEventListener("hashchange", readSurface);
+    return () => window.removeEventListener("hashchange", readSurface);
+  }, []);
 
   const applyEvent = useCallback((e: StreamEvent) => {
     const d = e.data;
@@ -113,9 +224,10 @@ export default function Page() {
       const s = d.session as { id: string; stateVersion: number };
       setSessionId(s.id);
       setStateVersion(s.stateVersion);
+      setSurface("app");
       trackRecent(s.id);
       try {
-        window.history.replaceState(null, "", `/?s=${encodeURIComponent(s.id)}`);
+        window.history.replaceState(null, "", `/?s=${encodeURIComponent(s.id)}#app`);
       } catch { /* non-browser render */ }
     } else if (e.type === "intent") {
       setIntent((d.intent ?? null) as Record<string, unknown> | null);
@@ -127,7 +239,7 @@ export default function Page() {
       setHinges((h) => [...h, { hinge: d.hinge as string, question: (d.question as string) ?? (d.hinge as string), why: (d.why as string) ?? "", changes: (d.changes as string) ?? "", family: (d.family as string) ?? "" }]);
       setStatusLine(null);
     } else if (e.type === "research") {
-      setStatusLine(`Researching: ${String(d.family ?? "market data")}.`);
+      setStatusLine(`Checking ${familyLabel(String(d.family ?? "market evidence"))}.`);
     } else if (e.type === "skip" && typeof d.check === "string") {
       const check = String(d.check);
       const reason = String((d as { reason?: unknown }).reason ?? "");
@@ -203,6 +315,7 @@ export default function Page() {
     setBrief(null);
     setIntent(null);
     setBaseline(null);
+    setSurface("app");
     keyRef.current = crypto.randomUUID().replace(/-/g, "").slice(0, 32);
     try {
       await runStream("/api/research/start", { dilemma: dilemma.trim(), idempotencyKey: keyRef.current });
@@ -406,74 +519,81 @@ export default function Page() {
   const hasJourney = phase !== "idle" || Boolean(intent || baseline || brief || sessionId);
   const activeHinge = hinges.length ? hinges[hinges.length - 1] : null;
   const previousHinges = hinges.slice(0, -1);
+  const openApp = useCallback(() => navigateSurface("app", "app"), [navigateSurface]);
+  const jumpToDashboard = useCallback((anchor: string) => {
+    navigateSurface("dashboard", anchor);
+    window.setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+  }, [navigateSurface]);
 
   return (
     <div className="app-shell">
-      <header className="site-header">
-        <a className="wordmark" href="/" aria-label="CLINCH home">CLINCH</a>
-        <p className="header-context">Hinge-first market research</p>
-        <a className="header-link" href="/recent">Recent decisions</a>
-      </header>
+      <SiteHeader surface={surface} onNavigate={navigateSurface} />
+      {surface === "dashboard" ? <DashboardView onOpenApp={openApp} onJump={jumpToDashboard} /> : <div id="app" className="app-surface">
+        <section className="app-intro" aria-labelledby="app-title">
+          <div><p className="eyebrow">CLINCH RESEARCH DESK</p><h1 id="app-title" className="display app-title">Research a Decision</h1><p className="app-subtitle">Tokenized U.S. Stocks on Bitget</p></div>
+          <a className="button-secondary" href="/recent">Recent research</a>
+        </section>
 
       <main className={hasJourney ? "workspace workspace-active" : "workspace workspace-initial"}>
         <section className={hasJourney ? "decision-composer decision-composer-compact" : "decision-composer"} aria-label="Decision input">
-          <p className="eyebrow">{hasJourney ? "RESEARCH AGAIN" : "DECISION RESEARCH"}</p>
-          <h1 className="hero-question display">{hasJourney ? "What should CLINCH check next?" : COPY.heroQuestion}</h1>
-          <p className="hero-support">{hasJourney ? "Describe another trading decision and CLINCH will start a fresh, focused research pass." : COPY.heroSupport}</p>
+          <p className="eyebrow">{hasJourney ? "RESEARCH AGAIN" : "START WITH THE DECISION"}</p>
+          <h2 className="hero-question display">{hasJourney ? "What should CLINCH check next?" : "What are you deciding?"}</h2>
+          <p className="hero-support">{hasJourney ? "Describe another trading decision and CLINCH will start a fresh, focused research pass." : "Bring the question in your own words. CLINCH will find the Hinge before it chooses what to research."}</p>
           <label className="input-label" htmlFor="dilemma">{COPY.inputLabel}</label>
-          <textarea id="dilemma" className="input-box" value={dilemma} onChange={(e) => setDilemma(e.target.value)} placeholder={COPY.inputPlaceholder} maxLength={2000} disabled={busy} />
+          <textarea id="dilemma" className="input-box" value={dilemma} onChange={(e) => { setDilemma(e.target.value); setSelectedMarket(null); }} placeholder="Example: rNVDA has been drifting lower tonight. I am considering a small entry now, but I am not sure whether waiting makes more sense." maxLength={2000} disabled={busy} />
           <div className="input-meta"><span>{dilemma.length > 1700 ? String(dilemma.length) + " / 2000" : "Use your own words. CLINCH will infer the asset and timing."}</span></div>
-          <div className="example-row" aria-label="Example dilemmas">
-            <span className="example-label">Try an example</span>
-            <button type="button" className="example-chip" disabled={busy} onClick={() => setDilemma("rNVDA fell hard after the close. I am thinking of buying the dip. Real opportunity or wait?")}>rNVDA dip</button>
-            <button type="button" className="example-chip" disabled={busy} onClick={() => setDilemma("rTSLA spiked fast on a wide spread late in the session. Breakout or thin print?")}>Thin rTSLA move</button>
-            <button type="button" className="example-chip" disabled={busy} onClick={() => setDilemma("rAAPL is flat but stock-perp positioning looks crowded. Is entering now worth it or should I wait?")}>Crowded rAAPL</button>
+          <div className="market-picker" aria-label="Verified quick starts">
+            <div><span className="example-label">Verified quick starts</span><span className="market-picker-note">Optional. Natural-language entry remains open.</span></div>
+            <div className="market-chip-row">
+              <button type="button" className={selectedMarket === "rNVDA" ? "market-chip is-selected" : "market-chip"} disabled={busy} onClick={() => { setSelectedMarket("rNVDA"); setDilemma("rNVDA fell hard after the close. I am thinking of buying the dip. Real opportunity or wait?"); }}>rNVDA</button>
+              <button type="button" className={selectedMarket === "rTSLA" ? "market-chip is-selected" : "market-chip"} disabled={busy} onClick={() => { setSelectedMarket("rTSLA"); setDilemma("rTSLA spiked fast on a wide spread late in the session. Breakout or thin print?"); }}>rTSLA</button>
+              <button type="button" className={selectedMarket === "rAAPL" ? "market-chip is-selected" : "market-chip"} disabled={busy} onClick={() => { setSelectedMarket("rAAPL"); setDilemma("rAAPL is flat but stock-perp positioning looks crowded. Is entering now worth it or should I wait?"); }}>rAAPL</button>
+            </div>
           </div>
-          <button type="button" className="cta-primary" disabled={busy || dilemma.trim().length < 4} onClick={start}>{busy ? "Checking this trade..." : COPY.ctaCheck} <span aria-hidden="true">↗</span></button>
-          <p className="trust-line">{COPY.trustLine} <span>No signup.</span></p>
+          <button type="button" className="cta-primary" disabled={busy || dilemma.trim().length < 4} onClick={start}>{busy ? "Researching your decision..." : "Find the Decision Hinge"} <span aria-hidden="true">↗</span></button>
+          <p className="trust-line">CLINCH researches the decision. It does not place trades. <span>No signup.</span></p>
         </section>
 
         {hasJourney && (
           <div className="research-workspace">
             <section className="progress-panel" aria-label="Research progress">
               <div className="progress-heading"><div><p className="eyebrow">THE WORK IN VIEW</p><h2 className="section-title">A focused check, one question at a time</h2></div>{busy && <FreshnessBadge status="live" label="Live" />}</div>
-              <ol className="progress-steps">
-                <li className={intent ? "is-done" : busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{intent ? "✓" : ""}</span><span>Understand your decision</span></li>
-                <li className={baseline ? "is-done" : intent && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{baseline ? "✓" : ""}</span><span>Ground in live context</span></li>
-                <li className={(findings.length > 0 || brief) ? "is-done" : baseline && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{findings.length > 0 || brief ? "✓" : ""}</span><span>Resolve the decision hinge</span></li>
-                <li className={brief ? "is-done" : ""}><span className="step-marker" aria-hidden="true">{brief ? "✓" : ""}</span><span>Stop when more checking will not help</span></li>
+              <ol className="progress-steps progress-steps-five">
+                <li className={intent ? "is-done" : busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{intent ? "✓" : ""}</span><span>Understand the decision</span></li>
+                <li className={baseline ? "is-done" : intent && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{baseline ? "✓" : ""}</span><span>Read live context</span></li>
+                <li className={activeHinge ? "is-done" : baseline && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{activeHinge ? "✓" : ""}</span><span>Find the Decision Hinge</span></li>
+                <li className={(findings.length > 0 || skips.length > 0) ? "is-done" : activeHinge && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{findings.length > 0 || skips.length > 0 ? "✓" : ""}</span><span>Check the highest-value evidence</span></li>
+                <li className={brief ? "is-done" : stopReason && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{brief ? "✓" : ""}</span><span>Stop with a brief</span></li>
               </ol>
             </section>
 
-            {error && phase === "error" && <section className="state-panel state-error" aria-label="Error" role="alert"><p className="eyebrow">NEEDS ATTENTION</p><h2 className="section-title">Research could not continue</h2><p className="body-text">{error}</p><p className="secondary-text">Your decision is preserved above. Retry when the connection or provider is ready.</p><button type="button" className="button-secondary" onClick={start} disabled={busy}>Try again</button></section>}
+            {error && phase === "error" && <section className="state-panel state-error" aria-label="Error" role="alert"><p className="eyebrow"><span className="state-tag state-failed">FAILED</span> NEEDS ATTENTION</p><h2 className="section-title">Unable to complete the research</h2><p className="body-text">{error}</p><p className="secondary-text">Your decision is preserved above. Retry when the connection or provider is ready.</p><button type="button" className="button-secondary" onClick={start} disabled={busy}>Try Again</button></section>}
 
             {interrupted && <section className="state-panel state-recovery" aria-label="Interrupted research" role="status"><p className="eyebrow">SAVED STATE RESTORED</p><h2 className="section-title">{recoveryStatus === "active" ? "Research is still running" : "Research paused safely"}</h2><p className="body-text">{interrupted}</p><button type="button" className="button-secondary" disabled={busy} onClick={resumeRun}>{COPY.recheck}</button>{resumeNote && <p className="secondary-text">{resumeNote}</p>}</section>}
 
-            {intent && <section className="decision-summary" aria-label="Decision restatement"><div><p className="eyebrow">YOUR DECISION</p><h2 className="decision-asset display">{String((intent as { asset?: unknown }).asset ?? "Unresolved asset")}</h2></div><div className="decision-copy"><p className="decision-line">Considering <strong>{actionLabel((intent as { action?: unknown }).action)}</strong></p><p className="secondary-text">{String((intent as { timeframeContext?: unknown }).timeframeContext ?? "Your stated market context")}</p>{typeof (intent as { decisionQuestion?: unknown }).decisionQuestion === "string" && <p className="secondary-text">{String((intent as { decisionQuestion: unknown }).decisionQuestion)}</p>}</div><button type="button" className="quiet-button" onClick={() => document.getElementById("dilemma")?.focus()} disabled={busy}>Edit decision</button></section>}
+            {(intent || read || activeHinge) && <section className="result-overview" aria-label="Research result"><div className="result-overview-heading"><div><p className="eyebrow">{brief ? "RESEARCH RESULT" : "RESULT IN VIEW"}</p><h2 className="section-title">{brief ? "A concise read, with the path behind it" : "The research path is visible as it forms"}</h2></div>{brief && <span className="brief-complete"><span aria-hidden="true">✓</span> Saved</span>}</div><div className="result-grid"><article className="result-block"><p className="eyebrow">YOUR DECISION</p><strong className="result-value display">{String((intent as { asset?: unknown } | null)?.asset ?? "Reading")}</strong><p className="result-note">{intent ? `Considering ${actionLabel((intent as { action?: unknown }).action)}.` : "Understanding the language of the decision."}</p></article><article className="result-block result-read-block"><p className="eyebrow">CURRENT READ</p><strong className="result-value display">{read ? readLabel(read) : "Still evaluating"}</strong><p className="result-note">Not a prediction. The human decides.</p></article><article className="result-block result-hinge-block"><p className="eyebrow">DECISION HINGE</p><strong className="result-hinge-question display">{activeHinge?.question ?? "Finding the question most likely to change the read."}</strong>{activeHinge && <><p className="result-note"><strong>Why it matters.</strong> {activeHinge.why}</p><p className="result-note result-note-muted"><strong>What would change the read.</strong> {activeHinge.changes}</p></>}</article></div></section>}
 
-            {baseline && <section className="context-section" aria-label="Market context"><div className="section-header-row"><div><p className="eyebrow">LIVE CONTEXT</p><h2 className="section-title">What CLINCH is seeing now</h2></div><FreshnessBadge status="live" label="Live baseline" /></div>{Object.keys(spot).length || Object.keys(perp).length ? <div className="context-grid"><ContextMetric label="Last price" value={numberText(spot.last)} note={spotSymbol} /><ContextMetric label="24h move" value={percentText(spot.movePct24h)} /><ContextMetric label="Spread" value={numberText(spot.spreadBps, 1)} note={spot.spreadWide === true ? "wide" : spot.spreadWide === false ? "tight" : undefined} /><ContextMetric label="Funding" value={percentText(perp.fundingRate)} note={Object.keys(perp).length ? "stock-perp" : undefined} /></div> : <div className="empty-inline"><span className="marker marker-muted" aria-hidden="true">?</span><p className="body-text">Live context is unavailable right now. CLINCH will not fill the gap with a guess.</p></div>}<p className="provenance-line">Bitget market data, read by the server. Missing fields stay unavailable.</p></section>}
-
-            {read && <CurrentRead read={readLabel(read)} note="Current research read, not a prediction. You decide." />}
-            {activeHinge && <HingeCard n={hinges.length} question={activeHinge.question} why={activeHinge.why} changes={activeHinge.changes} active={!brief} />}
+            {baseline && <section className="context-section" aria-label="Market context"><div className="section-header-row"><div><p className="eyebrow">LIVE CONTEXT</p><h2 className="section-title">What CLINCH is seeing now</h2></div><FreshnessBadge status="live" label="Live baseline" /></div>{Object.keys(spot).length || Object.keys(perp).length ? <div className="context-grid"><ContextMetric label="Last price" value={numberText(spot.last)} note={spotSymbol} /><ContextMetric label="24h move" value={percentText(spot.movePct24h)} /><ContextMetric label="Spread" value={numberText(spot.spreadBps, 1)} note={spot.spreadWide === true ? "wide" : spot.spreadWide === false ? "tight" : undefined} /><ContextMetric label="Funding" value={percentText(perp.fundingRate)} note={Object.keys(perp).length ? "stock-perp" : undefined} /></div> : <div className="empty-inline"><span className="state-tag state-unavailable">UNAVAILABLE</span><p className="body-text">Live context is unavailable right now. CLINCH will not fill the gap with a guess.</p></div>}<p className="provenance-line">Bitget market data, read by the server. Missing fields stay unavailable.</p></section>}
 
             {statusLine && <section className="live-status" aria-label="Research progress" aria-live="polite"><span className="status-pulse" aria-hidden="true" /><div><p className="eyebrow">NOW</p><p className="status-copy">{statusLine}</p></div></section>}
 
-            {findings.length > 0 && <section className="findings-section" aria-label="Evidence findings"><div className="section-header-row"><div><p className="eyebrow">EVIDENCE</p><h2 className="section-title">What the checks found</h2></div><span className="count-label">{findings.length} {findings.length === 1 ? "check" : "checks"}</span></div><div className="finding-list">{findings.map((finding, index) => <article className="finding" key={finding.hinge + "-" + index}><div className="finding-marker" aria-hidden="true">{String(index + 1).padStart(2, "0")}</div><div className="finding-body"><p className="finding-family">{familyLabel(finding.family)}</p><p className="finding-summary">{finding.summary}</p><p className="finding-provenance">{finding.source}{shortUtc(finding.observedAt) ? ", observed " + shortUtc(finding.observedAt) : ""}.</p>{Object.keys(finding.facts).length > 0 && <details className="trade-details"><summary>Trade details</summary><dl className="fact-list">{Object.entries(finding.facts).slice(0, 8).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{typeof value === "boolean" ? (value ? "Yes" : "No") : String(value)}</dd></div>)}</dl></details>}</div></article>)}</div></section>}
+            {findings.length > 0 && <section className="findings-section" aria-label="Evidence findings"><div className="section-header-row"><div><p className="eyebrow">WHAT CLINCH CHECKED</p><h2 className="section-title">Evidence that mattered</h2></div><span className="count-label">{findings.length} {findings.length === 1 ? "check" : "checks"}</span></div><div className="finding-list">{findings.map((finding, index) => <article className="finding finding-checked" key={finding.hinge + "-" + index}><div className="finding-marker" aria-hidden="true">{String(index + 1).padStart(2, "0")}</div><div className="finding-body"><p className="finding-family"><span className="state-tag state-checked">CHECKED</span> {familyLabel(finding.family)}</p><p className="finding-summary">{finding.summary}</p><p className="finding-provenance">{finding.source}{shortUtc(finding.observedAt) ? ", observed " + shortUtc(finding.observedAt) : ""}.</p>{Object.keys(finding.facts).length > 0 && <details className="trade-details"><summary>View Research Evidence &amp; Sources</summary><dl className="fact-list">{Object.entries(finding.facts).slice(0, 8).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{typeof value === "boolean" ? (value ? "Yes" : "No") : String(value)}</dd></div>)}</dl></details>}</div></article>)}</div></section>}
 
-            {skips.length > 0 && <section className="skip-section" aria-label="Skipped research"><p className="eyebrow">DELIBERATE SKIP</p>{skips.map((skip, index) => <SkipRecord key={skip.check + "-" + index} check={skip.check} reason={skip.reason} />)}</section>}
+            {skips.length > 0 && <section className="skip-section" aria-label="Skipped research"><p className="eyebrow">WHAT CLINCH SKIPPED</p>{skips.map((skip, index) => <SkipRecord key={skip.check + "-" + index} check={skip.check} reason={skip.reason} />)}</section>}
 
-            {stopReason && <section className="stop-panel" aria-label="Stop state" aria-live="polite"><p className="eyebrow">STOPPED WITH INTENT</p><h2 className="display stop-title">CLINCH is stopping here.</h2><p className="body-text">{stopReason.replace(/^CLINCH is stopping here\.\s*/i, "") || "The checks still available are unlikely to change this read."}</p></section>}
+            {stopReason && <section className="stop-panel" aria-label="Stop state" aria-live="polite"><p className="eyebrow">STOP, WITH REASON</p><h2 className="display stop-title">Why CLINCH stopped here</h2><p className="body-text">{stopReason.replace(/^CLINCH is stopping here\.\s*/i, "") || "The checks still available are unlikely to change this read."}</p><p className="secondary-text">Further supported research is unlikely to materially change the current decision state.</p></section>}
 
             {phase === "clarify" && clarifyQ && <section className="clarify-panel" aria-label="Clarification" aria-live="polite"><p className="eyebrow">ONE DETAIL NEEDED</p><h2 className="hinge-question display">{clarifyQ}</h2><p className="secondary-text">Choose the closest decision. CLINCH will use it to select the right evidence.</p><div className="choice-grid"><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am considering entering now.")}>Enter now</button><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am considering exiting.")}>Exit</button><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am considering waiting.")}>Wait for a better moment</button><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am not deciding yet.")}>I am not deciding yet</button></div></section>}
 
             {(previousHinges.length > 0 || historyList.length > 0) && <details className="audit-trail"><summary>How CLINCH got here</summary><div className="trail-list">{[...previousHinges, ...historyList.map((h) => ({ hinge: h.hinge, question: h.hinge }))].map((h, index) => <div className="trail-item" key={h.hinge + "-" + index}><span className="trail-marker" aria-hidden="true">✓</span><div><strong>Decision Hinge {index + 1}</strong><p>{h.question}</p></div></div>)}</div></details>}
 
-            {brief && <section className="brief-panel" aria-label="Final brief"><div className="brief-heading"><div><p className="eyebrow">RESEARCH BRIEF</p><h2 className="display brief-title">Decision brief</h2></div><span className="brief-complete"><span aria-hidden="true">✓</span> Saved</span></div><div className="brief-read"><p className="eyebrow">CURRENT RESEARCH READ</p><p className="brief-read-value display">{String((brief as { read?: unknown }).read ?? readLabel(read))}</p><p className="brief-decision">{String((brief as { decision?: unknown }).decision ?? "")}</p></div><div className="brief-section"><h3>Why this is the read</h3><p className="body-text">{String((brief as { why?: unknown }).why ?? "No completed evidence was available.")}</p></div>{Array.isArray((brief as { findings?: unknown }).findings) && ((brief as { findings: unknown[] }).findings.length > 0) && <div className="brief-section"><h3>What mattered</h3><ul className="brief-list">{((brief as { findings: unknown[] }).findings).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}{Array.isArray((brief as { completed?: unknown }).completed) && ((brief as { completed: unknown[] }).completed.length > 0) && <div className="brief-section"><h3>Checks completed</h3><div className="completed-list">{((brief as { completed: unknown[] }).completed).map((item, index) => <span key={index}>{String(item)}</span>)}</div></div>}{Array.isArray((brief as { skipped?: unknown }).skipped) && ((brief as { skipped: { check?: unknown; reason?: unknown }[] }).skipped.length > 0) && <div className="brief-section"><h3>Checks skipped</h3><ul className="brief-list">{((brief as { skipped: { check?: unknown; reason?: unknown }[] }).skipped).map((item, index) => <li key={index}><strong>{familyLabel(String(item.check ?? ""))}.</strong> {String(item.reason ?? "")}</li>)}</ul></div>}{Array.isArray((brief as { openQuestions?: unknown }).openQuestions) && ((brief as { openQuestions: unknown[] }).openQuestions.length > 0) && <div className="brief-section"><h3>Still open</h3><ul className="brief-list">{((brief as { openQuestions: unknown[] }).openQuestions).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}{Array.isArray((brief as { changeTriggers?: unknown }).changeTriggers) && <div className="brief-section"><h3>What would change this read</h3><ul className="brief-list">{((brief as { changeTriggers: unknown[] }).changeTriggers).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}<details className="trade-details brief-details"><summary>Sources and freshness</summary><p className="secondary-text">{String((brief as { freshness?: unknown }).freshness ?? "")}</p>{Array.isArray((brief as { sources?: unknown }).sources) && <ul className="source-list">{((brief as { sources: unknown[] }).sources).map((item, index) => <li key={index}>{String(item)}</li>)}</ul>}</details><div className="human-final"><p className="eyebrow">HUMAN DECISION</p><p className="body-text">{COPY.finalNotice}</p></div><div className="brief-actions"><a className="cta-primary" href="/">Start another decision <span aria-hidden="true">↗</span></a><a className="button-secondary" href="/recent">Open recent decisions</a></div><div className="delete-row">{deletePending ? <div className="delete-confirm" role="group" aria-label="Confirm deletion"><p className="secondary-text">Delete this saved brief and its research history? This cannot be undone.</p><div className="delete-confirm-actions"><button type="button" className="quiet-danger" disabled={busy || deleting} onClick={deleteResearch}>{deleting ? "Deleting..." : "Delete it"}</button><button type="button" className="button-plain" disabled={busy || deleting} onClick={() => setDeletePending(false)}>Keep research</button></div></div> : <button type="button" className="quiet-danger" disabled={busy || deleting} onClick={() => setDeletePending(true)}>{COPY.deleteResearch}</button>}</div></section>}
+            {brief && <section className="brief-panel" aria-label="Final brief"><div className="brief-heading"><div><p className="eyebrow">FINAL DECISION BRIEF</p><h2 className="display brief-title">A clear read, with room for uncertainty</h2></div><span className="brief-complete"><span aria-hidden="true">✓</span> Saved</span></div><div className="brief-read"><p className="eyebrow">CURRENT READ</p><p className="brief-read-value display">{String((brief as { read?: unknown }).read ?? readLabel(read))}</p><p className="brief-decision">{String((brief as { decision?: unknown }).decision ?? "")}</p></div><div className="brief-section"><h3>Why</h3><p className="body-text">{String((brief as { why?: unknown }).why ?? "No completed evidence was available.")}</p></div>{Array.isArray((brief as { findings?: unknown }).findings) && ((brief as { findings: unknown[] }).findings.length > 0) && <div className="brief-section"><h3>Evidence that mattered</h3><ul className="brief-list">{((brief as { findings: unknown[] }).findings).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}{Array.isArray((brief as { completed?: unknown }).completed) && ((brief as { completed: unknown[] }).completed.length > 0) && <div className="brief-section"><h3>Checks completed</h3><div className="completed-list">{((brief as { completed: unknown[] }).completed).map((item, index) => <span key={index}>{String(item)}</span>)}</div></div>}{Array.isArray((brief as { skipped?: unknown }).skipped) && ((brief as { skipped: { check?: unknown; reason?: unknown }[] }).skipped.length > 0) && <div className="brief-section"><h3>What CLINCH skipped</h3><ul className="brief-list">{((brief as { skipped: { check?: unknown; reason?: unknown }[] }).skipped).map((item, index) => <li key={index}><strong>{familyLabel(String(item.check ?? ""))}.</strong> {String(item.reason ?? "")}</li>)}</ul></div>}{Array.isArray((brief as { openQuestions?: unknown }).openQuestions) && ((brief as { openQuestions: unknown[] }).openQuestions.length > 0) && <div className="brief-section"><h3>What remains uncertain</h3><ul className="brief-list">{((brief as { openQuestions: unknown[] }).openQuestions).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}{Array.isArray((brief as { changeTriggers?: unknown }).changeTriggers) && <div className="brief-section"><h3>What could change this decision</h3><ul className="brief-list">{((brief as { changeTriggers: unknown[] }).changeTriggers).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}<details className="trade-details brief-details"><summary>View Research Evidence &amp; Sources</summary><p className="secondary-text">Instrument: {spotSymbol}. {String((brief as { freshness?: unknown }).freshness ?? "Freshness was not recorded.")}</p>{Array.isArray((brief as { sources?: unknown }).sources) && <ul className="source-list">{((brief as { sources: unknown[] }).sources).map((item, index) => <li key={index}>{String(item)}</li>)}</ul>}{findings.length > 0 && <ul className="source-list">{findings.map((finding, index) => <li key={finding.hinge + "-source-" + index}>{familyLabel(finding.family)}: {finding.source}{shortUtc(finding.observedAt) ? ", observed " + shortUtc(finding.observedAt) : ""}.</li>)}</ul>}</details><div className="human-final"><p className="eyebrow">HUMAN DECISION</p><p className="body-text">{COPY.finalNotice}</p></div><div className="brief-actions"><button type="button" className="cta-primary" onClick={openApp}>Start another decision <span aria-hidden="true">↗</span></button><a className="button-secondary" href="/recent">Open recent decisions</a></div><div className="delete-row">{deletePending ? <div className="delete-confirm" role="group" aria-label="Confirm deletion"><p className="secondary-text">Delete this saved brief and its research history? This cannot be undone.</p><div className="delete-confirm-actions"><button type="button" className="quiet-danger" disabled={busy || deleting} onClick={deleteResearch}>{deleting ? "Deleting..." : "Delete it"}</button><button type="button" className="button-plain" disabled={busy || deleting} onClick={() => setDeletePending(false)}>Keep research</button></div></div> : <button type="button" className="quiet-danger" disabled={busy || deleting} onClick={() => setDeletePending(true)}>{COPY.deleteResearch}</button>}</div></section>}
           </div>
         )}
       </main>
+      </div>}
 
-      <footer className="product-foot"><p>{COPY.privacyNote}</p><p>Research support only. CLINCH never places trades.</p></footer>
+      <ProductFooter />
     </div>
   );
 

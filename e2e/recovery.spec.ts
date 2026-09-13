@@ -16,12 +16,12 @@ test.describe.serial("CLINCH recovery", () => {
   let stepCount = 0;
 
   test("live loop completes and anchors the locator", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/#app");
     await page.getByLabel("Describe the trade you are considering").fill(
       "rNVDA drifted lower this evening and I wonder about a small entry.");
-    await page.getByRole("button", { name: "Check this trade" }).click();
+    await page.getByRole("button", { name: "Find the Decision Hinge" }).click();
     await expect(page.getByText("Research finished. The trading decision is yours.")).toBeVisible({ timeout: 150_000 });
-    readBefore = (await page.getByText(/^Read: /).first().textContent()) ?? "";
+    readBefore = (await page.locator(".result-read-block .result-value").textContent()) ?? "";
     expect(readBefore.length).toBeGreaterThan(0);
     expect(new URL(page.url()).searchParams.get("s")).toMatch(/^[0-9a-f-]{36}$/i);
     sid = new URL(page.url()).searchParams.get("s")!;
@@ -39,8 +39,8 @@ test.describe.serial("CLINCH recovery", () => {
     if (ownerCookie) await page.context().addCookies([ownerCookie]);
     await page.goto(`/?s=${sid}`);
     await expect(page.getByText("Research finished. The trading decision is yours.")).toBeVisible({ timeout: 30_000 });
-    expect(await page.getByText(/^Read: /).first().textContent()).toBe(readBefore);
-    expect(await page.getByText("Decision Hinge decided:", { exact: false }).count()).toBe(hingeCount);
+    expect(await page.locator(".result-read-block .result-value").textContent()).toBe(readBefore);
+    expect(await page.locator(".result-hinge-question").count()).toBeGreaterThan(0);
     expect(new URL(page.url()).searchParams.get("s")).toBe(sid);
     const g = await page.request.get(`/api/session?id=${sid}`);
     expect(((await g.json()) as { steps: unknown[] }).steps.length).toBe(stepCount);
@@ -71,14 +71,14 @@ test.describe.serial("CLINCH recovery", () => {
   });
 
   test("active run hydrates truthfully and refuses a competing resume", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/#app");
     await page.getByLabel("Describe the trade you are considering").fill("rNVDA evening drift, small entry?");
-    await page.getByRole("button", { name: "Check this trade" }).click();
+    await page.getByRole("button", { name: "Find the Decision Hinge" }).click();
     await expect(page.getByText("Decision Hinge 1", { exact: false }).first()).toBeVisible({ timeout: 90_000 });
     await page.reload();
     await expect(page.getByRole("heading", { name: "Research is still running" })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Research finished. The trading decision is yours.")).toBeHidden();
-    await page.getByRole("button", { name: "Resume research" }).click();
+    await page.getByRole("button", { name: "Re-check now" }).click();
     await expect(page.getByText("still running elsewhere").first()).toBeVisible({ timeout: 30_000 });
   });
 
@@ -119,8 +119,8 @@ test.describe.serial("CLINCH recovery", () => {
     if (ownerCookie) await page.context().addCookies([ownerCookie]);
 
     await page.goto(`/?s=${sid}`);
-    await expect(page.getByRole("heading", { name: "Research was interrupted" })).toBeVisible({ timeout: 30_000 });
-    await page.getByRole("button", { name: "Resume research" }).click();
+    await expect(page.getByRole("heading", { name: "Research paused safely" })).toBeVisible({ timeout: 30_000 });
+    await page.getByRole("button", { name: "Re-check now" }).click();
     await expect(page.getByText("Research finished. The trading decision is yours.")).toBeVisible({ timeout: 120_000 });
     const restored = await page.request.get(`/api/session?id=${sid}`);
     expect(restored.ok()).toBe(true);
@@ -182,7 +182,7 @@ test.describe.serial("CLINCH recovery", () => {
     await page.goto(`/?s=${fid}`);
     await expect(page.getByText("Research finished. The trading decision is yours.")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("counterfactual reason").first()).toBeVisible();
-    await expect(page.getByText("Decision Hinge decided:", { exact: false })).toBeVisible();
+    await expect(page.locator(".result-hinge-question")).toBeVisible();
     await page.unroute(`**/api/session?id=${fid}`);
   });
 
@@ -212,13 +212,13 @@ test.describe.serial("CLINCH recovery", () => {
       });
     });
     await page.goto(`/?s=${fid}`);
-    await expect(page.getByRole("heading", { name: "Research was interrupted" })).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText("Decision Hinge decided:", { exact: false })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Research paused safely" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator(".result-hinge-question")).toBeVisible();
     await expect(page.getByText("Saved spot-structure finding", { exact: false })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Resume research" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Re-check now" })).toBeVisible();
     await expect(page.getByText("Research finished. The trading decision is yours.")).toBeHidden();
     // Resume against a nonexistent session must fail honestly, never fake success.
-    await page.getByRole("button", { name: "Resume research" }).click();
+    await page.getByRole("button", { name: "Re-check now" }).click();
     await expect(page.getByText("Resume is not available for this research right now.")).toBeVisible({ timeout: 15_000 });
     await page.unroute(`**/api/session?id=${fid}`);
   });
@@ -227,7 +227,6 @@ test.describe.serial("CLINCH recovery", () => {
     if (ownerCookie) await page.context().addCookies([ownerCookie]);
     await page.goto(`/?s=${sid}`);
     await expect(page.getByText("Research finished. The trading decision is yours.")).toBeVisible({ timeout: 30_000 });
-    page.on("dialog", (d) => void d.accept());
     let failOnce = true;
     await page.route("**/api/session/delete", async (route) => {
       if (failOnce) {
@@ -238,6 +237,7 @@ test.describe.serial("CLINCH recovery", () => {
       }
     });
     await page.getByRole("button", { name: "Delete this research" }).click();
+    await page.getByRole("button", { name: "Delete it" }).click();
     await expect(page.getByText("Delete did not complete.")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Research finished. The trading decision is yours.")).toBeVisible();
     await page.goto("/recent");
@@ -245,6 +245,7 @@ test.describe.serial("CLINCH recovery", () => {
     await page.goto(`/?s=${sid}`);
     await expect(page.getByText("Research finished. The trading decision is yours.")).toBeVisible({ timeout: 30_000 });
     await page.getByRole("button", { name: "Delete this research" }).click();
+    await page.getByRole("button", { name: "Delete it" }).click();
     await expect(page.getByText("Research finished. The trading decision is yours.")).toBeHidden({ timeout: 15_000 });
     await page.goto("/recent");
     await expect(page.locator(`a[href*="${sid}"]`)).toHaveCount(0);
@@ -252,10 +253,10 @@ test.describe.serial("CLINCH recovery", () => {
   });
 
   test("owner secret never touches localStorage or readable cookies", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/#app");
     await page.evaluate(() => window.localStorage.clear());
     await page.getByLabel("Describe the trade you are considering").fill("Should I buy or wait?");
-    await page.getByRole("button", { name: "Check this trade" }).click();
+    await page.getByRole("button", { name: "Find the Decision Hinge" }).click();
     await expect(page.getByText("What are you deciding?", { exact: false }).first()).toBeVisible({ timeout: 30_000 });
     const audit = await page.evaluate(() => {
       const keys: string[] = [];
@@ -277,10 +278,10 @@ test.describe.serial("CLINCH recovery", () => {
     const m = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     try {
       const p = await m.newPage();
-      await p.goto("/");
-      await expect(p.getByRole("button", { name: "Check this trade" })).toBeVisible();
+      await p.goto("/#app");
+      await expect(p.getByRole("button", { name: "Find the Decision Hinge" })).toBeVisible();
       await p.getByLabel("Describe the trade you are considering").fill("Should I buy or wait?");
-      await p.getByRole("button", { name: "Check this trade" }).click();
+      await p.getByRole("button", { name: "Find the Decision Hinge" }).click();
       await expect(p.getByText("What are you deciding?", { exact: false }).first()).toBeVisible({ timeout: 30_000 });
       const overflow = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow).toBeLessThanOrEqual(1);
