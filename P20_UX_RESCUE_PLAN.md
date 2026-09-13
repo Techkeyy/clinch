@@ -41,3 +41,13 @@ Date: 2026-09-13
 - A separate fresh public supported dilemma reached a saved brief in about 18 seconds without error. The live kernel did not expose a Hinge for that market state, which was left truthful rather than forced.
 
 The next gate is owner manual UAT. P21 and later phases remain untouched.
+
+## Second design pass
+
+Date: 2026-09-13
+
+The follow-up audit found two state-truth issues in the completion flow. Delete used a browser-native confirmation and, after a successful response, cleared only the brief and session pointer while leaving the decision, market context, findings, skips, and stop state mounted. The stop panel also had a malformed prefix-removal expression, so a duplicated stop lead-in could remain in the body copy.
+
+The completion flow now uses an inline accessible confirmation, preserves the brief when deletion fails, and resets the full workspace only after the delete endpoint confirms success. The stop copy removes its lead-in with an escaped period and whitespace expression. No backend, provider, persistence, or market-data code changed.
+
+Second-pass verification: typecheck, lint, Vitest (109 passed, 4 skipped), production build, no long-dash copy, and a fixture-backed mobile browser check all pass. The browser check confirmed no native dialog, the keep action preserves the brief, successful deletion returns to the initial empty workspace, the stop body has no duplicate lead-in, CTA height remains 50px, and mobile has no horizontal overflow. Public deployment verification remains pending for this latest UI change.

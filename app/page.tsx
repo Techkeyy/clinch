@@ -103,6 +103,8 @@ export default function Page() {
   const [interrupted, setInterrupted] = useState<string | null>(null);
   const [recoveryStatus, setRecoveryStatus] = useState<"active" | "interrupted" | null>(null);
   const [resumeNote, setResumeNote] = useState<string | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const keyRef = useRef<string | null>(null);
 
   const applyEvent = useCallback((e: StreamEvent) => {
@@ -189,6 +191,7 @@ export default function Page() {
     setBusy(true);
     setPhase("streaming");
     setError(null);
+    setDeletePending(false);
     setRecoveryStatus(null);
     setInterrupted(null);
     setHinges([]);
@@ -209,6 +212,58 @@ export default function Page() {
       setBusy(false);
     }
   }, [busy, dilemma, runStream]);
+
+  const resetWorkspace = useCallback(() => {
+    setPhase("idle");
+    setDilemma("");
+    setBusy(false);
+    setSessionId(null);
+    setStateVersion(0);
+    setIntent(null);
+    setBaseline(null);
+    setHinges([]);
+    setFindings([]);
+    setSkips([]);
+    setRead(null);
+    setHistoryList([]);
+    setStopReason(null);
+    setBrief(null);
+    setClarifyQ(null);
+    setError(null);
+    setStatusLine(null);
+    setInterrupted(null);
+    setRecoveryStatus(null);
+    setResumeNote(null);
+    setDeletePending(false);
+    keyRef.current = null;
+  }, []);
+
+  const deleteResearch = useCallback(async () => {
+    if (!sessionId || busy || deleting) return;
+    const deletingId = sessionId;
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/session/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: deletingId }),
+      });
+      if (!res.ok) {
+        setError("Delete did not complete. Your research is still saved; please retry.");
+        setPhase("error");
+        return;
+      }
+      untrackRecent(deletingId);
+      resetWorkspace();
+      window.history.replaceState(null, "", "/");
+    } catch {
+      setError("Delete did not complete. Your research is still saved; please retry.");
+      setPhase("error");
+    } finally {
+      setDeleting(false);
+    }
+  }, [busy, deleting, resetWorkspace, sessionId]);
 
   const answerClarify = useCallback(async (text: string) => {
     if (!sessionId || busy) return;
@@ -407,13 +462,13 @@ export default function Page() {
 
             {skips.length > 0 && <section className="skip-section" aria-label="Skipped research"><p className="eyebrow">DELIBERATE SKIP</p>{skips.map((skip, index) => <SkipRecord key={skip.check + "-" + index} check={skip.check} reason={skip.reason} />)}</section>}
 
-            {stopReason && <section className="stop-panel" aria-label="Stop state" aria-live="polite"><p className="eyebrow">STOPPED WITH INTENT</p><h2 className="display stop-title">CLINCH is stopping here.</h2><p className="body-text">{stopReason.replace(/^CLINCH is stopping here.s*/i, "") || "The checks still available are unlikely to change this read."}</p></section>}
+            {stopReason && <section className="stop-panel" aria-label="Stop state" aria-live="polite"><p className="eyebrow">STOPPED WITH INTENT</p><h2 className="display stop-title">CLINCH is stopping here.</h2><p className="body-text">{stopReason.replace(/^CLINCH is stopping here\.\s*/i, "") || "The checks still available are unlikely to change this read."}</p></section>}
 
             {phase === "clarify" && clarifyQ && <section className="clarify-panel" aria-label="Clarification" aria-live="polite"><p className="eyebrow">ONE DETAIL NEEDED</p><h2 className="hinge-question display">{clarifyQ}</h2><p className="secondary-text">Choose the closest decision. CLINCH will use it to select the right evidence.</p><div className="choice-grid"><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am considering entering now.")}>Enter now</button><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am considering exiting.")}>Exit</button><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am considering waiting.")}>Wait for a better moment</button><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am not deciding yet.")}>I am not deciding yet</button></div></section>}
 
             {(previousHinges.length > 0 || historyList.length > 0) && <details className="audit-trail"><summary>How CLINCH got here</summary><div className="trail-list">{[...previousHinges, ...historyList.map((h) => ({ hinge: h.hinge, question: h.hinge }))].map((h, index) => <div className="trail-item" key={h.hinge + "-" + index}><span className="trail-marker" aria-hidden="true">✓</span><div><strong>Decision Hinge {index + 1}</strong><p>{h.question}</p></div></div>)}</div></details>}
 
-            {brief && <section className="brief-panel" aria-label="Final brief"><div className="brief-heading"><div><p className="eyebrow">RESEARCH BRIEF</p><h2 className="display brief-title">Decision brief</h2></div><span className="brief-complete"><span aria-hidden="true">✓</span> Saved</span></div><div className="brief-read"><p className="eyebrow">CURRENT RESEARCH READ</p><p className="brief-read-value display">{String((brief as { read?: unknown }).read ?? readLabel(read))}</p><p className="brief-decision">{String((brief as { decision?: unknown }).decision ?? "")}</p></div><div className="brief-section"><h3>Why this is the read</h3><p className="body-text">{String((brief as { why?: unknown }).why ?? "No completed evidence was available.")}</p></div>{Array.isArray((brief as { findings?: unknown }).findings) && ((brief as { findings: unknown[] }).findings.length > 0) && <div className="brief-section"><h3>What mattered</h3><ul className="brief-list">{((brief as { findings: unknown[] }).findings).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}{Array.isArray((brief as { completed?: unknown }).completed) && ((brief as { completed: unknown[] }).completed.length > 0) && <div className="brief-section"><h3>Checks completed</h3><div className="completed-list">{((brief as { completed: unknown[] }).completed).map((item, index) => <span key={index}>{String(item)}</span>)}</div></div>}{Array.isArray((brief as { skipped?: unknown }).skipped) && ((brief as { skipped: { check?: unknown; reason?: unknown }[] }).skipped.length > 0) && <div className="brief-section"><h3>Checks skipped</h3><ul className="brief-list">{((brief as { skipped: { check?: unknown; reason?: unknown }[] }).skipped).map((item, index) => <li key={index}><strong>{familyLabel(String(item.check ?? ""))}.</strong> {String(item.reason ?? "")}</li>)}</ul></div>}{Array.isArray((brief as { openQuestions?: unknown }).openQuestions) && ((brief as { openQuestions: unknown[] }).openQuestions.length > 0) && <div className="brief-section"><h3>Still open</h3><ul className="brief-list">{((brief as { openQuestions: unknown[] }).openQuestions).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}{Array.isArray((brief as { changeTriggers?: unknown }).changeTriggers) && <div className="brief-section"><h3>What would change this read</h3><ul className="brief-list">{((brief as { changeTriggers: unknown[] }).changeTriggers).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}<details className="trade-details brief-details"><summary>Sources and freshness</summary><p className="secondary-text">{String((brief as { freshness?: unknown }).freshness ?? "")}</p>{Array.isArray((brief as { sources?: unknown }).sources) && <ul className="source-list">{((brief as { sources: unknown[] }).sources).map((item, index) => <li key={index}>{String(item)}</li>)}</ul>}</details><div className="human-final"><p className="eyebrow">HUMAN DECISION</p><p className="body-text">{COPY.finalNotice}</p></div><div className="brief-actions"><a className="cta-primary" href="/">Start another decision <span aria-hidden="true">↗</span></a><a className="button-secondary" href="/recent">Open recent decisions</a></div><p className="delete-row"><button type="button" className="quiet-danger" disabled={busy} onClick={() => { if (sessionId && window.confirm("Delete this research brief and its history?")) { fetch("/api/session/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) }).then((res) => { if (res.ok) { untrackRecent(sessionId); setBrief(null); setPhase("idle"); setSessionId(null); window.history.replaceState(null, "", "/"); } else { setError("Delete did not complete. Your research is still saved; please retry."); setPhase("error"); } }).catch(() => { setError("Delete did not complete. Your research is still saved; please retry."); setPhase("error"); }); } }}>{COPY.deleteResearch}</button></p></section>}
+            {brief && <section className="brief-panel" aria-label="Final brief"><div className="brief-heading"><div><p className="eyebrow">RESEARCH BRIEF</p><h2 className="display brief-title">Decision brief</h2></div><span className="brief-complete"><span aria-hidden="true">✓</span> Saved</span></div><div className="brief-read"><p className="eyebrow">CURRENT RESEARCH READ</p><p className="brief-read-value display">{String((brief as { read?: unknown }).read ?? readLabel(read))}</p><p className="brief-decision">{String((brief as { decision?: unknown }).decision ?? "")}</p></div><div className="brief-section"><h3>Why this is the read</h3><p className="body-text">{String((brief as { why?: unknown }).why ?? "No completed evidence was available.")}</p></div>{Array.isArray((brief as { findings?: unknown }).findings) && ((brief as { findings: unknown[] }).findings.length > 0) && <div className="brief-section"><h3>What mattered</h3><ul className="brief-list">{((brief as { findings: unknown[] }).findings).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}{Array.isArray((brief as { completed?: unknown }).completed) && ((brief as { completed: unknown[] }).completed.length > 0) && <div className="brief-section"><h3>Checks completed</h3><div className="completed-list">{((brief as { completed: unknown[] }).completed).map((item, index) => <span key={index}>{String(item)}</span>)}</div></div>}{Array.isArray((brief as { skipped?: unknown }).skipped) && ((brief as { skipped: { check?: unknown; reason?: unknown }[] }).skipped.length > 0) && <div className="brief-section"><h3>Checks skipped</h3><ul className="brief-list">{((brief as { skipped: { check?: unknown; reason?: unknown }[] }).skipped).map((item, index) => <li key={index}><strong>{familyLabel(String(item.check ?? ""))}.</strong> {String(item.reason ?? "")}</li>)}</ul></div>}{Array.isArray((brief as { openQuestions?: unknown }).openQuestions) && ((brief as { openQuestions: unknown[] }).openQuestions.length > 0) && <div className="brief-section"><h3>Still open</h3><ul className="brief-list">{((brief as { openQuestions: unknown[] }).openQuestions).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}{Array.isArray((brief as { changeTriggers?: unknown }).changeTriggers) && <div className="brief-section"><h3>What would change this read</h3><ul className="brief-list">{((brief as { changeTriggers: unknown[] }).changeTriggers).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}<details className="trade-details brief-details"><summary>Sources and freshness</summary><p className="secondary-text">{String((brief as { freshness?: unknown }).freshness ?? "")}</p>{Array.isArray((brief as { sources?: unknown }).sources) && <ul className="source-list">{((brief as { sources: unknown[] }).sources).map((item, index) => <li key={index}>{String(item)}</li>)}</ul>}</details><div className="human-final"><p className="eyebrow">HUMAN DECISION</p><p className="body-text">{COPY.finalNotice}</p></div><div className="brief-actions"><a className="cta-primary" href="/">Start another decision <span aria-hidden="true">↗</span></a><a className="button-secondary" href="/recent">Open recent decisions</a></div><div className="delete-row">{deletePending ? <div className="delete-confirm" role="group" aria-label="Confirm deletion"><p className="secondary-text">Delete this saved brief and its research history? This cannot be undone.</p><div className="delete-confirm-actions"><button type="button" className="quiet-danger" disabled={busy || deleting} onClick={deleteResearch}>{deleting ? "Deleting..." : "Delete it"}</button><button type="button" className="button-plain" disabled={busy || deleting} onClick={() => setDeletePending(false)}>Keep research</button></div></div> : <button type="button" className="quiet-danger" disabled={busy || deleting} onClick={() => setDeletePending(true)}>{COPY.deleteResearch}</button>}</div></section>}
           </div>
         )}
       </main>

@@ -228,6 +228,12 @@ a:focus-visible, button:focus-visible, textarea:focus-visible, summary:focus-vis
 .delete-row { border-top: 1px solid var(--line); margin: 26px 0 0; padding-top: 17px; }
 .quiet-danger { border: 0; background: transparent; color: var(--red); cursor: pointer; font-size: 13px; padding: 4px 0; text-decoration: underline; text-underline-offset: 3px; }
 .quiet-danger:disabled { color: var(--quiet); cursor: default; }
+.delete-confirm { display: grid; gap: 12px; max-width: 520px; }
+.delete-confirm .secondary-text { margin: 0; }
+.delete-confirm-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.button-plain { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 13px; font-weight: 700; min-height: 44px; padding: 8px 0; text-decoration: underline; text-underline-offset: 3px; }
+.button-plain:hover { color: var(--ink); }
+.button-plain:disabled { color: var(--quiet); cursor: default; }
 .product-foot { display: flex; justify-content: space-between; gap: 24px; max-width: var(--content); margin: 58px auto 32px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; padding-top: 16px; }
 .product-foot p { margin: 0; }
 .body-text { font-size: 15px; line-height: 1.6; margin: 0 0 8px; }
