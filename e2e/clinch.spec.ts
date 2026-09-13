@@ -58,6 +58,37 @@ test.describe("CLINCH core loop", () => {
     await expect(page.getByText("CLINCH is stopping here", { exact: false }).first()).toBeVisible();
   });
 
+  test("refresh after a completed run preserves the brief truthfully", async ({ page }) => {
+    await page.goto("/");
+    await page.getByLabel("Describe the trade you are considering").fill(
+      "rNVDA drifted lower this evening and I wonder about a small entry.");
+    await page.getByRole("button", { name: "Check this trade" }).click();
+    await expect(page.getByText("Research finished. The trading decision is yours.")).toBeVisible({ timeout: 150_000 });
+    await page.reload();
+    await expect(page.getByLabel("Describe the trade you are considering")).toBeVisible({ timeout: 30_000 });
+  });
+
+  test("delete removes the brief and recent history entry", async ({ page }) => {
+    await page.goto("/");
+    await page.getByLabel("Describe the trade you are considering").fill("rAAPL is quiet tonight, tiny entry?");
+    await page.getByRole("button", { name: "Check this trade" }).click();
+    await expect(page.getByText("Research finished. The trading decision is yours.")).toBeVisible({ timeout: 150_000 });
+    page.on("dialog", (d) => d.accept());
+    await page.getByRole("button", { name: "Delete this research" }).click();
+    await expect(page.getByText("Research finished. The trading decision is yours.")).toBeHidden({ timeout: 15_000 });
+    await page.goto("/recent");
+    await expect(page.getByText("No saved research in this browser yet.")).toBeVisible({ timeout: 30_000 });
+  });
+
+  test("recent page lists this browser's completed research", async ({ page }) => {
+    await page.goto("/");
+    await page.getByLabel("Describe the trade you are considering").fill("rNVDA evening drift, small entry?");
+    await page.getByRole("button", { name: "Check this trade" }).click();
+    await expect(page.getByText("Research finished. The trading decision is yours.")).toBeVisible({ timeout: 150_000 });
+    await page.goto("/recent");
+    await expect(page.getByText("RNVDA", { exact: false }).first()).toBeVisible({ timeout: 30_000 });
+  });
+
   test("mobile has no horizontal overflow and CTA stays usable", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "mobile", "mobile-only layout check");
     await page.goto("/");

@@ -6,6 +6,7 @@ import postgres from "postgres";
 import { eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { researchSessions, researchSteps } from "../drizzle/schema";
+import { SESSION_TTL_MS, RATE_BUCKET_TTL_MS } from "../config/thresholds";
 import type { SessionRow, SessionStore, StepRow } from "./store";
 
 export function openPostgres(url: string): SessionStore {
@@ -28,11 +29,24 @@ export function openPostgres(url: string): SessionStore {
     },
     async getSession(id) {
       const rows = await db.select().from(researchSessions).where(eq(researchSessions.id, id)).limit(1);
-      return rows.length ? toRow(rows[0]) : null;
+      if (!rows.length) return null;
+      if (Date.now() - rows[0].updatedAt.getTime() > SESSION_TTL_MS) {
+        await db.delete(researchSteps).where(eq(researchSteps.sessionId, id));
+        await db.delete(researchSessions).where(eq(researchSessions.id, id));
+        return null;
+      }
+      return toRow(rows[0]);
     },
     async findByIdempotencyKey(key) {
       const rows = await db.select().from(researchSessions).where(eq(researchSessions.idempotencyKey, key)).limit(1);
-      return rows.length ? toRow(rows[0]) : null;
+      if (!rows.length) return null;
+      const found = rows[0];
+      if (Date.now() - found.updatedAt.getTime() > SESSION_TTL_MS) {
+        await db.delete(researchSteps).where(eq(researchSteps.sessionId, found.id));
+        await db.delete(researchSessions).where(eq(researchSessions.id, found.id));
+        return null;
+      }
+      return toRow(found);
     },
     async compareAndSet(id, expectedVersion, patch) {
       const sets: Record<string, unknown> = { updatedAt: new Date(), stateVersion: sql`${researchSessions.stateVersion} + 1` };
@@ -83,6 +97,19 @@ export function openPostgres(url: string): SessionStore {
       ) as { count: number }[];
       const count = existing[0]?.count ?? limit + 1;
       return { allowed: count <= limit, count };
+    },
+    async pruneExpired(nowMs) {
+      const cutoff = new Date(nowMs - SESSION_TTL_MS);
+      const dying = await db.select({ id: researchSessions.id }).from(researchSessions)
+        .where(sql`${researchSessions.updatedAt} < ${cutoff}`).limit(100);
+      for (const d of dying) {
+        await db.delete(researchSteps).where(eq(researchSteps.sessionId, d.id));
+        await db.delete(researchSessions).where(eq(researchSessions.id, d.id));
+      }
+      const bcut = nowMs - RATE_BUCKET_TTL_MS;
+      const gone = await client.unsafe(
+        `DELETE FROM rate_counters WHERE window_start_ms < $1 RETURNING bucket_key`, [bcut]) as unknown[];
+      return { sessions: dying.length, buckets: gone.length };
     },
     async close() { await client.end(); },
   };

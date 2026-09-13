@@ -21,7 +21,7 @@ export async function GET(req: Request) {
   }
   const steps = await store.getSteps(id);
   return Response.json({
-    session: { id: row.id, status: row.status, read: row.read, stateVersion: row.stateVersion, state: row.state, brief: row.brief },
+    session: { id: row.id, status: row.status, read: row.read, stateVersion: row.stateVersion, state: row.state, brief: row.brief, updatedAt: row.updatedAt, createdAt: row.createdAt },
     steps: steps.map((s) => ({ ord: s.ord, kind: s.kind, family: s.family, requestSummary: s.requestSummary, resultSummary: s.resultSummary, provenance: s.provenance, finishedAt: s.finishedAt })),
   });
 }

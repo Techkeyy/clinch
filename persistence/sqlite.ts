@@ -4,6 +4,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { randomUUID } from "node:crypto";
 import type { SessionRow, SessionStore, StepRow } from "./store";
+import { SESSION_TTL_MS, RATE_BUCKET_TTL_MS } from "../config/thresholds";
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS research_sessions (
@@ -39,6 +40,7 @@ export function openSQLite(path: string): SessionStore {
   const db = new DatabaseSync(path);
   db.exec("PRAGMA journal_mode = WAL;");
   db.exec("PRAGMA foreign_keys = ON;");
+  db.exec("PRAGMA busy_timeout = 10000;");
   db.exec(SCHEMA);
   const now = () => new Date().toISOString();
   return {
@@ -57,11 +59,24 @@ export function openSQLite(path: string): SessionStore {
     },
     async getSession(id) {
       const r = db.prepare("SELECT * FROM research_sessions WHERE id = ?").get(id) as Record<string, unknown> | undefined;
-      return r ? row(r) : null;
+      if (!r) return null;
+      // Lazy expiry: expired sessions are never accessible (P15 retention).
+      if (Date.now() - Date.parse(r.updated_at as string) > SESSION_TTL_MS) {
+        db.prepare("DELETE FROM research_steps WHERE session_id = ?").run(id);
+        db.prepare("DELETE FROM research_sessions WHERE id = ?").run(id);
+        return null;
+      }
+      return row(r);
     },
     async findByIdempotencyKey(key) {
       const r = db.prepare("SELECT * FROM research_sessions WHERE idempotency_key = ?").get(key) as Record<string, unknown> | undefined;
-      return r ? row(r) : null;
+      if (!r) return null;
+      if (Date.now() - Date.parse(r.updated_at as string) > SESSION_TTL_MS) {
+        db.prepare("DELETE FROM research_steps WHERE session_id = ?").run(r.id as string);
+        db.prepare("DELETE FROM research_sessions WHERE id = ?").run(r.id as string);
+        return null;
+      }
+      return row(r);
     },
     async compareAndSet(id, expectedVersion, patch) {
       const sets: string[] = [];
@@ -113,6 +128,18 @@ export function openSQLite(path: string): SessionStore {
       if (existing.c >= limit) return { allowed: false, count: existing.c };
       db.prepare("UPDATE rate_counters SET count = count + 1 WHERE bucket_key = ?").run(key);
       return { allowed: true, count: existing.c + 1 };
+    },
+    async pruneExpired(nowMs) {
+      const cutoff = new Date(nowMs - SESSION_TTL_MS).toISOString();
+      const dying = db.prepare("SELECT id FROM research_sessions WHERE updated_at < ? LIMIT 100").all(cutoff) as { id: string }[];
+      for (const d of dying) {
+        db.prepare("DELETE FROM research_steps WHERE session_id = ?").run(d.id);
+        db.prepare("DELETE FROM research_sessions WHERE id = ?").run(d.id);
+      }
+      const bcut = nowMs - RATE_BUCKET_TTL_MS;
+      const old = db.prepare("SELECT bucket_key FROM rate_counters WHERE window_start_ms < ? LIMIT 500").all(bcut) as { bucket_key: string }[];
+      for (const o of old) db.prepare("DELETE FROM rate_counters WHERE bucket_key = ?").run(o.bucket_key);
+      return { sessions: dying.length, buckets: old.length };
     },
     async close() { db.close(); },
   };

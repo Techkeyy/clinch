@@ -4,7 +4,12 @@ export const LOGIC_VERSION = "hinge-v1" as const;
 export const SEMANTICS_VERSION = "semantics-v1" as const;
 
 export const RESEARCH_LOOP_CAP = 6;
-export const MODEL_PARSE_ATTEMPTS = 2;
+
+// Retention (P7/P15): research sessions 30 days; abuse buckets 24 hours max.
+export const SESSION_TTL_MS = 30 * 24 * 3_600_000;
+export const RATE_BUCKET_TTL_MS = 24 * 3_600_000;
+// A researching run untouched this long is presumed interrupted (P15 resume rule).
+export const STALE_RUN_MS = 5 * 60_000;export const MODEL_PARSE_ATTEMPTS = 2;
 export const MODEL_POLISH_ATTEMPTS = 2;
 export const MAX_MODEL_CALLS_PER_RUN = 4;
 export const MAX_CLARIFICATION_ROUNDS = 3;

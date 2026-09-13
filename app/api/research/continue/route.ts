@@ -60,13 +60,19 @@ export async function POST(req: Request) {
     await store.compareAndSet(row.id, row.stateVersion, { state: st as unknown as Record<string, unknown> });
     return Response.json({ session: snap({ ...row, state: st }), clarify: intent.clarificationQuestion });
   }
+  // Atomic run claim: only one loop may own this session version.
+  const claimed = await store.compareAndSet(row.id, row.stateVersion, { status: "researching" });
+  if (!claimed) {
+    const current = await store.getSession(row.id);
+    return Response.json({ error: "VERSION_CONFLICT", session: current ? snap(current) : null }, { status: 409 });
+  }
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const enc = new TextEncoder();
       const send = (type: string, data: unknown) => controller.enqueue(enc.encode(sseEncode(type, data)));
       const finish = () => { try { controller.close(); } catch { /* closed */ } };
       try {
-        send("session", { session: snap(row) });
+        send("session", { session: snap(claimed) });
         const finalSt = await driveLoop(row.id, {
           asset: intent.asset, spotSymbol: st.spotSymbol ?? "", perpSymbol: st.perpSymbol,
           action: intent.action, read: "undecided", resolvedTopics: [],
@@ -77,8 +83,8 @@ export async function POST(req: Request) {
           store,
           onEvent: (e) => send(e.type, e.data),
           persistStep: async (kind, family, summary, provenance) => {
-            const cur = await store.getSession(row.id);
-            await store.appendStep({ sessionId: row.id, ord: (cur ? 100 : 100), kind, family,
+            const existing = await store.getSteps(row.id);
+            await store.appendStep({ sessionId: row.id, ord: 1000 + existing.length, kind, family,
               requestSummary: JSON.stringify(summary).slice(0, 500), resultSummary: summary, provenance });
           },
           maxIterations: RESEARCH_LOOP_CAP,

@@ -47,6 +47,8 @@ export async function POST(req: Request) {
   const owner = await readOwner();
   const limit = await checkStartLimits(store, owner.secret, ip);
   if (!limit.ok) return Response.json({ error: limit.code }, { status: 429 });
+  // Opportunistic bounded retention cleanup (P15; no worker). Failures never block research.
+  store.pruneExpired(Date.now()).catch(() => {});
 
   let secret = owner.secret;
   let setCookie: string | null = null;
@@ -59,6 +61,10 @@ export async function POST(req: Request) {
   const existing = await store.findByIdempotencyKey(parsed.data.idempotencyKey);
   if (existing) {
     if (!ownsSession(existing.ownerVerifier, existing.id, secret)) {
+      return Response.json({ error: "KEY_CONFLICT" }, { status: 409 });
+    }
+    const prior = (existing.state as unknown as { dilemma?: string })?.dilemma;
+    if (typeof prior === "string" && prior !== parsed.data.dilemma) {
       return Response.json({ error: "KEY_CONFLICT" }, { status: 409 });
     }
     const steps = await store.getSteps(existing.id);
@@ -79,12 +85,26 @@ export async function POST(req: Request) {
       };
       const finish = () => { send("done", { sessionId }); controller.close(); };
       try {
-        const created = await store.createSession({
-          id: sessionId, ownerVerifier: verifier, intent: null,
-          state: initialFlowState(parsed.data.dilemma), status: "awaiting", read: "undecided",
-          logicVersion: LOGIC_VERSION, idempotencyKey: parsed.data.idempotencyKey,
-          stateVersion: 0, brief: null,
-        });
+        let created;
+        try {
+          created = await store.createSession({
+            id: sessionId, ownerVerifier: verifier, intent: null,
+            state: initialFlowState(parsed.data.dilemma), status: "awaiting", read: "undecided",
+            logicVersion: LOGIC_VERSION, idempotencyKey: parsed.data.idempotencyKey,
+            stateVersion: 0, brief: null,
+          });
+        } catch (e) {
+          // Lost a create race on the idempotency key: replay the winner.
+          const winner = await store.findByIdempotencyKey(parsed.data.idempotencyKey);
+          if (winner && ownsSession(winner.ownerVerifier, winner.id, secret)) {
+            const steps = await store.getSteps(winner.id);
+            send("session", { session: publicSession(winner), replayed: true });
+            for (const s of steps) send("step", { kind: s.kind, family: s.family, summary: s.requestSummary });
+            finish();
+            return;
+          }
+          throw e;
+        }
         send("session", { session: publicSession(created) });
 
         const model = await getModel();
@@ -131,6 +151,10 @@ export async function POST(req: Request) {
           requestSummary: `baseline ${resolved.spot}`, resultSummary: { facts: base.facts, problems: base.problems },
           provenance: base.evidence.map((e) => (e as { provenance: unknown }).provenance) });
         send("baseline", { facts: base.facts, problems: base.problems });
+        const researching = await store.getSession(sessionId);
+        if (researching) {
+          await store.compareAndSet(sessionId, researching.stateVersion, { status: "researching" });
+        }
 
         const runState = {
           asset: st.intent.asset, spotSymbol: st.spotSymbol as string, perpSymbol: st.perpSymbol,

@@ -2,7 +2,9 @@ import { z } from "zod";
 import { getStore } from "@/server/db";
 import { readOwner, ownsSession } from "@/server/auth";
 import { sseEncode, sseResponse, sameOrigin } from "@/server/stream";
+import { retryAllowed } from "@/server/retry";
 import { driveLoop, assembleBrief } from "@/server/flow";
+import { buildResumeInput } from "@/server/resume";
 import { RESEARCH_LOOP_CAP, MAX_STEP_RETRIES } from "@/config/thresholds";
 
 export const runtime = "nodejs";
@@ -33,15 +35,17 @@ export async function POST(req: Request) {
   if (row.stateVersion !== parsed.data.expectedVersion) {
     return Response.json({ error: "VERSION_CONFLICT" }, { status: 409 });
   }
-  if (!["failed", "stopped", "unresolved"].includes(row.status)) {
+  if (!retryAllowed(row.status, row.updatedAt, Date.now())) {
+    // Presumed-interrupted runs (researching but untouched beyond STALE_RUN_MS)
+    // may resume; anything actively fresh is rejected to avoid forked runs.
     return Response.json({ error: "NOT_RETRYABLE" }, { status: 409 });
   }
   const st = row.state as unknown as {
     intent: import("@/domain/types").IntentContract | null;
     read: string; resolvedTopics: string[]; facts: Record<string, unknown>;
-    skips: { check: string; reason: string }[]; uncertainty: string[];
-    hingeHistory: { hinge: string; verdict: string }[];
-    spotSymbol: string | null; perpSymbol: string | null; context: string; known: string[];
+    skips: { check: string; reason: string; kind?: string }[]; uncertainty: string[];
+    hingeHistory: { hinge: string; topic?: string | null; verdict: string }[];
+    spotSymbol: string | null; perpSymbol: string | null; context: string; known: string[]; stopReason?: string | null;
     retries?: number;
   };
   if ((st.retries ?? 0) >= MAX_STEP_RETRIES) {
@@ -49,19 +53,26 @@ export async function POST(req: Request) {
   }
   const intent = st.intent;
   if (!intent) return Response.json({ error: "NOT_RETRYABLE" }, { status: 409 });
+  // Atomic run claim: concurrent resumes serialize here; loser gets current state.
+  const claimed = await store.compareAndSet(row.id, row.stateVersion, { status: "researching" });
+  const snapOf = (r: { id: string; status: string; read: string; stateVersion: number; state: unknown; brief: unknown }) =>
+    ({ id: r.id, status: r.status, read: r.read, stateVersion: r.stateVersion, state: r.state, brief: r.brief });
+  if (!claimed) {
+    const current = await store.getSession(row.id);
+    return Response.json({ error: "VERSION_CONFLICT", session: current ? snapOf(current) : null }, { status: 409 });
+  }
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const enc = new TextEncoder();
       const send = (type: string, data: unknown) => controller.enqueue(enc.encode(sseEncode(type, data)));
       try {
-        send("session", { session: { id: row.id, status: "researching", read: row.read, stateVersion: row.stateVersion } });
-        const finalSt = await driveLoop(row.id, {
-          asset: intent.asset, spotSymbol: st.spotSymbol ?? "", perpSymbol: st.perpSymbol,
-          action: intent.action, read: st.read === "cannot-resolve" ? "undecided" : st.read,
-          resolvedTopics: [...st.resolvedTopics], facts: JSON.parse(JSON.stringify(st.facts ?? {})),
-          data: { "spot-structure": "fresh", "perp-positioning": "fresh" },
-          context: st.context ?? "", known: [...(st.known ?? [])],
-        }, {
+        send("session", { session: { id: row.id, status: "researching", read: row.read, stateVersion: claimed.stateVersion } });
+        const finalSt = await driveLoop(row.id, buildResumeInput({
+          intent, spotSymbol: st.spotSymbol, perpSymbol: st.perpSymbol, read: st.read,
+          resolvedTopics: st.resolvedTopics, facts: st.facts,
+          context: st.context, known: st.known, skips: st.skips,
+          uncertainty: st.uncertainty, stopReason: st.stopReason, hingeHistory: st.hingeHistory,
+        }), {
           store,
           onEvent: (e) => send(e.type, e.data),
           persistStep: async (kind, family, summary, provenance) => {

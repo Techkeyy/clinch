@@ -5,10 +5,10 @@
 - **Hackathon:** Bitget AI Â· Genesis Season 2
 - **Intended Track:** AI Trading Desk
 - **Intended Submission Lane:** Open Theme
-- **Current Phase:** P13 Complete Core Loop (Day 1 sprint: P9-P13 continuous)
+- **Current Phase:** P16 Edge + Validation
 - **Current Phase Status:** BUILDING
 - **Current Overall Product Status:** BUILDING
-- **Last Verified Timestamp:** 2026-09-12T13:30:00+01:00
+- **Last Verified Timestamp:** 2026-09-13T02:23:14+01:00
 - **P1 Evidence:** `P1_HACKATHON_ONBOARDING.md` (researched 2026-09-11)
 - **P2 Evidence:** `P2_PRODUCT_UNDERSTANDING.md` (accepted by Director)
 - **P3 Evidence:** `P3_SCOPE_LOCK.md` (accepted by Director)
@@ -22,6 +22,7 @@
 - **P11 Evidence:** research executors (COMPONENT PROVEN: selective, distinct, safe)
 - **P12 Evidence:** hinge engine (COMPONENT PROVEN: P5 regression green)
 - **P13 Evidence:** core loop (INTEGRATION PROVEN: live streamed loop + 9 browser tests)
+- **P15 Evidence:** persistence and recovery (INTEGRATION PROVEN: 95 Vitest tests passed with 4 live-gated skips; 39 Playwright tests passed in two workers with 1 expected mobile-only skip; completed refresh, stale partial resume, active competing resume, recent/reopen, delete-failure preservation, mobile, and live Bitget normal paths verified).
 
 ---
 

@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { COPY } from "@/lib/copy";
+import { trackRecent, untrackRecent } from "@/lib/recent";
 import { FreshnessBadge, HingeCard, SkipRecord, CurrentRead } from "@/components/research";
+import { STALE_RUN_MS } from "@/config/thresholds";
 
 interface StreamEvent { type: string; data: Record<string, unknown>; }
 interface Finding { hinge: string; family: string; summary: string; observedAt: string | null; source: string; facts: Record<string, unknown>; }
@@ -54,11 +56,15 @@ export default function Page() {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [skips, setSkips] = useState<Skip[]>([]);
   const [read, setRead] = useState<string | null>(null);
+  const [historyList, setHistoryList] = useState<{ hinge: string; verdict: string }[]>([]);
   const [stopReason, setStopReason] = useState<string | null>(null);
   const [brief, setBrief] = useState<Record<string, unknown> | null>(null);
   const [clarifyQ, setClarifyQ] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [statusLine, setStatusLine] = useState<string | null>(null);
+  const [interrupted, setInterrupted] = useState<string | null>(null);
+  const [recoveryStatus, setRecoveryStatus] = useState<"active" | "interrupted" | null>(null);
+  const [resumeNote, setResumeNote] = useState<string | null>(null);
   const keyRef = useRef<string | null>(null);
 
   const applyEvent = useCallback((e: StreamEvent) => {
@@ -67,6 +73,10 @@ export default function Page() {
       const s = d.session as { id: string; stateVersion: number };
       setSessionId(s.id);
       setStateVersion(s.stateVersion);
+      trackRecent(s.id);
+      try {
+        window.history.replaceState(null, "", `/?s=${encodeURIComponent(s.id)}`);
+      } catch { /* non-browser render */ }
     } else if (e.type === "intent") {
       setIntent((d.intent ?? null) as Record<string, unknown> | null);
       setBaseline((prev) => ({ ...(typeof prev === "object" && prev ? prev : {}), ...(d as object) }));
@@ -141,7 +151,10 @@ export default function Page() {
     setBusy(true);
     setPhase("streaming");
     setError(null);
+    setRecoveryStatus(null);
+    setInterrupted(null);
     setHinges([]);
+    setHistoryList([]);
     setFindings([]);
     setSkips([]);
     setRead(null);
@@ -173,11 +186,131 @@ export default function Page() {
     }
   }, [sessionId, stateVersion, busy, runStream]);
 
+  const resumeRun = useCallback(async () => {
+    if (!sessionId || busy) return;
+    setBusy(true);
+    setResumeNote(null);
+    setPhase("streaming");
+    try {
+      const res = await fetch("/api/research/retry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, expectedVersion: stateVersion }),
+      });
+      if (res.status === 409) {
+        setResumeNote("Research is still running elsewhere. Showing the latest saved state.");
+        setBusy(false);
+        return;
+      }
+      if (!res.ok) {
+        setError("Resume is not available for this research right now.");
+        setPhase("error");
+        setBusy(false);
+        return;
+      }
+      const ctype = res.headers.get("content-type") ?? "";
+      if (!ctype.includes("text/event-stream")) {
+        setBusy(false);
+        return;
+      }
+      const reader = res.body!.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const parsed = parseSSE(buf);
+        buf = parsed.rest;
+        for (const e of parsed.events) {
+          if (e.type === "done") { setBusy(false); setInterrupted(null); continue; }
+          applyEvent(e);
+        }
+      }
+    } catch {
+      setError("Could not reach CLINCH. Check your connection and retry.");
+      setPhase("error");
+      setBusy(false);
+    }
+  }, [sessionId, stateVersion, busy, applyEvent]);
+
+  // Hydrate from ?s= locator: authoritative GET session reconstructs the workspace.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      let id: string | null = null;
+      try {
+        id = new URLSearchParams(window.location.search).get("s");
+      } catch { id = null; }
+      if (!id) return;
+      try {
+        const res = await fetch(`/api/session?id=${encodeURIComponent(id)}`);
+        if (!res.ok) return;
+        const j = await res.json();
+        const sess = j.session as { id: string; status: string; read: string; stateVersion: number; state: Record<string, unknown>; brief: Record<string, unknown> | null; updatedAt?: string };
+        const steps = (j.steps ?? []) as { kind: string; family: string | null; requestSummary: string | null; resultSummary: unknown; finishedAt: string | null }[];
+        if (cancelled) return;
+        setSessionId(sess.id);
+        setStateVersion(sess.stateVersion);
+        trackRecent(sess.id);
+        const restored = sess.state as {
+          intent?: Record<string, unknown> | null;
+          facts?: Record<string, unknown>;
+          spotSymbol?: string | null;
+          skips?: { check: string; reason: string }[];
+          hingeHistory?: { hinge: string; topic?: string | null; verdict: string }[];
+          read?: string;
+        };
+        if (restored.intent && typeof restored.intent === "object") setIntent(restored.intent);
+        if (restored.facts && typeof restored.facts === "object") {
+          setBaseline({ facts: restored.facts, spotSymbol: restored.spotSymbol ?? null });
+        }
+        setSkips(Array.isArray(restored.skips) ? restored.skips : []);
+        setHistoryList(Array.isArray(restored.hingeHistory) ? restored.hingeHistory : []);
+        if (sess.brief) {
+          setBrief(sess.brief as Record<string, unknown>);
+          const b = sess.brief as { read?: unknown };
+          if (typeof b.read === "string") setRead(b.read);
+          setPhase("brief");
+        } else if (sess.status === "researching") {
+          // Interrupted workspace: restore read + saved findings from persisted
+          // steps so the page shows the decision state, not an empty notice.
+          if (typeof restored.read === "string" && restored.read.length > 0) setRead(restored.read);
+          const saved = steps.filter((s) => s.kind === "research").map((s) => {
+            let hinge = "";
+            try {
+              const parsed = JSON.parse(s.requestSummary ?? "{}") as { hinge?: unknown };
+              if (typeof parsed.hinge === "string") hinge = parsed.hinge;
+            } catch { /* keep blank */ }
+            return {
+              hinge, family: s.family ?? "", facts: {},
+              summary: `Saved ${s.family ?? "market"} finding${hinge ? ` for Hinge ${hinge}` : ""} (restored from this session).`,
+              observedAt: s.finishedAt, source: "Saved from this session",
+            };
+          });
+          setFindings(saved);
+          const hinges = steps.filter((s) => s.kind === "hinge").length;
+          const research = steps.filter((s) => s.kind === "research").length;
+          const ageMs = sess.updatedAt ? Date.now() - Date.parse(sess.updatedAt) : Number.POSITIVE_INFINITY;
+          const stale = !Number.isFinite(ageMs) || ageMs > STALE_RUN_MS;
+          setRecoveryStatus(stale ? "interrupted" : "active");
+          setInterrupted(stale
+            ? `Research was interrupted after ${hinges} Hinge decision${hinges === 1 ? "" : "s"} and ${research} completed research check${research === 1 ? "" : "s"}. Saved work is intact. Nothing completed beyond what is shown.`
+            : "Research is still running elsewhere. Showing the latest saved state. Resume will be rejected until the active run is no longer authoritative.");
+        } else if (sess.status === "clarifying") {
+          setPhase("clarify");
+          setClarifyQ("What are you deciding? Tell me the asset and whether you are considering entering, exiting, or waiting.");
+        }
+      } catch { /* offline: workspace stays fresh */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <div className="wrap">
       <div className="column">
         <header>
-          <p className="micro-label">CLINCH</p>
+          <p className="micro-label">CLINCH <span style={{ float: "right" }}><a href="/recent">Recent</a></span></p>
           <h1 className="hero-question display">{COPY.heroQuestion}</h1>
           <p className="body-text">{COPY.heroSupport}</p>
         </header>
@@ -196,7 +329,7 @@ export default function Page() {
             <div className="chip-row" aria-label="Example dilemmas">
               <button type="button" className="chip" disabled={busy} onClick={() => setDilemma("rNVDA fell hard after the close. I am thinking of buying the dip. Real opportunity or wait?")}>rNVDA dip</button>
               <button type="button" className="chip" disabled={busy} onClick={() => setDilemma("rTSLA spiked fast on a wide spread late in the session. Breakout or thin print?")}>Thin rTSLA move</button>
-              <button type="button" className="chip" disabled={busy} onClick={() => setDilemma("rAAPL is flat but perp desks look crowded into tomorrow. Enter before the event?")}>Crowded rAAPL</button>
+              <button type="button" className="chip" disabled={busy} onClick={() => setDilemma("rAAPL is flat but stock-perp positioning looks crowded. Is entering now worth it or should I wait?")}>Crowded rAAPL</button>
             </div>
             <button type="button" className="cta-primary" disabled={busy || dilemma.trim().length < 4} onClick={start}>
               {busy ? "Checking this trade..." : COPY.ctaCheck}
@@ -250,6 +383,25 @@ export default function Page() {
             </section>
           )}
 
+          {interrupted && (
+            <section aria-label="Interrupted research" role="status">
+              <h2 className="section-title">{recoveryStatus === "active" ? "Research is still running" : "Research was interrupted"}</h2>
+              <p className="body-text">{interrupted}</p>
+              <button type="button" className="cta-primary" disabled={busy} onClick={resumeRun}>
+                Resume research
+              </button>
+              {resumeNote && <p className="secondary-text">{resumeNote}</p>}
+            </section>
+          )}
+
+          {historyList.length > 0 && hinges.length === 0 && (
+            <section aria-label="Restored research history">
+              {historyList.map((h, i) => (
+                <p key={i} className="secondary-text">Decision Hinge decided: {h.verdict}</p>
+              ))}
+            </section>
+          )}
+
           {phase === "clarify" && clarifyQ && (
             <section aria-label="Clarification">
               <h2 className="section-title">{clarifyQ}</h2>
@@ -267,6 +419,14 @@ export default function Page() {
               <h2 className="section-title">Research brief</h2>
               <p className="body-text">Read: {String((brief as { read?: unknown }).read ?? "")}</p>
               <p className="body-text">Why: {String((brief as { why?: unknown }).why ?? "")}</p>
+              {Array.isArray((brief as { findings?: unknown }).findings) && ((brief as { findings: string[] }).findings.length > 0) && (
+                <div>
+                  <p className="micro-label">Completed findings</p>
+                  {((brief as { findings: string[] }).findings).map((f, i) => (
+                    <p key={i} className="body-text">{f}</p>
+                  ))}
+                </div>
+              )}
               {Array.isArray((brief as { skipped?: unknown }).skipped) && ((brief as { skipped: { check: string; reason: string }[] }).skipped.length > 0) && (
                 <div>
                   <p className="micro-label">Skipped checks</p>
@@ -282,7 +442,15 @@ export default function Page() {
                 <p className="secondary-text">What would change this read: {((brief as { changeTriggers: string[] }).changeTriggers).join("; ")}</p>
               )}
               <p className="secondary-text">Freshness: {String((brief as { freshness?: unknown }).freshness ?? "")}</p>
+              {Array.isArray((brief as { sources?: unknown }).sources) && ((brief as { sources: string[] }).sources.length > 0) && (
+                <p className="secondary-text">Sources: {((brief as { sources: string[] }).sources).join("; ")}</p>
+              )}
               <p className="body-text">Research finished. The trading decision is yours.</p>
+              <p className="secondary-text">
+                <button type="button" className="chip" disabled={busy} onClick={() => { if (sessionId && window.confirm("Delete this research brief and its history?")) { fetch("/api/session/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) }).then((res) => { if (res.ok) { untrackRecent(sessionId); setBrief(null); } else { setError("Delete did not complete. Your research is still saved; please retry."); setPhase("error"); } }).catch(() => { setError("Delete did not complete. Your research is still saved; please retry."); setPhase("error"); }); } }}>
+                  Delete this research
+                </button>
+              </p>
             </section>
           )}
 

@@ -38,5 +38,7 @@ export interface SessionStore {
   deleteSession(id: string): Promise<boolean>;
   /** Rate counters: {count, windowStartMs} per key, for abuse control. */
   rateHit(key: string, windowMs: number, limit: number): Promise<{ allowed: boolean; count: number }>;
+  /** Opportunistic cleanup: delete expired sessions (cascade steps) + stale buckets. */
+  pruneExpired(nowMs: number): Promise<{ sessions: number; buckets: number }>;
   close(): Promise<void>;
 }

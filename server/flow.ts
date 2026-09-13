@@ -26,11 +26,15 @@ export interface LoopInput {
   read: string; resolvedTopics: string[]; facts: MarketFacts;
   data: Record<string, string>; context: string; known: string[];
   baselineProblems?: string[];
+  skips?: { check: string; reason: string; kind?: string }[];
+  uncertainty?: string[];
+  hingeHistory?: { hinge: string; topic?: string | null; verdict: string }[];
+  stopReason?: string | null;
 }
 export interface LoopState {
   read: string; resolvedTopics: string[]; facts: MarketFacts;
   skips: { check: string; reason: string; kind: string }[]; uncertainty: string[];
-  hingeHistory: { hinge: string; verdict: string }[]; stopReason: string | null;
+  hingeHistory: { hinge: string; topic?: string | null; verdict: string }[]; stopReason: string | null;
 }
 export interface FlowState {
   intent: IntentContract | null;
@@ -39,7 +43,7 @@ export interface FlowState {
   facts: MarketFacts;
   skips: { check: string; reason: string; kind: string }[];
   uncertainty: string[];
-  hingeHistory: { hinge: string; verdict: string }[];
+  hingeHistory: { hinge: string; topic?: string | null; verdict: string }[];
   stopReason: string | null;
   briefStatus: "none" | "ready";
   spotSymbol: string | null;
@@ -82,7 +86,7 @@ export async function resolveAsset(mention: string | null, fetchImpl?: FetchImpl
 
 export interface BriefInput {
   intent: IntentContract | null; read: string;
-  hingeHistory: { hinge: string; verdict: string }[];
+  hingeHistory: { hinge: string; topic?: string | null; verdict: string }[];
   skips: { check: string; reason: string; kind?: string }[]; uncertainty: string[];
 }
 export function assembleBrief(state: BriefInput, spotSymbol: string | null): BriefSections {
@@ -121,7 +125,10 @@ export async function driveLoop(
   const acc: LoopState = {
     read: input.read, resolvedTopics: [...input.resolvedTopics],
     facts: JSON.parse(JSON.stringify(input.facts ?? {})) as MarketFacts,
-    skips: [], uncertainty: [], hingeHistory: [], stopReason: null,
+    skips: (input.skips ?? []).map((s) => ({ check: s.check, reason: s.reason, kind: s.kind ?? "cannot-matter" })),
+    uncertainty: [...(input.uncertainty ?? [])],
+    hingeHistory: (input.hingeHistory ?? []).map((h) => ({ ...h })),
+    stopReason: input.stopReason ?? null,
   };
   let iters = 0;
   const seenSkips = new Set<string>();
@@ -161,6 +168,7 @@ export async function driveLoop(
     if (out.action === "RESEARCH" && out.hinge) {
       const q = pkg.candidates.find((c) => c.id === out.hinge)!;
       emit({ type: "hinge", data: { hinge: q.id, question: q.q, why: TOPIC_WHY[q.topic ?? ""] ?? out.why, changes: TOPIC_CHANGES[q.topic ?? ""] ?? null, family: out.family } });
+      await deps.persistStep("hinge", out.family, { hinge: q.id, question: q.q, why: out.why }, null);
       const need = needForTopic(q.topic);
       if (!need || (need.family === "perp-positioning" && !input.perpSymbol)) {
         acc.uncertainty.push("Selected hinge has no executable research mapping or instrument.");
@@ -197,10 +205,10 @@ export async function driveLoop(
           if (mq?.topic && !acc.resolvedTopics.includes(mq.topic)) acc.resolvedTopics.push(mq.topic);
         }
         if (br.action !== "undecided") acc.read = br.action;
-        acc.hingeHistory.push({ hinge: q.id, verdict: `${outcome} :: read now ${acc.read}` });
+        acc.hingeHistory.push({ hinge: q.id, topic: q.topic ?? null, verdict: `${outcome} :: read now ${acc.read}` });
       } else {
         acc.uncertainty.push(`Finding on ${q.topic ?? "unknown"} did not clearly match a branch; read unchanged.`);
-        acc.hingeHistory.push({ hinge: q.id, verdict: "inconclusive; read unchanged" });
+        acc.hingeHistory.push({ hinge: q.id, topic: q.topic ?? null, verdict: "inconclusive; read unchanged" });
         acc.resolvedTopics.push(q.topic ?? q.id);
       }
       iters++;
