@@ -70,3 +70,22 @@ Reference mapping:
 The restructure preserves the natural-language backend contract and does not advertise a closed market universe. Quick starts are the existing verified rNVDA, rTSLA, and rAAPL examples, while users can still describe any currently supported Reality instrument in their own words.
 
 Screenshot evidence is stored under `proof/design-pass/`: `clinch-dashboard-desktop.png`, `clinch-dashboard-mobile.png`, `clinch-app-fresh-desktop.png`, `clinch-app-active-desktop.png`, `clinch-app-completed-desktop.png`, and `clinch-app-completed-mobile.png`, alongside the captured JustFair Dashboard and App reference states.
+
+## Current production design-pass verification
+
+Date: 2026-09-13
+
+The restructure is deployed from commit `085ca7c` in Vercel production deployment `DWQ48oVPgoLrxh88vR1TaRLwXkVX` and is aliased at `https://clinch-nine.vercel.app`.
+
+Fresh public browser smoke timings:
+
+- Dashboard response and render: 1.06s
+- App response and render: 1.20s
+- Research request accepted: 1.27s
+- Live result and context state: 17.57s
+- Final brief: 47.59s
+- Total journey: 47.69s
+
+The live run used the current production path and reached a final brief through a truthful `NO-CAPABLE-FAMILY` STOP because the current market context did not establish a capable research family. No live SKIP was forced and no hinge or finding was invented. Refresh restored the decision and progress state. The smoke found no console errors, native dialogs, horizontal overflow, or long-dash UI copy. The owner cookie was observed with HttpOnly, Secure, SameSite=Lax, and Path=/ flags. Rendered-page and local-storage checks found no secret-name leakage.
+
+The required owner boundary remains unchanged: P20 UX restructure is complete, P20 owner manual UAT is required and unperformed, and P21 has not started.
