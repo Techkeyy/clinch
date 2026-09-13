@@ -10,5 +10,5 @@ export interface ModelProvider {
   polishBrief(sections: Record<string, string>): Promise<ModelResult<string>>;
 }
 export function modelConfigured(): boolean {
-  return !!process.env.DASHSCOPE_API_KEY;
+  return !!process.env.BITGET_QWEN_API_KEY;
 }

@@ -15,6 +15,7 @@ import type { SessionStore } from "@/persistence/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 180;
 
 const StartBody = z.object({ dilemma: DilemmaInput.shape.dilemma, idempotencyKey: IdempotencyKey });
 

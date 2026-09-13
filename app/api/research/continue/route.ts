@@ -9,6 +9,7 @@ import { qwenProvider } from "@/model/qwen";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 180;
 
 const ContinueBody = z.object({
   sessionId: z.string().uuid(),

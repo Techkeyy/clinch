@@ -265,7 +265,7 @@ test.describe.serial("CLINCH recovery", () => {
       }
       return { keys, cookie: document.cookie };
     });
-    expect(audit.keys.join("|")).not.toMatch(/clinch_owner|verifier|pepper|DASHSCOPE|DATABASE/i);
+    expect(audit.keys.join("|")).not.toMatch(/clinch_owner|verifier|pepper|BITGET_QWEN|DATABASE/i);
     expect(audit.cookie).not.toMatch(/clinch_owner/i);
     expect(audit.keys.some((k) => k.startsWith("clinch-recent"))).toBe(true);
     const cookies = await page.context().cookies();

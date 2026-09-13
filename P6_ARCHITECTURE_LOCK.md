@@ -57,9 +57,9 @@ Schema validation Zod 4.6.2, types shared client/server from one schema module.
 Database Postgres via Neon serverless (`@neondatabase/serverless` 1.1.0) with
 Drizzle ORM 0.45.2 (+ drizzle-kit 0.31 migrations); rejected Prisma (v8 line is
 release-candidate: unsuitable stability for a deadline build). Model via AI SDK
-`ai` 7.0.98 + `@ai-sdk/openai-compatible` 3.0.48 against Qwen DashScope
-OpenAI-compatible endpoint (docs-verified 2026-09-12: regional
-`{workspace}.maas.aliyuncs.com/compatible-mode/v1`, `DASHSCOPE_API_KEY`;
+`ai` 7.0.98 + `@ai-sdk/openai-compatible` 3.0.48 against Bitget-sponsored Qwen
+Chat Completions-compatible gateway (docs-verified 2026-09-12: regional
+`https://hackathon.bitgetops.com/v1`, `BITGET_QWEN_API_KEY`;
 single provider, no fallback credential). Testing Vitest 5.0.0 (+ tsx 4.23.13 dev
 runner). Bitget transport: global fetch with AbortController (stdlib, no client
 lib). Nothing else at lock time; P9 justifies any addition.
@@ -155,10 +155,10 @@ inconsistent extraction → retry bounded once → CLARIFY or FAILED with truthf
 UX. Structured kernel owns eligibility, effects, dependencies, skip/stop
 invariants, no-data handling, provenance validity. Provider strategy: ONE
 configured provider at a time, Qwen
-through DashScope OpenAI-compatible API behind the narrow interface; switching
+through Bitget-sponsored Chat Completions-compatible gateway behind the narrow interface; switching
 provider rewrites config, not the engine.
 No multi-provider abstraction. V1 runs ONE configured provider at a time: Qwen
-through DashScope OpenAI-compatible API. There is NO automatic OpenAI fallback
+through Bitget-sponsored Chat Completions-compatible gateway. There is NO automatic OpenAI fallback
 in v1 (no second credential, billing path, failure mode, or output-behavior
 variance). If Qwen is unavailable, the product returns truthful model-service
 failure/retry behavior; a provider change is a configuration plus validation

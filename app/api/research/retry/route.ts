@@ -9,6 +9,7 @@ import { RESEARCH_LOOP_CAP, MAX_STEP_RETRIES } from "@/config/thresholds";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 180;
 
 const RetryBody = z.object({
   sessionId: z.string().uuid(),
