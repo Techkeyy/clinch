@@ -6,9 +6,9 @@
 - **Intended Track:** AI Trading Desk
 - **Intended Submission Lane:** Open Theme
 - **Current Phase:** P18 Production Deployment
-- **Current Phase Status:** BUILDING
+- **Current Phase Status:** BLOCKED
 - **Current Overall Product Status:** BUILDING
-- **Last Verified Timestamp:** 2026-09-13T02:43:52+01:00
+- **Last Verified Timestamp:** 2026-09-13T02:48:15+01:00
 - **P1 Evidence:** `P1_HACKATHON_ONBOARDING.md` (researched 2026-09-11)
 - **P2 Evidence:** `P2_PRODUCT_UNDERSTANDING.md` (accepted by Director)
 - **P3 Evidence:** `P3_SCOPE_LOCK.md` (accepted by Director)
@@ -25,6 +25,7 @@
 - **P15 Evidence:** persistence and recovery (INTEGRATION PROVEN: 95 Vitest tests passed with 4 live-gated skips; 39 Playwright tests passed in two workers with 1 expected mobile-only skip; completed refresh, stale partial resume, active competing resume, recent/reopen, delete-failure preservation, mobile, and live Bitget normal paths verified).
 - **P16 Evidence:** controlled decision-value and adversarial validation (INTEGRATION PROVEN: 30 frozen P5A/P5B scenarios; 54 baseline calls versus 25 CLINCH calls; 0 blindspots across 22 eligible scenarios; 30/30 terminal and explanation contracts; seven adversarial tests passed). See `P16_VALIDATION_REPORT.md` and `tests/p16-validation.test.ts`.
 - **P17 Evidence:** product audit (INTEGRATION PROVEN: mechanical checks green, product-facing scope and security claims reconciled, Next root warning resolved, no tracked build artifacts or secrets). See `P17_PRODUCT_AUDIT.md`.
+- **P18 Evidence:** deployment prerequisite check (BLOCKED: no production DATABASE_URL, DASHSCOPE_API_KEY, host SESSION_PEPPER, hosting project/config, or git remote available; no deployment attempted). See `P18_DEPLOYMENT_PREREQUISITES.md`.
 
 ---
 
