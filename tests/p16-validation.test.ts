@@ -26,26 +26,27 @@ type Scenario = {
 };
 type Replay = { steps: KernelOutput[]; calls: string[]; available: string[]; critical: string[] };
 
-const load = (path: string) => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8")) as any;
-const P5A_SCEN = load("../proof/p5/scenarios/scenarios.json").scenarios as Array<Record<string, any>>;
-const P5A_EXP = load("../proof/p5/expected/expected.json") as Record<string, Expected>;
-const P5A_SIM = load("../proof/p5/runs/sim.json") as Record<string, Record<string, string>>;
-const P5B_EXP = load("../proof/p5b/expected/expected.json") as Record<string, Expected>;
-const P5B_SIM = load("../proof/p5b/runs/sim.json") as Record<string, Record<string, string>>;
+type P5AScenarioInput = { id: string; action: string; read: string; candidates: Candidate[]; data: Record<string, string> };
+const load = <T>(path: string): T => JSON.parse(readFileSync(new URL(path, import.meta.url), "utf8")) as T;
+const P5A_SCEN = load<{ scenarios: P5AScenarioInput[] }>("../proof/p5/scenarios/scenarios.json").scenarios;
+const P5A_EXP = load<Record<string, Expected>>("../proof/p5/expected/expected.json");
+const P5A_SIM = load<Record<string, Record<string, string>>>("../proof/p5/runs/sim.json");
+const P5B_EXP = load<Record<string, Expected>>("../proof/p5b/expected/expected.json");
+const P5B_SIM = load<Record<string, Record<string, string>>>("../proof/p5b/runs/sim.json");
 
 const P5B_IDS = ["B01", "B02", "B03", "B04", "B05", "B06a", "B06b", "B07a", "B07b", "B08", "B09", "B10", "H-A", "H-B", "H-C"];
 
 function rawToScenario(id: string): Scenario {
-  const raw = load(`../proof/p5b/raw/${id}.json`) as RawFacts;
+  const raw = load<RawFacts>(`../proof/p5b/raw/${id}.json`);
   const pkg = compileSemantics(raw);
   return { id, action: raw.action, read: raw.read, candidates: pkg.candidates, data: { ...raw.data }, sim: P5B_SIM[id] || {}, expected: P5B_EXP[id], source: "P5B" };
 }
 
-const makeP5AScenario = (s: Record<string, any>): Scenario => ({
+const makeP5AScenario = (s: P5AScenarioInput): Scenario => ({
   id: s.id,
   action: s.action,
   read: s.read,
-  candidates: s.candidates as Candidate[],
+  candidates: s.candidates,
   data: { ...s.data },
   sim: P5A_SIM[s.id] || {},
   expected: P5A_EXP[s.id],
@@ -175,23 +176,28 @@ describe("P16 controlled validation: 30 frozen P5 scenarios", () => {
     expect(explainabilityPasses).toBe(30);
   });
 
-  it("prints the measured comparison used by P16_VALIDATION_REPORT", () => {
-    const savings = totalBaselineCalls - totalClinchCalls;
-    const baselineActionable = sum(baselineFirstActionable);
-    const clinchActionable = sum(clinchFirstActionable);
-    console.log(JSON.stringify({
+  it("locks the measured comparison recorded in P16_VALIDATION_REPORT", () => {
+    expect({
       scenarios: SCENARIOS.length,
-      coveredWithAvailableCriticalFamily: covered.length,
-      blindspots: blindspots.map((m) => m.id),
-      terminalContracts: `${terminalPasses}/${SCENARIOS.length}`,
-      explanationContracts: `${explainabilityPasses}/${SCENARIOS.length}`,
-      calls: { baseline: totalBaselineCalls, clinch: totalClinchCalls, saved: savings, savedPercent: Number(((savings / totalBaselineCalls) * 100).toFixed(1)) },
-      unnecessaryCalls: { baseline: totalBaselineUnnecessary, clinch: totalClinchUnnecessary },
-      firstActionableRounds: { baseline: baselineActionable, clinch: clinchActionable, saved: baselineActionable - clinchActionable },
-      baselinePolicy: "fixed spot-structure then perp-positioning; call each family when its fixture is fresh; no hinge/skip/stop reasoning",
-      clinchPolicy: "production kernel selection with dependency-aware skip/stop and frozen simulated outcomes",
-    }, null, 2));
-    expect(savings).toBeGreaterThan(0);
+      covered: covered.length,
+      blindspots: blindspots.length,
+      baselineCalls: totalBaselineCalls,
+      clinchCalls: totalClinchCalls,
+      baselineUnnecessary: totalBaselineUnnecessary,
+      clinchUnnecessary: totalClinchUnnecessary,
+      baselineFirstActionable: sum(baselineFirstActionable),
+      clinchFirstActionable: sum(clinchFirstActionable),
+    }).toEqual({
+      scenarios: 30,
+      covered: 22,
+      blindspots: 0,
+      baselineCalls: 54,
+      clinchCalls: 25,
+      baselineUnnecessary: 31,
+      clinchUnnecessary: 2,
+      baselineFirstActionable: 54,
+      clinchFirstActionable: 22,
+    });
   });
 });
 
@@ -227,10 +233,10 @@ describe("P16 adversarial matrix", () => {
   });
 
   it("marks an unsupported research family as unsupported instead of calling it", () => {
-    const candidate: Candidate = { id: "q-unsupported", topic: "unsupported", families: ["news-briefing"], branches: [{ outcome: "found", action: "enter-now" }, { outcome: "missing", action: "wait" }] };
+    const candidate: Candidate = { id: "q-unsupported", topic: "unsupported", families: ["unsupported-family"], branches: [{ outcome: "found", action: "enter-now" }, { outcome: "missing", action: "wait" }] };
     const out = decide({ id: "unsupported", action: "enter-now", candidates: [candidate] }, initialState("undecided", {}));
     expect(out.action).toBe("CANNOT_RESOLVE");
-    expect(out.skips).toContainEqual(expect.objectContaining({ family: "news-briefing", kind: "unsupported" }));
+    expect(out.skips).toContainEqual(expect.objectContaining({ family: "unsupported-family", kind: "unsupported" }));
   });
 
   it("falls back to deterministic intent when the model tier is unavailable", async () => {

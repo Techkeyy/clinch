@@ -6,7 +6,7 @@ import type { Candidate } from "./kernel";
 
 export interface RawFacts {
   action: string; read: string;
-  spot: Record<string, string>; positioning: Record<string, string>; events: Record<string, string>;
+  spot: Record<string, string>; positioning: Record<string, string>;
   data: Record<string, string>; resolved: string[];
 }
 interface Outcome { key: string; label: string; enter: string; exit: string; terminal?: boolean }
@@ -49,7 +49,7 @@ const TEMPLATES: Template[] = [
       return [`funding=${s.positioning.funding}/oi=${s.positioning.oi}`];
     },
     question: "Does leveraged crowding change the timing of this action?",
-    why: "Crowded positioning can flip entry timing around catalysts and events.",
+    why: "Crowded positioning can flip entry timing around the decision point.",
     outcomes: [
       { key: "crowded", label: "extreme crowding", enter: "wait", exit: "exit-now" },
       { key: "calm", label: "normal positioning", enter: "enter-now", exit: "wait" },
@@ -134,12 +134,12 @@ export function compileSemantics(raw: RawFacts): CompiledPackage {
     derivation.push(`prior settlement passed through: ${topic}`);
   }
   if (questions.filter((q) => !q.resolved).length === 0 && raw.read === "undecided") {
-    questions.push({ id: "q-unknown-cause", topic: "unknown-cause",
-      q: "Is there any verifiable cause to act on?", families: [], prunes: [],
-      dataNeeded: "fresh evidence family + verifiable event communication",
+    questions.push({ id: "q-unresolved-market", topic: "unresolved-market-question",
+      q: "Is there enough supported market evidence to act on?", families: [], prunes: [],
+      dataNeeded: "fresh spot structure or stock-perp positioning evidence",
       branches: [
-        { outcome: "verified cause found", action: raw.action === "exit-now" ? "wait" : "enter-now" },
-        { outcome: "nothing verifiable", action: "wait" },
+        { outcome: "supported market evidence found", action: raw.action === "exit-now" ? "wait" : "enter-now" },
+        { outcome: "no supported market evidence", action: "wait" },
       ] });
     derivation.push("T-UNRESOLVED fired (nothing else matched, read undecided)");
   }

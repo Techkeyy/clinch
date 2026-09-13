@@ -29,7 +29,7 @@ describe("domain schema foundation", () => {
   it("restricts research families to the two proven ones", () => {
     expect(ResearchFamily.safeParse("spot-structure").success).toBe(true);
     expect(ResearchFamily.safeParse("perp-positioning").success).toBe(true);
-    expect(ResearchFamily.safeParse("news-briefing").success).toBe(false);
+    expect(ResearchFamily.safeParse("unsupported-family").success).toBe(false);
   });
   it("keeps no-data and negative evidence as distinct types", () => {
     const missing = NoData.parse({ kind: "no-data", reason: "orderbook unavailable" });

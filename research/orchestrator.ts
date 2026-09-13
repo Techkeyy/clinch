@@ -16,7 +16,6 @@ export interface MarketFacts {
     lastVolume?: number | null; last?: number | null };
   perp?: { fundingRate?: number | null; openInterest?: number | null;
     markIndexDislocationBps?: number | null; perpMovePcnt?: number | null };
-  events?: { catalyst?: string };
 }
 export function factsToRaw(base: {
   action: string; read: string; asset: string; context: string;
@@ -49,7 +48,7 @@ export function factsToRaw(base: {
   }
   return {
     action: base.action, read: base.read, spot: drift, positioning: pos,
-    events: { catalyst: f.events?.catalyst ?? "none" },
+
     data: base.data, resolved: base.resolved,
   };
 }

@@ -60,8 +60,8 @@ describe("perp-positioning executor", () => {
 
 describe("research registry", () => {
   it("rejects unregistered families instead of executing them", () => {
-    expect(() => assertSupportedFamily("news-briefing")).toThrowError(BitgetError);
-    expect(() => assertSupportedFamily("news-briefing")).toThrowError(/not registered/);
+    expect(() => assertSupportedFamily("unsupported-family")).toThrowError(BitgetError);
+    expect(() => assertSupportedFamily("unsupported-family")).toThrowError(/not registered/);
     expect(() => assertSupportedFamily("spot-structure")).not.toThrow();
   });
 });
