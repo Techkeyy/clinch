@@ -6,7 +6,7 @@
 - **Intended Track:** AI Trading Desk
 - **Intended Submission Lane:** Open Theme
 - **Current Phase:** P20 Owner Manual UAT
-- **Current Phase Status:** NOT STARTED
+- **Current Phase Status:** UAT READY
 - **Current Overall Product Status:** BUILDING
 - **Last Verified Timestamp:** 2026-09-13T19:53:42+01:00
 - **P1 Evidence:** `P1_HACKATHON_ONBOARDING.md` (researched 2026-09-11)
@@ -27,6 +27,7 @@
 - **P17 Evidence:** product audit (INTEGRATION PROVEN: mechanical checks green, product-facing scope and security claims reconciled, Next root warning resolved, no tracked build artifacts or secrets). See `P17_PRODUCT_AUDIT.md`.
 - **P18 Evidence:** production integration proven: real Neon schema and persistence contract, Bitget-sponsored Qwen Chat Completions adapter, encrypted Vercel production variables, HTTPS deployment, security headers, normal production Bitget flow, secure owner cookie, persistence, refresh, recent history, delete, and stranger isolation. See `P18_PRODUCTION_VERIFICATION.md`.
 - **P19 Evidence:** clean-user production E2E proven: fresh public desktop and mobile contexts completed the real supported flow with Qwen intent, Bitget baseline/research, Hinge, truthful live STOP/SKIP behavior, final brief, refresh restoration, recent history, second-browser isolation, and deletion. P20 owner UAT remains intentionally unperformed.
+- **P20 Evidence:** owner UX failure was treated as a real product defect. The workspace was redesigned around the locked P8 journey, verified locally and through fresh public desktop/mobile browser checks, committed as 4bba265, and redeployed to the public URL. Owner manual UAT is now ready and remains unperformed.
 
 ---
 

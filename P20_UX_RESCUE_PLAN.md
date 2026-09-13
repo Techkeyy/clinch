@@ -26,3 +26,18 @@ Keep one calm research workspace. Make the user journey visible in this order:
 ## Visual direction
 
 Paper surface, ink typography, serif judgment moments, restrained petrol action color, hairline separators, generous spacing, no dashboard chrome, no gradients, no decorative metrics, and no color-only status meaning. The mobile layout is a single readable column with thumb-reachable actions and no horizontal overflow.
+
+## Verification
+
+Date: 2026-09-13
+
+- npm run typecheck: PASS.
+- npm run lint: PASS.
+- npm test: PASS, 11 files, 109 tests passed, 4 expected skips.
+- npm run build: PASS locally and on Vercel.
+- Fresh local DOM checks at 1280px and 390px: heading, decision label, primary action, recent link, 50px CTA, 136px input, no horizontal overflow, no visible long-dash copy.
+- Fresh public HTTPS checks at desktop and mobile: same first-open contract, no horizontal overflow, no visible long-dash copy.
+- Fresh public supported entry dilemma: one Decision Hinge rendered, one live finding rendered, explicit stop rendered, final brief saved, and the probe was deleted through the owner UI. Browser journey duration was 33.6 seconds.
+- A separate fresh public supported dilemma reached a saved brief in about 18 seconds without error. The live kernel did not expose a Hinge for that market state, which was left truthful rather than forced.
+
+The next gate is owner manual UAT. P21 and later phases remain untouched.
