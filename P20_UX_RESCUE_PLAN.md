@@ -127,3 +127,17 @@ Typography-pass proof is stored under `proof/typography-pass/`:
 - `clinch-app-completed-mobile.png`
 
 Local verification passed: typecheck, lint, Vitest with 109 passed and 4 skipped, production build, design-skill UI audit with zero long-dash errors and zero small-text warnings, focused desktop browser smoke, focused mobile browser smoke, font-loaded checks, and no horizontal overflow at 1440px or 390px. The completed App fixture rendered the final brief and truthful STOP at both widths.
+
+Deployment and public verification:
+
+- Typography commit: `1b3249f`
+- Vercel deployment: `dpl_GKxff1ENw41xVazNf28EeTSoRTwg`
+- Production target: `READY`
+- Production alias: `https://clinch-nine.vercel.app`
+- Public desktop and mobile audits observed Inter weights 400, 500, 600, 700, and 800 loaded before inspection.
+- Public desktop metrics matched the audit at 48px hero, 30px section title, 17.5px body, 14px navigation, and 13px buttons.
+- Public mobile metrics matched the audit at 32px hero and 15px body.
+- Public Dashboard and App navigation worked with `#dashboard` and `#app` hash synchronization.
+- Public desktop and mobile renders had no horizontal overflow.
+
+The final handoff remains P20 owner UAT REQUIRED. Do not continue to P21.
