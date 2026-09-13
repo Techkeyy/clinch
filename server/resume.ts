@@ -2,7 +2,7 @@ import type { LoopInput } from "./flow";
 
 // Persisted-state shape the retry route reconstructs a resume from. Deliberately
 // a subset: only what the server persisted, never UI-derived input, so a stream
-// disconnect can never erase completed work — resume seeds from this state.
+// disconnect can never erase completed work. Resume seeds from this state.
 export interface SavedResumeState {
   intent: { asset: string; action: string };
   spotSymbol: string | null;

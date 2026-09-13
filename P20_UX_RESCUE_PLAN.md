@@ -89,3 +89,41 @@ Fresh public browser smoke timings:
 The live run used the current production path and reached a final brief through a truthful `NO-CAPABLE-FAMILY` STOP because the current market context did not establish a capable research family. No live SKIP was forced and no hinge or finding was invented. Refresh restored the decision and progress state. The smoke found no console errors, native dialogs, horizontal overflow, or long-dash UI copy. The owner cookie was observed with HttpOnly, Secure, SameSite=Lax, and Path=/ flags. Rendered-page and local-storage checks found no secret-name leakage.
 
 The required owner boundary remains unchanged: P20 UX restructure is complete, P20 owner manual UAT is required and unperformed, and P21 has not started.
+
+## Final typography-only pass
+
+Date: 2026-09-14
+
+The Owner accepted the current CLINCH layout, Dashboard/App structure, colors, interactions, backend, and component architecture. This pass changes typography only. No navigation destination, content architecture, research logic, provider, persistence, or market-data behavior changed.
+
+Live JustFair computed-style audit:
+
+- Public stylesheet loads Inter at weights 400, 500, 600, 700, and 800 through Google Fonts.
+- JetBrains Mono is reserved for technical values and is not used for ordinary prose.
+- Desktop hero: Inter 800, 48px, 1.15 line-height, -0.035em tracking, approximately 650px text width.
+- Mobile hero: Inter 800, 32px, 1.15 line-height, -0.035em tracking.
+- Section title: Inter 700, 30px, -0.025em tracking, with the reference's open 1.6 line rhythm.
+- Card title: Inter 700, 18px, 1.35 line-height.
+- Body: Inter 400, 17.5px desktop and 15px mobile, with comfortable 1.5 to 1.58 line-height.
+- Navigation: Inter 500, 14px, normal tracking. Active navigation uses weight 600.
+- Compact buttons: Inter 600, 13px.
+- Eyebrows and labels: uppercase Inter 700, approximately 11px, restrained tracking around 0.06em.
+
+CLINCH mapping:
+
+- Dashboard and App display headings now use the Inter display face and reference scale.
+- Section headings use the reference's Inter hierarchy instead of the prior Georgia display face.
+- Body, metadata, navigation, labels, buttons, result values, final brief headings, and evidence details now share the same Inter type system.
+- Inter is loaded through `next/font/google` with the public weights required by the interface and `display: swap`.
+- Existing CLINCH colors, layout, component boundaries, URLs, interactions, and state hierarchy remain unchanged.
+
+Typography-pass proof is stored under `proof/typography-pass/`:
+
+- `clinch-dashboard-desktop.png`
+- `clinch-dashboard-mobile.png`
+- `clinch-app-desktop.png`
+- `clinch-app-mobile.png`
+- `clinch-app-completed-desktop.png`
+- `clinch-app-completed-mobile.png`
+
+Local verification passed: typecheck, lint, Vitest with 109 passed and 4 skipped, production build, design-skill UI audit with zero long-dash errors and zero small-text warnings, focused desktop browser smoke, focused mobile browser smoke, font-loaded checks, and no horizontal overflow at 1440px or 390px. The completed App fixture rendered the final brief and truthful STOP at both widths.

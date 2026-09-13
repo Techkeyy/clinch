@@ -1,4 +1,14 @@
 :root {
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: var(--font-sans);
+  --font-display: var(--font-sans);
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --text-hero: 48px;
+  --text-section: 30px;
+  --text-card-title: 18px;
+  --text-body: 16px;
+  --text-label: 11px;
+  --text-meta: 13px;
   --paper: #f7f8f5;
   --surface: #ffffff;
   --surface-soft: #eef3f0;
@@ -27,8 +37,8 @@ html { background: var(--paper); }
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 15px;
+  font-family: var(--font-body);
+  font-size: var(--text-body);
   line-height: 1.55;
 }
 button, textarea { font: inherit; }
@@ -38,7 +48,7 @@ a:focus-visible, button:focus-visible, textarea:focus-visible, summary:focus-vis
   outline: 3px solid #dfad2d;
   outline-offset: 3px;
 }
-.display { font-family: Georgia, "Times New Roman", serif; font-weight: 600; }
+.display { font-family: var(--font-display); font-weight: 800; }
 .app-shell { max-width: var(--shell); margin: 0 auto; padding: 0 32px; }
 .site-header {
   display: grid;
@@ -455,4 +465,157 @@ a:focus-visible, button:focus-visible, textarea:focus-visible, summary:focus-vis
   .result-block:first-child { border-top: 0; }
   .result-value { margin: 12px 0 7px; }
   .result-hinge-question { margin: 12px 0 10px; }
+}
+
+/* Typography-only pass. The reference uses one public sans family throughout,
+   with hierarchy coming from weight, scale, tracking, and line rhythm. */
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: 1.6;
+  font-synthesis: none;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.eyebrow {
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: .06em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.wordmark { font-size: 13px; font-weight: 700; letter-spacing: .08em; }
+.wordmark-button span { font-size: 13px; font-weight: 500; letter-spacing: 0; }
+.header-context { font-size: 13px; line-height: 1.5; }
+.header-link { font-size: 14px; font-weight: 500; line-height: 1.6; }
+
+.mode-link,
+.text-nav-link {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: normal;
+}
+
+.mode-link.is-active { font-weight: 600; }
+
+.header-cta,
+.cta-primary,
+.button-secondary,
+.market-chip,
+.choice-button {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.dashboard-title {
+  max-width: 650px;
+  font-family: var(--font-display);
+  font-size: clamp(40px, 3.34vw, var(--text-hero));
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -.035em;
+}
+
+.dashboard-lede {
+  max-width: 540px;
+  font-size: 17.5px;
+  line-height: 1.58;
+}
+
+.dashboard-section-title {
+  max-width: 680px;
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: -.025em;
+}
+
+.value-card h3,
+.step-row h3 {
+  font-size: var(--text-card-title);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.value-card p,
+.step-row p {
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.section-intro-split > p,
+.trust-copy > p,
+.dashboard-cta > p:not(.eyebrow) {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.method-flow strong { font-size: 15px; font-weight: 700; line-height: 1.35; }
+.proof-live { font-size: 11px; font-weight: 700; letter-spacing: .06em; }
+.hero-proof-line { font-size: 16px; line-height: 1.5; }
+.hero-proof-line strong { font-size: 11px; font-weight: 700; letter-spacing: .06em; }
+
+.app-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -.025em;
+}
+
+.app-subtitle { font-size: 14px; font-weight: 600; line-height: 1.5; }
+.app-surface .hero-question { font-size: var(--text-section); font-weight: 700; line-height: 1.25; letter-spacing: -.025em; }
+.app-surface .hero-support { font-size: 16px; line-height: 1.5; }
+.input-label { font-size: 13px; font-weight: 600; line-height: 1.4; }
+.input-box { font-size: 16px; line-height: 1.6; }
+.input-meta, .example-label, .market-picker-note { font-size: 13px; line-height: 1.5; }
+.market-chip { font-size: 13px; }
+
+.section-title {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -.02em;
+}
+
+.progress-steps li { font-size: 12px; line-height: 1.4; }
+.result-value, .read-value, .brief-read-value { font-family: var(--font-display); font-weight: 800; letter-spacing: -.02em; }
+.result-value { font-size: 26px; line-height: 1.1; }
+.result-hinge-question { font-family: var(--font-display); font-size: 26px; font-weight: 800; line-height: 1.15; letter-spacing: -.02em; }
+.result-note, .hinge-explanation, .brief-decision { font-size: 14px; line-height: 1.5; }
+.hinge-question, .stop-title { font-family: var(--font-display); font-size: 26px; font-weight: 800; line-height: 1.15; letter-spacing: -.02em; }
+.finding-family, .finding-provenance, .context-metric-label, .context-metric-note, .provenance-line { font-size: 12px; line-height: 1.4; }
+.finding-summary { font-size: 15px; line-height: 1.5; }
+.skip-title { font-size: var(--text-card-title); font-weight: 700; line-height: 1.35; }
+.brief-title { font-family: var(--font-display); font-size: 30px; font-weight: 700; line-height: 1.25; letter-spacing: -.025em; }
+.brief-section h3 { font-size: 15.5px; font-weight: 700; line-height: 1.3; }
+.source-list, .fact-list { font-size: 13px; line-height: 1.5; }
+.state-tag { font-size: 11px; font-weight: 700; letter-spacing: .05em; }
+.completed-list span { font-size: 12px; font-weight: 600; }
+.button-plain, .quiet-danger, .quiet-button, .trade-details summary, .audit-trail summary { font-size: 13px; font-weight: 600; line-height: 1.5; }
+.body-text { font-size: 16px; line-height: 1.5; }
+.secondary-text { font-size: 14px; line-height: 1.5; }
+.micro-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; }
+.product-foot { font-size: 12px; line-height: 1.5; }
+
+@media (max-width: 640px) {
+  .dashboard-title { max-width: 100%; font-size: 32px; line-height: 1.15; letter-spacing: -.035em; }
+  .dashboard-lede { font-size: 15px; line-height: 1.58; }
+  .dashboard-section-title { font-size: 30px; line-height: 1.6; letter-spacing: -.025em; }
+  .section-intro-split > p, .trust-copy > p, .dashboard-cta > p:not(.eyebrow) { font-size: 15px; line-height: 1.5; }
+  .app-title { font-size: 32px; }
+  .app-surface .hero-question { font-size: 26px; line-height: 1.25; }
+  .app-surface .hero-support { font-size: 15px; line-height: 1.58; }
+  .section-title { font-size: 22px; line-height: 1.3; }
+  .result-hinge-question, .hinge-question, .stop-title { font-size: 22px; }
+  .brief-title { font-size: 26px; }
+  .body-text { font-size: 15px; line-height: 1.58; }
 }

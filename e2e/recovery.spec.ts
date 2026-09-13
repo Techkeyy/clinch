@@ -4,7 +4,7 @@ import { STALE_RUN_MS } from "../config/thresholds";
 
 // P15 browser recovery gate. Exactly ONE live Bitget loop (serial, shared sid);
 // everything else is API contexts or synthetic intercepted fixtures (labeled as
-// such inline — fixtures test rendering/hydration logic, never live evidence).
+// such inline fixture checks test rendering/hydration logic, never live evidence).
 test.describe.serial("CLINCH recovery", () => {
   let sid = "";
   let ownerCookie: {
