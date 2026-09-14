@@ -124,10 +124,15 @@ function identityTerms(stock: StockIdentityData): string[] {
   ].map(cleanWords).filter(Boolean);
 }
 
+function termsOverlap(term: string, query: string): boolean {
+  if (term.includes(query)) return true;
+  return term.length >= 2 && query.length >= 2 && query.includes(term);
+}
+
 export function stockMatchesQuery(stock: StockIdentityData, query: string): boolean {
   const q = cleanWords(query);
   if (!q) return true;
-  return identityTerms(stock).some((term) => term.includes(q) || q.includes(term));
+  return identityTerms(stock).some((term) => termsOverlap(term, q));
 }
 
 export function findStockByMention<T extends StockIdentityData>(mention: string | null | undefined, stocks: T[]): T | null {
@@ -136,7 +141,7 @@ export function findStockByMention<T extends StockIdentityData>(mention: string 
   if (!q) return null;
   const exact = stocks.find((stock) => identityTerms(stock).some((term) => term === q));
   if (exact) return exact;
-  return stocks.find((stock) => identityTerms(stock).some((term) => term.includes(q) || q.includes(term))) ?? null;
+  return stocks.find((stock) => identityTerms(stock).some((term) => termsOverlap(term, q))) ?? null;
 }
 
 export function normalTickerLabel(stock: StockIdentityData): string {
