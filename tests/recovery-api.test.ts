@@ -43,6 +43,8 @@ const CANDLES = { code: "00000", msg: "ok", data: [
   ["1789149600000", "218.60", "218.70", "218.10", "218.20", "6610618.0", "1451144945.0"],
 ] };
 const DEPTH = { code: "00000", msg: "ok", data: { a: [["218.60", 0.4]], b: [["218.00", 0.5]], ts: "1789167781492" } };
+const SPOT_INSTRUMENTS = { code: "00000", msg: "ok", data: [{ symbol: "RNVDAUSDT", category: "SPOT", status: "online", isReality: "yes" }] };
+const FUT_INSTRUMENTS = { code: "00000", msg: "ok", data: [{ symbol: "NVDAUSDT", category: "USDT-FUTURES", symbolType: "stock", isRwa: "YES" }] };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyMod = any;
@@ -101,6 +103,8 @@ function rowCountForKey(key: string): number {
 beforeAll(async () => {
   const perp = { code: "00000", msg: "ok", data: [fx("perp-nvda.json")] };
   stubFetch({
+    "/instruments?category=SPOT": SPOT_INSTRUMENTS,
+    "/instruments?category=USDT-FUTURES": FUT_INSTRUMENTS,
     "/tickers?category=SPOT": WIDE_TICKER,
     "/tickers?category=USDT-FUTURES": perp,
     "/candles?": CANDLES,
@@ -217,6 +221,7 @@ describe("stale resume through the real retry route", () => {
     expect(resumed.status).toBe(200);
     const body = await resumed.text();
     expect(body).toContain("brief");
+    expect(body).toContain(staleId);
 
     // Completed spot family was never re-fetched: no spot-symbol calls at all.
     expect(fetchCalls.some((u) => u.includes("RNVDAUSDT"))).toBe(false);
@@ -237,6 +242,7 @@ describe("version conflict through the real continue route", () => {
     await started.text();
     const s = await store.findByIdempotencyKey(key);
     expect(s.status).toBe("clarifying");
+    expect(s.stateVersion).toBe(1);
     const v = s.stateVersion;
     const payload = { sessionId: s.id, expectedVersion: v, text: "I want to enter RNVDA for a swing" };
     const [a, b] = await Promise.all([
@@ -255,6 +261,29 @@ describe("version conflict through the real continue route", () => {
     const steps = await store.getSteps(s.id);
     const hinges = steps.filter((x: { kind: string }) => x.kind === "hinge").map((x: { requestSummary: string | null }) => x.requestSummary);
     expect(new Set(hinges).size).toBe(hinges.length);
+  }, 60000);
+});
+
+describe("Research Again creates a new session while history remains readable", () => {
+  it("completed or reopened history does not reuse its CAS target", async () => {
+    const oldKey = `research-again-old-${Date.now()}`;
+    const oldStart = await StartPOST(jsonReq("/api/research/start", { dilemma: AMBIGUOUS, idempotencyKey: oldKey }));
+    await oldStart.text();
+    const old = await store.findByIdempotencyKey(oldKey);
+    const completed = await store.compareAndSet(old.id, old.stateVersion, {
+      status: "stopped", read: "holding-off", brief: { decision: "Saved historical brief" },
+    });
+    expect(completed?.status).toBe("stopped");
+
+    const newKey = `research-again-new-${Date.now()}`;
+    const fresh = await StartPOST(jsonReq("/api/research/start", { dilemma: RNVDA_ENTER, idempotencyKey: newKey }));
+    expect(fresh.status).toBe(200);
+    await fresh.text();
+    const next = await store.findByIdempotencyKey(newKey);
+    expect(next.id).not.toBe(old.id);
+    expect(next.stateVersion).toBeGreaterThanOrEqual(0);
+    expect((await store.getSession(old.id))?.status).toBe("stopped");
+    expect((await store.getSession(next.id))?.id).toBe(next.id);
   }, 60000);
 });
 

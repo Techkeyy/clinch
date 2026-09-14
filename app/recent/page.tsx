@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { readRecentIds } from "@/lib/recent";
+import { StockIdentity } from "@/components/stock-identity";
+import { displayStockFromMention, type StockIdentityData } from "@/lib/stocks";
 
-interface RecentItem { id: string; asset: string; decision: string; read: string; status: string; updatedAt: string }
+interface RecentItem { id: string; stock: StockIdentityData | null; decision: string; read: string; status: string; updatedAt: string }
 
 function shortDate(iso: string): string {
   const d = new Date(iso);
@@ -33,10 +35,11 @@ export default function RecentPage() {
           const res = await fetch("/api/session?id=" + encodeURIComponent(id));
           if (!res.ok) continue;
           const j = await res.json();
-          const st = (j.session?.state ?? {}) as { intent?: { asset?: string; decisionQuestion?: string } };
+          const st = (j.session?.state ?? {}) as { intent?: { asset?: string; resolvedSymbol?: string; decisionQuestion?: string }; spotSymbol?: string };
+          const stock = displayStockFromMention(st.spotSymbol ?? st.intent?.resolvedSymbol ?? st.intent?.asset, []);
           out.push({
             id,
-            asset: String(st.intent?.asset ?? "Decision"),
+            stock,
             decision: String(st.intent?.decisionQuestion ?? "Research session").slice(0, 100),
             read: readLabel(String(j.session?.read ?? "Still evaluating")),
             status: String(j.session?.status ?? ""),
@@ -78,7 +81,7 @@ export default function RecentPage() {
               <article className="recent-row" key={item.id}>
                 <div className="recent-row-main">
                   <p className="eyebrow">{item.status === "stopped" ? "COMPLETED RESEARCH" : "SAVED RESEARCH"}</p>
-                  <h2 className="recent-asset display">{item.asset}</h2>
+                  {item.stock ? <StockIdentity stock={item.stock} size="lg" /> : <h2 className="recent-asset display">Decision</h2>}
                   <p className="recent-decision">{item.decision}</p>
                 </div>
                 <div className="recent-row-read"><span className="secondary-text">Current read</span><strong>{item.read}</strong>{item.updatedAt && <span className="secondary-text">{shortDate(item.updatedAt)}</span>}</div>

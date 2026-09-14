@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getStore } from "@/server/db";
 import { readOwner, ownsSession } from "@/server/auth";
 import { sseEncode, sseResponse, sameOrigin } from "@/server/stream";
-import { parseIntentFlow, driveLoop, assembleBrief } from "@/server/flow";
+import { parseIntentFlow, resolveAsset, driveLoop, assembleBrief } from "@/server/flow";
 import { RESEARCH_LOOP_CAP } from "@/config/thresholds";
 import { modelConfigured } from "@/model/provider";
 import { qwenProvider } from "@/model/qwen";
@@ -58,11 +58,21 @@ export async function POST(req: Request) {
   const intent = await parseIntentFlow(combined, model);
   st.intent = intent as unknown as typeof st.intent;
   if (intent.clarificationNeeded || intent.action === "unclear") {
-    await store.compareAndSet(row.id, row.stateVersion, { state: st as unknown as Record<string, unknown> });
-    return Response.json({ session: snap({ ...row, state: st }), clarify: intent.clarificationQuestion });
+    const clarified = await store.compareAndSet(row.id, row.stateVersion, { intent, state: st as unknown as Record<string, unknown> });
+    if (!clarified) {
+      const current = await store.getSession(row.id);
+      return Response.json({ error: "VERSION_CONFLICT", session: current ? snap(current) : null }, { status: 409 });
+    }
+    return Response.json({ session: snap(clarified), clarify: intent.clarificationQuestion });
   }
+  const resolved = await resolveAsset(intent.asset).catch(() => ({ spot: null, perp: null, ticker: null, companyName: null, universe: 0 }));
+  if (!resolved.spot) return Response.json({ error: "UNSUPPORTED_ASSET", session: snap(row) }, { status: 422 });
+  const canonicalIntent = { ...intent, asset: resolved.ticker ?? intent.asset, resolvedSymbol: resolved.spot };
+  st.intent = canonicalIntent as unknown as typeof st.intent;
+  st.spotSymbol = resolved.spot;
+  st.perpSymbol = resolved.perp;
   // Atomic run claim: only one loop may own this session version.
-  const claimed = await store.compareAndSet(row.id, row.stateVersion, { status: "researching" });
+  const claimed = await store.compareAndSet(row.id, row.stateVersion, { status: "researching", intent: st.intent, state: st as unknown as Record<string, unknown> });
   if (!claimed) {
     const current = await store.getSession(row.id);
     return Response.json({ error: "VERSION_CONFLICT", session: current ? snap(current) : null }, { status: 409 });
@@ -75,7 +85,7 @@ export async function POST(req: Request) {
       try {
         send("session", { session: snap(claimed) });
         const finalSt = await driveLoop(row.id, {
-          asset: intent.asset, spotSymbol: st.spotSymbol ?? "", perpSymbol: st.perpSymbol,
+          asset: canonicalIntent.asset, spotSymbol: st.spotSymbol ?? "", perpSymbol: st.perpSymbol,
           action: intent.action, read: "undecided", resolvedTopics: [],
           facts: (st.facts ?? {}) as import("@/research/orchestrator").MarketFacts,
           data: { "spot-structure": "fresh", "perp-positioning": "fresh" },
@@ -90,7 +100,7 @@ export async function POST(req: Request) {
           },
           maxIterations: RESEARCH_LOOP_CAP,
         });
-        const brief = assembleBrief({ intent, read: finalSt.read,
+        const brief = assembleBrief({ intent: canonicalIntent, read: finalSt.read,
           hingeHistory: finalSt.hingeHistory, skips: finalSt.skips, uncertainty: finalSt.uncertainty }, st.spotSymbol);
         const after = await store.getSession(row.id);
         await store.compareAndSet(row.id, after!.stateVersion, {

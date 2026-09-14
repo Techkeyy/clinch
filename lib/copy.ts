@@ -5,7 +5,7 @@ export const COPY = {
   heroSupport:
     "CLINCH finds the unanswered question most capable of changing your decision, researches it with live Bitget data, and stops when more research is unlikely to matter.",
   inputPlaceholder:
-    "Example: rNVDA fell hard after the close. I am thinking of buying the dip. Real opportunity or wait?",
+    "Example: NVIDIA fell hard after the close. I am thinking of buying the dip. Real opportunity or wait?",
   inputLabel: "Describe the trade you are considering",
   ctaCheck: "Find the Decision Hinge",
   trustLine: "CLINCH researches the decision. It does not place trades.",

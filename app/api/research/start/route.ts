@@ -113,21 +113,21 @@ export async function POST(req: Request) {
         if (intent.clarificationNeeded || intent.action === "unclear") {
           const st = stateOf(created);
           st.intent = intent;
-          await store.compareAndSet(sessionId, created.stateVersion, { intent, status: "clarifying", state: st as unknown as Record<string, unknown> });
-          send("clarify", { question: intent.clarificationQuestion ?? "What are you deciding? Tell me the asset and whether you are considering entering, exiting, or waiting." });
+          const clarified = await store.compareAndSet(sessionId, created.stateVersion, { intent, status: "clarifying", state: st as unknown as Record<string, unknown> });
+          send("clarify", { stateVersion: clarified?.stateVersion ?? created.stateVersion, question: intent.clarificationQuestion ?? "What are you deciding? Tell me the asset and whether you are considering entering, exiting, or waiting." });
           finish();
           return;
         }
         if (!intent.asset || intent.asset === "unknown") {
-          await failSession(store, sessionId, "clarify", "No asset found. Tell me which asset, such as RNVDA, and what you are considering.");
-          send("clarify", { question: "Which asset are you considering? For example: RNVDA." });
+          await failSession(store, sessionId, "clarify", "No stock found. Tell me which stock and what you are considering.");
+          send("clarify", { question: "Which stock are you considering? Search supported stocks or describe it in your own words." });
           finish();
           return;
         }
-        const resolved = await resolveAsset(intent.asset, undefined).catch(() => ({ spot: null, perp: null, universe: 0 }));
+        const resolved = await resolveAsset(intent.asset, undefined).catch(() => ({ spot: null, perp: null, ticker: null, companyName: null, universe: 0 }));
         if (!resolved.spot) {
-          await failSession(store, sessionId, "failed", `UNSUPPORTED_ASSET: ${intent.asset} is not a currently supported Reality instrument.`);
-          send("error", { code: "UNSUPPORTED_ASSET", message: `${intent.asset} is not a currently supported Reality instrument. Try RNVDA.` });
+          await failSession(store, sessionId, "failed", "The requested stock is not currently available from Bitget's Reality market data.");
+          send("error", { code: "UNSUPPORTED_ASSET", message: "That stock is not currently available to research from Bitget's Reality market data. Try searching supported stocks or describe another stock." });
           finish();
           return;
         }
@@ -138,12 +138,12 @@ export async function POST(req: Request) {
           return;
         }
         const st = stateOf(rowNow);
-        st.intent = { ...intent, resolvedSymbol: resolved.spot };
+        st.intent = { ...intent, asset: resolved.ticker ?? intent.asset, resolvedSymbol: resolved.spot };
         st.spotSymbol = resolved.spot;
         st.perpSymbol = resolved.perp;
-        await store.compareAndSet(sessionId, (await store.getSession(sessionId))!.stateVersion,
+        const intentSaved = await store.compareAndSet(sessionId, (await store.getSession(sessionId))!.stateVersion,
           { intent: st.intent, status: "context", state: st as unknown as Record<string, unknown> });
-        send("intent", { intent: st.intent, spotSymbol: resolved.spot, perpSymbol: resolved.perp });
+        send("intent", { intent: st.intent, spotSymbol: resolved.spot, perpSymbol: resolved.perp, stateVersion: intentSaved?.stateVersion });
 
         const base = await establishBaseline(resolved.spot, resolved.perp, undefined);
         st.facts = base.facts as unknown as Record<string, unknown>;
@@ -151,11 +151,11 @@ export async function POST(req: Request) {
         await store.appendStep({ sessionId, ord: 0, kind: "baseline", family: null,
           requestSummary: `baseline ${resolved.spot}`, resultSummary: { facts: base.facts, problems: base.problems },
           provenance: base.evidence.map((e) => (e as { provenance: unknown }).provenance) });
-        send("baseline", { facts: base.facts, problems: base.problems });
         const researching = await store.getSession(sessionId);
-        if (researching) {
-          await store.compareAndSet(sessionId, researching.stateVersion, { status: "researching" });
-        }
+        const researchingSaved = researching
+          ? await store.compareAndSet(sessionId, researching.stateVersion, { status: "researching" })
+          : null;
+        send("baseline", { facts: base.facts, problems: base.problems, stateVersion: researchingSaved?.stateVersion });
 
         const runState = {
           asset: st.intent.asset, spotSymbol: st.spotSymbol as string, perpSymbol: st.perpSymbol,

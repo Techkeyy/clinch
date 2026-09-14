@@ -141,3 +141,35 @@ Deployment and public verification:
 - Public desktop and mobile renders had no horizontal overflow.
 
 The final handoff remains P20 owner UAT REQUIRED. Do not continue to P21.
+
+## Targeted P20 correction pass
+
+Date: 2026-09-14
+
+The Owner inspection correction pass preserves the accepted Dashboard plus App structure, typography, colors, research kernel, Qwen adapter, Neon persistence, streaming contract, session ownership, and normal Bitget REST path.
+
+Stock universe and naming:
+
+- The old three-chip list is replaced by a dynamic `/api/stocks` route backed by Bitget's official SPOT instruments endpoint and the existing CLINCH spot research capability. Online Reality symbols are the live universe; optional stock-perp mapping is derived only when the discovered RWA futures instrument exists.
+- Search accepts company name, normal ticker, and Bitget rToken ticker. The deterministic extractor now recognizes common company names as well as ticker forms, while the server canonicalizes the resolved intent to the normal ticker and keeps raw exchange symbols in server state and validated research adapters.
+- A single `StockIdentity` component renders the company name, normal ticker, secondary `Bitget rToken · rTICKER` explanation, local recognizable issuer mark, or a stable monogram fallback. It is used in stock search results, examples, selected decisions, parsed result state, live context, Hinge, findings, final brief, and Recent research.
+
+Version conflict correction:
+
+- Root cause: the start clarification transition performed a compare-and-set from version 0 to version 1, but the stream's clarify event did not carry the new version. The browser then submitted the answer with a stale expected version.
+- Fix: clarification JSON and stream events return the authoritative post-CAS version; the client consumes version fields from every stream event and JSON response. Clarified intents are resolved and persisted before the same-session run claim.
+- Research Again now clears the old session locator, resets the client CAS target, and creates a fresh idempotency key. Historical completed or reopened sessions remain readable in Recent research. Retry remains same-session for failed or stale interrupted work.
+
+Verification completed locally:
+
+- `npm run typecheck`: PASS.
+- `npm run lint`: PASS.
+- `npm test -- --run`: PASS, 114 tests passed and 4 expected skips.
+- Production build: PASS, including `/api/stocks`.
+- Design-skill UI audit: PASS, zero long-dash errors, zero small-text warnings, zero copy warnings.
+- Desktop and mobile focused browser smoke: PASS with no horizontal overflow.
+- Fixture-backed P20 browser regressions: PASS on desktop and mobile for searchable stock identity and completed-session Research Again isolation.
+
+P14 status remains CUT / DEFERRED. The current official Bitget REST documentation describes user-created API keys with read-only or read/write permission configuration, plus separate trade, transfer, and withdrawal capabilities. It does not provide a clean delegated browser authorization flow for this product surface. CLINCH therefore keeps the original guest and public-data core, adds no credential form, adds no connection button, and requests no trading or withdrawal permission. A later P14 reopening would require an official permission-scoped delegated flow, server-side token handling, revocation, and a separate owner authorization decision. Reference: https://www.bitget.com/docs/classic/rest-api.
+
+P20 remains OWNER UAT REQUIRED. P21 remains untouched.

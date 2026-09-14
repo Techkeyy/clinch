@@ -3,8 +3,9 @@ import { compileSemantics, type RawFacts } from "../domain/semantics";
 import { extractIntent, toIntentContract } from "../domain/intent";
 import type { IntentContract } from "../domain/types";
 import { LOGIC_VERSION, RESEARCH_LOOP_CAP } from "../config/thresholds";
-import { discoverSpot, discoverFutures, realitySymbols, mapSpotToPerp } from "../research/bitget/index";
+import { discoverSpot, discoverFutures } from "../research/bitget/index";
 import type { FetchImpl } from "../research/bitget/client";
+import { findStockByMention, researchableRealityStocks } from "../lib/stocks";
 import { investigateSpot, investigatePositioning } from "../research/index";
 import { needForTopic, classifyFinding, factsToRaw, type MarketFacts } from "../research/orchestrator";
 import { renderStructuredBrief, HUMAN_DEC_LINE, type BriefSections } from "../brief/index";
@@ -73,15 +74,24 @@ export async function parseIntentFlow(dilemma: string, model?: ModelProvider | n
 }
 
 /** Resolve a user asset mention to a canonical Reality spot symbol via live discovery. */
-export async function resolveAsset(mention: string | null, fetchImpl?: FetchImpl): Promise<{ spot: string | null; perp: string | null; universe: number }> {
-  if (!mention) return { spot: null, perp: null, universe: 0 };
-  const [spot, fut] = await Promise.all([discoverSpot(fetchImpl), discoverFutures(fetchImpl)]);
-  const reality = realitySymbols(spot);
-  const norm = mention.toUpperCase();
-  const candidates = norm.endsWith("USDT") ? [norm] : [`${norm}USDT`, `R${norm}USDT`];
-  const hit = candidates.find((c) => reality.includes(c)) ?? null;
-  const perp = hit ? mapSpotToPerp(hit, spot, fut) : null;
-  return { spot: hit, perp, universe: reality.length };
+export async function resolveAsset(mention: string | null, fetchImpl?: FetchImpl): Promise<{ spot: string | null; perp: string | null; ticker: string | null; companyName: string | null; universe: number }> {
+  if (!mention) return { spot: null, perp: null, ticker: null, companyName: null, universe: 0 };
+  const spot = await discoverSpot(fetchImpl);
+  let fut = [] as Awaited<ReturnType<typeof discoverFutures>>;
+  try {
+    fut = await discoverFutures(fetchImpl);
+  } catch {
+    // The spot research path remains truthful if optional futures discovery is unavailable.
+  }
+  const stocks = researchableRealityStocks(spot, fut);
+  const hit = findStockByMention(mention, stocks);
+  return {
+    spot: hit?.realityTicker ?? null,
+    perp: hit?.perpTicker ?? null,
+    ticker: hit?.ticker ?? null,
+    companyName: hit?.companyName ?? null,
+    universe: stocks.length,
+  };
 }
 
 export interface BriefInput {

@@ -10,7 +10,13 @@ const ACTION_RULES: { re: RegExp; action: "enter-now" | "exit-now" | "wait" | "s
   { re: /\b(wait|hold off|delay|stand by|sit out|pause|not yet|should i wait)\b/i, action: "wait" },
   { re: /\b(stand aside|stay away|avoid|skip this|do nothing)\b/i, action: "stand-aside" },
 ];
-const SYMBOL_RES = [/\b(R[A-Z]{2,8}(USDT)?)\b/i, /\b([A-Z]{2,6}USDT)\b/i, /\b([A-Z]{3,10}COIN)\b/i, /\b(NVDA|TSLA|AAPL|AMD|MSFT|META|SPY|QQQ)\b/i];
+const SYMBOL_RES = [
+  /\b(R[A-Z]{2,8}(USDT)?)\b/i,
+  /\b([A-Z]{2,8}USDT)\b/i,
+  /\b([A-Z]{3,10}COIN)\b/i,
+  /\b(NVDA|TSLA|AAPL|AMD|MSFT|META|SPY|QQQ|AMZN|GOOGL|GOOG|AVGO|COIN|INTC|NFLX|ORCL|PLTR|QCOM|SHOP|V|WMT)\b/i,
+  /\b(NVIDIA|TESLA|APPLE|MICROSOFT|AMAZON|ALPHABET|GOOGLE|FACEBOOK|INTEL|NETFLIX|ORACLE|PALANTIR|QUALCOMM|SHOPIFY|VISA|WALMART|BROADCOM|COINBASE|SPDR|INVESCO|ADVANCED MICRO DEVICES)\b/i,
+];
 
 export interface RawIntent {
   assetMention: string | null;
