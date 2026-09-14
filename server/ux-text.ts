@@ -1,5 +1,55 @@
 // Deterministic user-facing presentation text (P8 copy, capability-truth audited).
 // No model, no jargon, no scores, no long dashes. Unit-tested.
+export type TerminalKind = "stopped" | "unresolved";
+export type TerminalReasonCode =
+  | "NO_CAPABLE_FAMILY"
+  | "NO_ANSWERABLE_HINGE"
+  | "EXECUTOR_UNAVAILABLE"
+  | "RESEARCH_UNAVAILABLE"
+  | "ITERATION_CAP"
+  | "NO_REMAINING_VALUE"
+  | "INCOMPLETE";
+
+/** Convert internal kernel reasons into a bounded diagnostic code. */
+export function terminalReasonCode(internalReason: string): TerminalReasonCode {
+  const reason = internalReason.toUpperCase();
+  if (reason.includes("NO-CAPABLE-FAMILY") || reason.includes("NO_CAPABLE_FAMILY")) return "NO_CAPABLE_FAMILY";
+  if (reason.includes("NO EXECUTOR") || reason.includes("NO EXECUTABLE") || reason.includes("NO CORRESPONDING PERP")) return "EXECUTOR_UNAVAILABLE";
+  if (reason.includes("DATA MISSING") || reason.includes("RETURNED NO-DATA") || reason.includes("EVIDENCE WAS UNAVAILABLE")) return "RESEARCH_UNAVAILABLE";
+  if (reason.includes("ITERATION CAP")) return "ITERATION_CAP";
+  if (reason.includes("NO UNRESOLVED FLIPPABLE HINGE")) return "NO_REMAINING_VALUE";
+  if (reason.includes("NOT ESTABLISHED") || reason.includes("NO ANSWERABLE")) return "NO_ANSWERABLE_HINGE";
+  return "INCOMPLETE";
+}
+
+export function userUnresolvedReason(code: TerminalReasonCode, assetLabel?: string | null): string {
+  const asset = assetLabel ? ` for ${assetLabel}` : "";
+  switch (code) {
+    case "NO_CAPABLE_FAMILY":
+    case "NO_ANSWERABLE_HINGE":
+      return `CLINCH established live context${asset}, but none of its supported research paths can answer the remaining decision question right now.`;
+    case "EXECUTOR_UNAVAILABLE":
+      return `CLINCH identified a decision question${asset}, but the required supported market path or instrument was unavailable.`;
+    case "RESEARCH_UNAVAILABLE":
+      return `CLINCH identified a decision question${asset}, but the supporting market evidence was unavailable. No unavailable result was treated as evidence.`;
+    case "ITERATION_CAP":
+      return `CLINCH could not complete the remaining research${asset} within this run. The decision remains unresolved.`;
+    case "INCOMPLETE":
+      return `CLINCH could not establish an answerable research path${asset}. The decision remains unresolved.`;
+    case "NO_REMAINING_VALUE":
+      return "CLINCH answered the relevant research question. The checks still available are unlikely to materially change this read.";
+  }
+}
+
+export function userSkipReason(kind: string): string {
+  switch (kind) {
+    case "resolved": return "This check was already settled by earlier evidence.";
+    case "no-data": return "This check was unavailable because its supporting market evidence was missing.";
+    case "unsupported": return "This check is not supported for this instrument.";
+    case "cannot-matter": return "This check was not expected to change the current read.";
+    default: return "This check was not used in the final read.";
+  }
+}
 export const TOPIC_WHY: Record<string, string> = {
   "move-reality":
     "If the move is mostly a thin-liquidity print, entering now is a different decision from buying real selling pressure.",
@@ -62,5 +112,5 @@ export function cleanVerdict(s: string): string {
 export function userStopReason(internalWhy: string, residueEmpty: boolean): string {
   void internalWhy;
   void residueEmpty;
-  return "CLINCH is stopping here. The checks still available are unlikely to change this read.";
+  return "CLINCH answered the relevant research question. The checks still available are unlikely to materially change this read.";
 }

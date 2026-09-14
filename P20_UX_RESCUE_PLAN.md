@@ -183,6 +183,36 @@ P14 status remains CUT / DEFERRED. The current official Bitget REST documentatio
 
 P20 remains OWNER UAT REQUIRED. P21 remains untouched.
 
+## P20 research-semantics correction
+
+Date: 2026-09-14
+
+Owner UAT exposed a release-blocking semantic failure in the selected NVIDIA path. The submitted wait-before-entry intent was compiled with action=wait, but the Reality structure templates only accepted enter-now. Calm funding also did not qualify for the positioning template. The compiler therefore emitted only the empty-family fallback candidate and the kernel correctly reported that no capable family could answer it. The bug was the eligibility gate, not a missing Bitget instrument or a reason to force research.
+
+The correction keeps the deterministic kernel authoritative:
+
+- wait is treated as entry timing for Reality move and structure questions;
+- resolved identity carries company name, normal ticker, Reality spot symbol, optional RWA perp symbol, and live instrument count;
+- family availability follows resolved instruments, so a missing perp mapping is missing, never optimistically fresh;
+- start, continue, retry, and refresh carry explicit stopped or unresolved terminal state;
+- user copy is mapped centrally and does not render NO-CAPABLE-FAMILY, flippable, or executor/compiler language;
+- an unresolved result shows Not established instead of the generic Hinge placeholder;
+- progress distinguishes Could not establish an answerable Hinge, Research not run or Research incomplete, and Return an unresolved brief;
+- deliberate STOP remains separate and is used only after supported evidence has been researched.
+
+Regression coverage includes the frozen Owner NVDA wording, NVIDIA identity mapping, capable spot-family selection, a true no-capable-family terminal, deliberate STOP, unresolved brief copy, and fixture browser proof.
+
+Final public proof:
+
+- Vercel deployment dpl_x9G5EpGAZk9VoTfxFZXrv7GpY1HR is READY and aliased to https://clinch-nine.vercel.app.
+- A fresh public desktop run selected NVIDIA, submitted text without a ticker, resolved NVDA / RNVDAUSDT / NVDAUSDT, received live baseline, selected spot-structure, produced one finding, deliberately stopped, and produced the final brief.
+- Final public decision summary: Considering whether to wait before entering NVDA.
+- Sanitized event proof: proof/p20-research-semantics/public-nvidia.json.
+- Screenshot proof: proof/p20-research-semantics/public-nvidia.png.
+- No local DNS pin, hardcoded Bitget IP, TLS bypass, SQLite, fixture interception, or terminal intervention was used.
+
+P20 research-semantics correction is complete. P21 remains untouched. Owner UAT remains the next human action.
+
 Production correction deployment:
 
 - Correction commits: `a225971` (`fix: use verified stock brand marks`) and `b2a7f23` (`fix: ignore short ticker substrings in search`).

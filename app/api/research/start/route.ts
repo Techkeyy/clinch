@@ -6,7 +6,7 @@ import { getStore } from "@/server/db";
 import { readOwner, mintOwner, ownsSession, verifierFor } from "@/server/auth";
 import { checkStartLimits, trustedNetworkSource } from "@/server/rate";
 import { sseEncode, sseResponse, sameOrigin } from "@/server/stream";
-import { parseIntentFlow, resolveAsset, assembleBrief, driveLoop } from "@/server/flow";
+import { parseIntentFlow, resolveAsset, assetIdentity, capabilityData, assembleBrief, driveLoop } from "@/server/flow";
 import type { IntentContract } from "@/domain/types";
 import { establishBaseline } from "@/research/orchestrator";
 import { modelConfigured, type ModelProvider } from "@/model/provider";
@@ -139,11 +139,12 @@ export async function POST(req: Request) {
         }
         const st = stateOf(rowNow);
         st.intent = { ...intent, asset: resolved.ticker ?? intent.asset, resolvedSymbol: resolved.spot };
+        st.assetIdentity = assetIdentity(resolved);
         st.spotSymbol = resolved.spot;
         st.perpSymbol = resolved.perp;
         const intentSaved = await store.compareAndSet(sessionId, (await store.getSession(sessionId))!.stateVersion,
           { intent: st.intent, status: "context", state: st as unknown as Record<string, unknown> });
-        send("intent", { intent: st.intent, spotSymbol: resolved.spot, perpSymbol: resolved.perp, stateVersion: intentSaved?.stateVersion });
+        send("intent", { intent: st.intent, assetIdentity: st.assetIdentity, spotSymbol: resolved.spot, perpSymbol: resolved.perp, stateVersion: intentSaved?.stateVersion });
 
         const base = await establishBaseline(resolved.spot, resolved.perp, undefined);
         st.facts = base.facts as unknown as Record<string, unknown>;
@@ -161,7 +162,7 @@ export async function POST(req: Request) {
           asset: st.intent.asset, spotSymbol: st.spotSymbol as string, perpSymbol: st.perpSymbol,
           action: st.intent.action, read: "undecided",
           resolvedTopics: [] as string[], facts: base.facts,
-          data: { "spot-structure": "fresh", "perp-positioning": "fresh" },
+          data: capabilityData(st.spotSymbol, st.perpSymbol),
           context: st.intent.timeframeContext, known: [] as string[],
         };
         let ord = 10;
@@ -176,8 +177,9 @@ export async function POST(req: Request) {
         });
         Object.assign(st, { read: finalSt.read, resolvedTopics: finalSt.resolvedTopics, facts: finalSt.facts,
           skips: finalSt.skips, uncertainty: [...st.uncertainty, ...finalSt.uncertainty],
-          hingeHistory: finalSt.hingeHistory, stopReason: finalSt.stopReason });
-        const brief = assembleBrief({ ...st, intent: st.intent }, st.spotSymbol);
+          hingeHistory: finalSt.hingeHistory, stopReason: finalSt.stopReason,
+          terminal: finalSt.terminal, terminalReasonCode: finalSt.terminalReasonCode });
+        const brief = assembleBrief({ ...st, intent: st.intent, terminal: finalSt.terminal!, terminalReasonCode: finalSt.terminalReasonCode! }, st.spotSymbol);
         let polished: string | null = null;
         if (model) {
           const sections: Record<string, string> = {
@@ -190,7 +192,7 @@ export async function POST(req: Request) {
             if (r.ok) { polished = r.value; break; }
           }
         }
-        const terminal = finalSt.read === "cannot-resolve" ? "unresolved" : "stopped";
+        const terminal = finalSt.terminal!;
         const after = await store.getSession(sessionId);
         await store.compareAndSet(sessionId, after!.stateVersion, {
           status: terminal, read: finalSt.read === "cannot-resolve" ? "cannot-resolve" : mapRead(finalSt.read),
@@ -200,7 +202,8 @@ export async function POST(req: Request) {
         send("brief", { brief: { ...brief, polishedText: polished, polished: polished !== null }, status: terminal });
         finish();
       } catch (e) {
-        send("error", { code: "FAILED", message: e instanceof Error ? e.message : "Research failed." });
+        await failSession(store, sessionId, "failed", "Research could not complete. Your saved state is preserved; try again.");
+        send("error", { code: "FAILED", message: "Research could not complete. Your saved state is preserved; try again." });
         try { controller.close(); } catch { /* already closed */ }
       }
     },
@@ -212,16 +215,19 @@ function initialFlowState(dilemma: string) {
   return { dilemma, intent: null, read: "undecided", resolvedTopics: [], facts: {},
     skips: [], uncertainty: [], hingeHistory: [], stopReason: null, briefStatus: "none",
     spotSymbol: null, perpSymbol: null, context: "", known: [], clarificationRound: 0,
-    data: { "spot-structure": "fresh", "perp-positioning": "fresh" } };
+    data: { "spot-structure": "missing", "perp-positioning": "missing" },
+    assetIdentity: null, terminal: null, terminalReasonCode: null };
 }
 interface FlowStateShape {
-  dilemma: string; intent: IntentContract | null; read: string;
+  dilemma: string; intent: IntentContract | null; assetIdentity: import("@/server/flow").AssetIdentity | null; read: string;
   resolvedTopics: string[]; facts: Record<string, unknown>;
   skips: { check: string; reason: string }[]; uncertainty: string[];
-  hingeHistory: { hinge: string; verdict: string }[]; stopReason: string | null;
+  hingeHistory: { hinge: string; topic?: string | null; question?: string | null; verdict: string }[]; stopReason: string | null;
   briefStatus: string; spotSymbol: string | null; perpSymbol: string | null;
   context: string; known: string[]; clarificationRound: number;
   data: Record<string, string>;
+  terminal: import("@/server/ux-text").TerminalKind | null;
+  terminalReasonCode: import("@/server/ux-text").TerminalReasonCode | null;
 }
 function stateOf(row: { state: unknown }) {
   return row.state as unknown as FlowStateShape;

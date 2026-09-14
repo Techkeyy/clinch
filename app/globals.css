@@ -143,9 +143,13 @@ a:focus-visible, button:focus-visible, textarea:focus-visible, summary:focus-vis
 .progress-steps li { display: flex; align-items: flex-start; gap: 8px; color: var(--quiet); font-size: 12px; line-height: 1.35; }
 .progress-steps li.is-done, .progress-steps li.is-active { color: var(--ink); }
 .progress-steps li.is-active { font-weight: 700; }
+.progress-steps li.is-unavailable { color: var(--amber); }
+.progress-steps li.is-skipped { color: var(--quiet); }
 .step-marker { flex: 0 0 19px; width: 19px; height: 19px; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--petrol); font-size: 12px; line-height: 17px; text-align: center; }
 .is-done .step-marker { background: var(--petrol-wash); border-color: var(--petrol); }
 .is-active .step-marker { border: 2px solid var(--petrol); }
+.is-unavailable .step-marker { border-color: var(--amber); color: var(--amber); background: var(--amber-wash); }
+.is-skipped .step-marker { border-style: dashed; color: var(--quiet); }
 .decision-summary { display: grid; grid-template-columns: 140px 1fr auto; align-items: center; gap: 22px; padding: 22px; }
 .decision-asset { font-size: 28px; line-height: 1; margin: 0; }
 .decision-copy { border-left: 1px solid var(--line); padding-left: 22px; }

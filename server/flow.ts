@@ -9,7 +9,11 @@ import { findStockByMention, researchableRealityStocks } from "../lib/stocks";
 import { investigateSpot, investigatePositioning } from "../research/index";
 import { needForTopic, classifyFinding, factsToRaw, type MarketFacts } from "../research/orchestrator";
 import { renderStructuredBrief, HUMAN_DEC_LINE, type BriefSections } from "../brief/index";
-import { TOPIC_WHY, TOPIC_CHANGES, summarizeSpotFinding, summarizePerpFinding, userStopReason } from "./ux-text";
+import {
+  TOPIC_WHY, TOPIC_CHANGES, summarizeSpotFinding, summarizePerpFinding,
+  terminalReasonCode, userSkipReason, userStopReason, userUnresolvedReason,
+  type TerminalKind, type TerminalReasonCode,
+} from "./ux-text";
 import type { ModelProvider } from "../model/provider";
 import type { SessionStore } from "../persistence/store";
 
@@ -29,22 +33,33 @@ export interface LoopInput {
   baselineProblems?: string[];
   skips?: { check: string; reason: string; kind?: string }[];
   uncertainty?: string[];
-  hingeHistory?: { hinge: string; topic?: string | null; verdict: string }[];
+  hingeHistory?: { hinge: string; topic?: string | null; question?: string | null; verdict: string }[];
   stopReason?: string | null;
+}
+export interface AssetIdentity {
+  companyName: string | null;
+  normalTicker: string | null;
+  realityTicker: string | null;
+  perpSymbol: string | null;
+  universe: number;
 }
 export interface LoopState {
   read: string; resolvedTopics: string[]; facts: MarketFacts;
   skips: { check: string; reason: string; kind: string }[]; uncertainty: string[];
-  hingeHistory: { hinge: string; topic?: string | null; verdict: string }[]; stopReason: string | null;
+  hingeHistory: { hinge: string; topic?: string | null; question?: string | null; verdict: string }[]; stopReason: string | null;
+  terminal: TerminalKind | null;
+  terminalReasonCode: TerminalReasonCode | null;
+  terminalInternalReason: string | null;
 }
 export interface FlowState {
   intent: IntentContract | null;
+  assetIdentity: AssetIdentity | null;
   read: string;
   resolvedTopics: string[];
   facts: MarketFacts;
   skips: { check: string; reason: string; kind: string }[];
   uncertainty: string[];
-  hingeHistory: { hinge: string; topic?: string | null; verdict: string }[];
+  hingeHistory: { hinge: string; topic?: string | null; question?: string | null; verdict: string }[];
   stopReason: string | null;
   briefStatus: "none" | "ready";
   spotSymbol: string | null;
@@ -53,6 +68,8 @@ export interface FlowState {
   known: string[];
   clarificationRound: number;
   data: Record<string, string>;
+  terminal: TerminalKind | null;
+  terminalReasonCode: TerminalReasonCode | null;
 }
 export const READ_LABEL: Record<string, string> = {
   "enter-now": "Leaning in", wait: "Holding off", "stand-aside": "Standing aside",
@@ -94,29 +111,60 @@ export async function resolveAsset(mention: string | null, fetchImpl?: FetchImpl
   };
 }
 
+export function assetIdentity(resolved: Awaited<ReturnType<typeof resolveAsset>>): AssetIdentity {
+  return {
+    companyName: resolved.companyName,
+    normalTicker: resolved.ticker,
+    realityTicker: resolved.spot,
+    perpSymbol: resolved.perp,
+    universe: resolved.universe,
+  };
+}
+
+/** Research-family availability follows resolved instruments, not optimistic UI flags. */
+export function capabilityData(spotSymbol: string | null, perpSymbol: string | null): Record<string, string> {
+  return {
+    "spot-structure": spotSymbol ? "fresh" : "missing",
+    "perp-positioning": perpSymbol ? "fresh" : "missing",
+  };
+}
+
 export interface BriefInput {
   intent: IntentContract | null; read: string;
-  hingeHistory: { hinge: string; topic?: string | null; verdict: string }[];
+  hingeHistory: { hinge: string; topic?: string | null; question?: string | null; verdict: string }[];
   skips: { check: string; reason: string; kind?: string }[]; uncertainty: string[];
+  terminal: TerminalKind; terminalReasonCode: TerminalReasonCode;
 }
 export function assembleBrief(state: BriefInput, spotSymbol: string | null): BriefSections {
   const clean = (s: string) => s.split("::")[0].replace(/\s*\[[a-z-]+\]/gi, " ").replace(/\s{2,}/g, " ").trim().replace(/[.]+$/, "") + ".";
-  const actionWords = (a: string | undefined) =>
-    a === "enter-now" ? "entering" : a === "exit-now" ? "exiting" : a === "wait" ? "waiting" : a === "stand-aside" ? "standing aside" : "acting";
+  const asset = state.intent?.asset ?? spotSymbol ?? "this stock";
+  const decision = state.intent?.action === "wait"
+    ? `Considering whether to wait before entering ${asset}.`
+    : state.intent?.action === "enter-now" ? `Considering a ${asset} entry now.`
+      : state.intent?.action === "exit-now" ? `Considering whether to exit ${asset}.`
+        : state.intent?.action === "stand-aside" ? `Considering whether to stay out of ${asset}.`
+          : `Considering a decision about ${asset}.`;
   const findings = state.hingeHistory.map((h) => clean(h.verdict));
+  const lastTopic = state.hingeHistory[state.hingeHistory.length - 1]?.topic ?? null;
+  const completed = state.hingeHistory.map((h) => h.question ?? "Supported market evidence check");
+  const unresolvedWhy = userUnresolvedReason(state.terminalReasonCode, asset);
+  const why = state.terminal === "unresolved"
+    ? unresolvedWhy
+    : state.hingeHistory.length ? clean(state.hingeHistory[state.hingeHistory.length - 1].verdict) : userStopReason("", true);
+  const changeTriggers = state.terminal === "unresolved"
+    ? (lastTopic && TOPIC_CHANGES[lastTopic] ? [TOPIC_CHANGES[lastTopic]] : ["A supported research path capable of answering the remaining decision question becomes available."])
+    : (lastTopic && TOPIC_CHANGES[lastTopic] ? [TOPIC_CHANGES[lastTopic]] : ["No remaining supported check is expected to materially change this read."]);
   return {
-    decision: `Considering ${actionWords(state.intent?.action)} on ${state.intent?.asset ?? spotSymbol ?? "unknown asset"}`,
+    terminalStatus: state.terminal,
+    terminalReasonCode: state.terminalReasonCode,
+    decision,
     read: READ_LABEL[state.read] ?? state.read,
-    why: state.hingeHistory.length ? clean(state.hingeHistory[state.hingeHistory.length - 1].verdict) : "No research completed.",
+    why,
     findings,
-    completed: state.hingeHistory.map((h) => h.hinge),
+    completed,
     skipped: state.skips.filter((s) => s.kind !== "resolved").map((s) => ({ check: s.check, reason: s.reason })),
     openQuestions: state.uncertainty,
-    changeTriggers: state.read === "wait" || state.read === "holding-off"
-      ? ["Sustained stabilization with healthy liquidity", "Positioning normalizing while structure holds"]
-      : state.read === "stand-aside"
-        ? ["Structural repair with expanding healthy volume", "Calm positioning confirmed over time"]
-        : ["New relevant evidence from live market structure or positioning"],
+    changeTriggers,
     freshness: `Observed during this session; re-check for current data.`,
     sources: ["Bitget Reality market data", "Bitget stock-perp positioning"],
     disclaimer: `${HUMAN_DEC_LINE} Research support only, not financial advice.`,
@@ -139,6 +187,9 @@ export async function driveLoop(
     uncertainty: [...(input.uncertainty ?? [])],
     hingeHistory: (input.hingeHistory ?? []).map((h) => ({ ...h })),
     stopReason: input.stopReason ?? null,
+    terminal: null,
+    terminalReasonCode: null,
+    terminalInternalReason: null,
   };
   let iters = 0;
   const seenSkips = new Set<string>();
@@ -153,8 +204,13 @@ export async function driveLoop(
   };
   for (;;) {
     if (iters >= maxIterations) {
-      acc.stopReason = "Iteration cap reached; stopping explicitly incomplete rather than fabricating completion.";
+      acc.terminal = "unresolved";
+      acc.terminalReasonCode = "ITERATION_CAP";
+      acc.terminalInternalReason = "Iteration cap reached; stopping explicitly incomplete rather than fabricating completion.";
+      acc.stopReason = userUnresolvedReason("ITERATION_CAP", input.asset);
       acc.uncertainty.push(acc.stopReason);
+      await deps.persistStep("stop", null, { terminal: acc.terminal, reasonCode: acc.terminalReasonCode, internalReason: acc.terminalInternalReason }, null);
+      emit({ type: "stop", data: { reason: acc.stopReason, cannotResolve: true, terminal: acc.terminal, reasonCode: acc.terminalReasonCode } });
       break;
     }
     const raw: RawFacts = factsToRaw({
@@ -172,7 +228,7 @@ export async function driveLoop(
     const scen = { id: "live", action: input.action, candidates: pkg.candidates };
     const out = decide(scen, kstate);
     for (const s of out.skips) {
-      if (!acc.skips.some((x) => x.check === s.family)) acc.skips.push({ check: s.family, reason: s.reason, kind: s.kind });
+      if (!acc.skips.some((x) => x.check === s.family)) acc.skips.push({ check: s.family, reason: userSkipReason(s.kind), kind: s.kind });
     }
     emitSkips(acc.skips.filter((s) => s.kind !== "resolved"));
     if (out.action === "RESEARCH" && out.hinge) {
@@ -181,7 +237,14 @@ export async function driveLoop(
       await deps.persistStep("hinge", out.family, { hinge: q.id, question: q.q, why: out.why }, null);
       const need = needForTopic(q.topic);
       if (!need || (need.family === "perp-positioning" && !input.perpSymbol)) {
-        acc.uncertainty.push("Selected hinge has no executable research mapping or instrument.");
+        const internalReason = !need ? "No executor mapping for selected hinge topic." : "No corresponding perp instrument for positioning hinge.";
+        acc.terminal = "unresolved";
+        acc.terminalReasonCode = "EXECUTOR_UNAVAILABLE";
+        acc.terminalInternalReason = internalReason;
+        acc.stopReason = userUnresolvedReason(acc.terminalReasonCode, input.asset);
+        acc.uncertainty.push(acc.stopReason);
+        await deps.persistStep("stop", null, { terminal: acc.terminal, reasonCode: acc.terminalReasonCode, internalReason }, null);
+        emit({ type: "stop", data: { reason: acc.stopReason, cannotResolve: true, terminal: acc.terminal, reasonCode: acc.terminalReasonCode } });
         break;
       }
       emit({ type: "research", data: { hinge: q.id, family: need.family } });
@@ -192,7 +255,7 @@ export async function driveLoop(
         { hinge: q.id, status: research.status, facts: research.facts },
         research.evidence.map((e) => e.provenance));
       if (research.status !== "ok") {
-        acc.uncertainty.push(`${need.family} returned ${research.status}; treated as unavailable, never as evidence.`);
+        acc.uncertainty.push(userUnresolvedReason("RESEARCH_UNAVAILABLE", input.asset));
         acc.resolvedTopics.push(q.topic ?? q.id);
         iters++;
         continue;
@@ -215,32 +278,51 @@ export async function driveLoop(
           if (mq?.topic && !acc.resolvedTopics.includes(mq.topic)) acc.resolvedTopics.push(mq.topic);
         }
         if (br.action !== "undecided") acc.read = br.action;
-        acc.hingeHistory.push({ hinge: q.id, topic: q.topic ?? null, verdict: `${outcome} :: read now ${acc.read}` });
+        acc.hingeHistory.push({ hinge: q.id, topic: q.topic ?? null, question: q.q ?? null, verdict: `${outcome} :: read now ${acc.read}` });
       } else {
-        acc.uncertainty.push(`Finding on ${q.topic ?? "unknown"} did not clearly match a branch; read unchanged.`);
-        acc.hingeHistory.push({ hinge: q.id, topic: q.topic ?? null, verdict: "inconclusive; read unchanged" });
+        acc.uncertainty.push("The selected market check returned evidence, but it did not resolve the decision question.");
+        acc.hingeHistory.push({ hinge: q.id, topic: q.topic ?? null, question: q.q ?? null, verdict: "inconclusive; read unchanged" });
         acc.resolvedTopics.push(q.topic ?? q.id);
       }
       iters++;
       continue;
     }
     if (out.action === "STOP") {
+      acc.terminal = "stopped";
+      acc.terminalReasonCode = "NO_REMAINING_VALUE";
+      acc.terminalInternalReason = out.why;
       acc.stopReason = userStopReason(out.why, true);
-      await deps.persistStep("stop", null, { reason: out.why }, null);
-      emit({ type: "stop", data: { reason: acc.stopReason } });
+      await deps.persistStep("stop", null, { terminal: acc.terminal, reasonCode: acc.terminalReasonCode, internalReason: out.why }, null);
+      emit({ type: "stop", data: { reason: acc.stopReason, terminal: acc.terminal, reasonCode: acc.terminalReasonCode } });
       break;
     }
     if (out.action === "CANNOT_RESOLVE") {
-      acc.uncertainty.push(out.why);
+      const code = terminalReasonCode(out.why);
+      acc.terminal = "unresolved";
+      acc.terminalReasonCode = code;
+      acc.terminalInternalReason = out.why;
       acc.read = "cannot-resolve";
-      emit({ type: "stop", data: { reason: out.why, cannotResolve: true } });
+      acc.stopReason = userUnresolvedReason(code, input.asset);
+      acc.uncertainty.push(acc.stopReason);
+      await deps.persistStep("stop", null, { terminal: acc.terminal, reasonCode: code, internalReason: out.why }, null);
+      emit({ type: "stop", data: { reason: acc.stopReason, cannotResolve: true, terminal: acc.terminal, reasonCode: code } });
       break;
     }
     if (out.action === "CLARIFY") {
+      acc.terminal = "unresolved";
+      acc.terminalReasonCode = "NO_ANSWERABLE_HINGE";
+      acc.terminalInternalReason = out.why;
+      acc.stopReason = userUnresolvedReason(acc.terminalReasonCode, input.asset);
       emit({ type: "clarify", data: { question: "What are you deciding? Tell me the asset and whether you are considering entering, exiting, or waiting." } });
       break;
     }
     break;
+  }
+  if (!acc.terminal) {
+    acc.terminal = "unresolved";
+    acc.terminalReasonCode = "INCOMPLETE";
+    acc.terminalInternalReason = "Research loop ended without a terminal decision.";
+    acc.stopReason = userUnresolvedReason("INCOMPLETE", input.asset);
   }
   return acc;
 }

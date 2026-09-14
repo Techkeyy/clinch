@@ -1,6 +1,8 @@
 // Structured brief assembly from authoritative state FIRST; model wording
 // polish is optional and can never add evidence. Truth lives in state.
 export interface BriefSections {
+  terminalStatus: "stopped" | "unresolved";
+  terminalReasonCode: string;
   decision: string;
   read: string;
   why: string;

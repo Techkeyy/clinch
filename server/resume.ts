@@ -1,4 +1,4 @@
-import type { LoopInput } from "./flow";
+import { capabilityData, type LoopInput } from "./flow";
 
 // Persisted-state shape the retry route reconstructs a resume from. Deliberately
 // a subset: only what the server persisted, never UI-derived input, so a stream
@@ -32,7 +32,7 @@ export function buildResumeInput(st: SavedResumeState): LoopInput {
     read: st.read === "cannot-resolve" ? "undecided" : st.read,
     resolvedTopics: [...new Set([...st.resolvedTopics, ...completedTopics])],
     facts: JSON.parse(JSON.stringify(st.facts ?? {})),
-    data: { "spot-structure": "fresh", "perp-positioning": "fresh" },
+    data: capabilityData(st.spotSymbol, st.perpSymbol),
     context: st.context ?? "",
     known: [...(st.known ?? [])],
     skips: (st.skips ?? []).map((s) => ({ ...s })),

@@ -20,7 +20,11 @@ const inSet = (v: string | undefined, xs: string[]) => !!v && xs.includes(v);
 const TEMPLATES: Template[] = [
   { id: "T-REALITY", topic: "move-reality", family: "spot-structure",
     when: (s) => {
-      if (s.action !== "enter-now") return null;
+      // Waiting before an entry is still an entry-timing decision. The user
+      // may have selected the stock first and intentionally omitted the
+      // ticker from the visible sentence, so do not drop Reality structure
+      // questions merely because the contemplated action is wait.
+      if (!["enter-now", "wait"].includes(s.action)) return null;
       if (!["sharp-up-20min", "spike"].includes(s.spot.move ?? "")) return null;
       if (!(s.spot.book === "thin" || s.spot.spread === "wide")) return null;
       return [`action=${s.action}`, `spot.move=${s.spot.move}`, `book=${s.spot.book}/spread=${s.spot.spread}`];
@@ -33,7 +37,7 @@ const TEMPLATES: Template[] = [
     ] },
   { id: "T-STRUCT", topic: "structure-direction", family: "spot-structure",
     when: (s) => {
-      if (!["enter-now", "exit-now"].includes(s.action)) return null;
+      if (!["enter-now", "wait", "exit-now"].includes(s.action)) return null;
       if (!(s.spot.drift === "down-quiet" || ["holding", "broken", "testing"].includes(s.spot.support ?? ""))) return null;
       return [`action=${s.action}`, `drift=${s.spot.drift}/support=${s.spot.support}`];
     },

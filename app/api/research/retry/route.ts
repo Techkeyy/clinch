@@ -45,8 +45,10 @@ export async function POST(req: Request) {
     intent: import("@/domain/types").IntentContract | null;
     read: string; resolvedTopics: string[]; facts: Record<string, unknown>;
     skips: { check: string; reason: string; kind?: string }[]; uncertainty: string[];
-    hingeHistory: { hinge: string; topic?: string | null; verdict: string }[];
+    hingeHistory: { hinge: string; topic?: string | null; question?: string | null; verdict: string }[];
     spotSymbol: string | null; perpSymbol: string | null; context: string; known: string[]; stopReason?: string | null;
+    terminal?: import("@/server/ux-text").TerminalKind | null;
+    terminalReasonCode?: import("@/server/ux-text").TerminalReasonCode | null;
     retries?: number;
   };
   if ((st.retries ?? 0) >= MAX_STEP_RETRIES) {
@@ -84,24 +86,34 @@ export async function POST(req: Request) {
           maxIterations: RESEARCH_LOOP_CAP,
         });
         const brief = assembleBrief({ intent, read: finalSt.read,
-          hingeHistory: finalSt.hingeHistory, skips: finalSt.skips, uncertainty: finalSt.uncertainty }, st.spotSymbol);
+          hingeHistory: finalSt.hingeHistory, skips: finalSt.skips, uncertainty: finalSt.uncertainty,
+          terminal: finalSt.terminal!, terminalReasonCode: finalSt.terminalReasonCode! }, st.spotSymbol);
         const after = await store.getSession(row.id);
         await store.compareAndSet(row.id, after!.stateVersion, {
-          status: finalSt.read === "cannot-resolve" ? "unresolved" : "stopped",
-          read: finalSt.read,
+          status: finalSt.terminal!,
+          read: finalSt.read === "cannot-resolve" ? "cannot-resolve" : mapRead(finalSt.read),
           state: { ...st, read: finalSt.read, resolvedTopics: finalSt.resolvedTopics, facts: finalSt.facts,
             skips: finalSt.skips, uncertainty: finalSt.uncertainty, hingeHistory: finalSt.hingeHistory,
-            stopReason: finalSt.stopReason, retries: (st.retries ?? 0) + 1 },
+            stopReason: finalSt.stopReason, retries: (st.retries ?? 0) + 1,
+            terminal: finalSt.terminal, terminalReasonCode: finalSt.terminalReasonCode },
           brief: { ...brief, polishedText: null, polished: false },
         });
-        send("brief", { brief: { ...brief, polishedText: null, polished: false } });
+        send("brief", { brief: { ...brief, polishedText: null, polished: false }, status: finalSt.terminal });
         send("done", { sessionId: row.id });
         controller.close();
       } catch (e) {
-        send("error", { code: "FAILED", message: e instanceof Error ? e.message : "Research failed." });
+        await store.compareAndSet(row.id, (await store.getSession(row.id))?.stateVersion ?? claimed.stateVersion, { status: "failed", state: { ...st, stopReason: "Research could not complete. Your saved state is preserved; try again." } });
+        send("error", { code: "FAILED", message: "Research could not complete. Your saved state is preserved; try again." });
         try { controller.close(); } catch { /* closed */ }
       }
     },
   });
   return sseResponse(stream, null);
+}
+
+function mapRead(read: string): string {
+  if (read === "enter-now") return "leaning-in";
+  if (read === "wait") return "holding-off";
+  if (read === "stand-aside") return "standing-aside";
+  return read;
 }

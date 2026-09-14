@@ -27,14 +27,15 @@ function shortUtc(iso: string | null): string | null {
   return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")} UTC`;
 }
 
-function actionLabel(action: unknown): string {
-  const labels: Record<string, string> = {
-    "enter-now": "enter now", "exit-now": "exit now", wait: "wait",
-    "delay-wait": "wait", "stand-aside": "stand aside", unclear: "decide what to do",
-  };
-  return labels[String(action ?? "")] ?? "make a decision";
+function decisionSummary(intent: Record<string, unknown> | null, asset: string | null): string {
+  const symbol = asset && asset !== "Live spot" ? asset : "this stock";
+  const action = String(intent?.action ?? "");
+  if (action === "wait") return "Considering whether to wait before entering " + symbol + ".";
+  if (action === "enter-now") return "Considering a " + symbol + " entry now.";
+  if (action === "exit-now") return "Considering whether to exit " + symbol + ".";
+  if (action === "stand-aside") return "Considering whether to stay out of " + symbol + ".";
+  return "Considering a decision about " + symbol + ".";
 }
-
 function safeSource(source: string, family: string): string {
   return /(?:R[A-Z0-9]{2,12}|[A-Z0-9]{2,12})USDT/i.test(source)
     ? `Bitget ${familyLabel(family).toLowerCase()} data`
@@ -195,8 +196,9 @@ export default function Page() {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [skips, setSkips] = useState<Skip[]>([]);
   const [read, setRead] = useState<string | null>(null);
-  const [historyList, setHistoryList] = useState<{ hinge: string; verdict: string }[]>([]);
+  const [historyList, setHistoryList] = useState<{ hinge: string; topic?: string | null; question?: string | null; verdict: string }[]>([]);
   const [stopReason, setStopReason] = useState<string | null>(null);
+  const [terminalStatus, setTerminalStatus] = useState<"stopped" | "unresolved" | null>(null);
   const [brief, setBrief] = useState<Record<string, unknown> | null>(null);
   const [clarifyQ, setClarifyQ] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -283,11 +285,15 @@ export default function Page() {
       setStatusLine(null);
     } else if (e.type === "stop") {
       setStopReason(String((d as { reason?: unknown }).reason ?? "Stopped."));
+      const terminal = (d as { terminal?: unknown }).terminal;
+      if (terminal === "stopped" || terminal === "unresolved") setTerminalStatus(terminal);
       if ((d as { cannotResolve?: boolean }).cannotResolve) setRead("Cannot resolve");
     } else if (e.type === "brief") {
       setBrief((d.brief ?? null) as Record<string, unknown> | null);
-      const b = d.brief as { read?: unknown } | null;
+      const b = d.brief as { read?: unknown; terminalStatus?: unknown } | null;
       if (typeof b?.read === "string") setRead(b.read);
+      const status = (d as { status?: unknown }).status ?? b?.terminalStatus;
+      if (status === "stopped" || status === "unresolved") setTerminalStatus(status);
       setPhase("brief");
       setBusy(false);
     } else if (e.type === "clarify") {
@@ -363,6 +369,7 @@ export default function Page() {
     setSkips([]);
     setRead(null);
     setStopReason(null);
+    setTerminalStatus(null);
     setBrief(null);
     setIntent(null);
     setBaseline(null);
@@ -399,6 +406,7 @@ export default function Page() {
     setRead(null);
     setHistoryList([]);
     setStopReason(null);
+    setTerminalStatus(null);
     setBrief(null);
     setClarifyQ(null);
     setError(null);
@@ -524,8 +532,10 @@ export default function Page() {
           facts?: Record<string, unknown>;
           spotSymbol?: string | null;
           skips?: { check: string; reason: string }[];
-          hingeHistory?: { hinge: string; topic?: string | null; verdict: string }[];
+          hingeHistory?: { hinge: string; topic?: string | null; question?: string | null; verdict: string }[];
           read?: string;
+          terminal?: "stopped" | "unresolved" | null;
+          terminalReasonCode?: string | null;
         };
         if (restored.intent && typeof restored.intent === "object") setIntent(restored.intent);
         if (restored.facts && typeof restored.facts === "object") {
@@ -533,6 +543,10 @@ export default function Page() {
         }
         setSkips(Array.isArray(restored.skips) ? restored.skips : []);
         setHistoryList(Array.isArray(restored.hingeHistory) ? restored.hingeHistory : []);
+        const restoredStatus = sess.brief && typeof sess.brief.terminalStatus === "string"
+          ? sess.brief.terminalStatus
+          : restored.terminal ?? (sess.status === "stopped" || sess.status === "unresolved" ? sess.status : null);
+        if (restoredStatus === "stopped" || restoredStatus === "unresolved") setTerminalStatus(restoredStatus);
         if (sess.brief) {
           setBrief(sess.brief as Record<string, unknown>);
           const b = sess.brief as { read?: unknown };
@@ -583,6 +597,12 @@ export default function Page() {
   const hasJourney = phase !== "idle" || Boolean(intent || baseline || brief || sessionId);
   const activeHinge = hinges.length ? hinges[hinges.length - 1] : null;
   const previousHinges = hinges.slice(0, -1);
+  const unresolved = terminalStatus === "unresolved" || read === "Cannot resolve";
+  const incompleteResearch = unresolved && ["RESEARCH_UNAVAILABLE", "ITERATION_CAP", "INCOMPLETE"].includes(String((brief as { terminalReasonCode?: unknown } | null)?.terminalReasonCode ?? ""));
+  const resultHinge = activeHinge?.question
+    ?? (unresolved ? "Not established" : Array.isArray((brief as { completed?: unknown[] } | null)?.completed)
+      ? String((brief as { completed: unknown[] }).completed.slice(-1)[0] ?? "Awaiting an answerable question")
+      : "Awaiting an answerable question");
   const openApp = useCallback(() => navigateSurface("app", "app"), [navigateSurface]);
   const startAnotherDecision = useCallback(() => {
     resetWorkspace();
@@ -631,9 +651,9 @@ export default function Page() {
               <ol className="progress-steps progress-steps-five">
                 <li className={intent ? "is-done" : busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{intent ? "✓" : ""}</span><span>Understand the decision</span></li>
                 <li className={baseline ? "is-done" : intent && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{baseline ? "✓" : ""}</span><span>Read live context</span></li>
-                <li className={activeHinge ? "is-done" : baseline && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{activeHinge ? "✓" : ""}</span><span>Find the Decision Hinge</span></li>
-                <li className={(findings.length > 0 || skips.length > 0) ? "is-done" : activeHinge && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{findings.length > 0 || skips.length > 0 ? "✓" : ""}</span><span>Check the highest-value evidence</span></li>
-                <li className={brief ? "is-done" : stopReason && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{brief ? "✓" : ""}</span><span>Stop with a brief</span></li>
+                <li className={activeHinge ? "is-done" : unresolved ? "is-unavailable" : baseline && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{activeHinge ? "✓" : unresolved ? "!" : ""}</span><span>{unresolved ? "Could not establish an answerable Hinge" : "Find the Decision Hinge"}</span></li>
+                <li className={findings.length > 0 ? "is-done" : unresolved ? "is-unavailable" : terminalStatus === "stopped" && brief ? "is-skipped" : activeHinge && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{findings.length > 0 ? "✓" : unresolved ? "!" : terminalStatus === "stopped" && brief ? "–" : ""}</span><span>{unresolved ? (incompleteResearch ? "Research incomplete" : "Research not run") : "Check the highest-value evidence"}</span></li>
+                <li className={brief ? "is-done" : busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{brief ? "✓" : ""}</span><span>{unresolved ? "Return an unresolved brief" : "Stop with a brief"}</span></li>
               </ol>
             </section>
 
@@ -641,7 +661,7 @@ export default function Page() {
 
             {interrupted && <section className="state-panel state-recovery" aria-label="Interrupted research" role="status"><p className="eyebrow">SAVED STATE RESTORED</p><h2 className="section-title">{recoveryStatus === "active" ? "Research is still running" : "Research paused safely"}</h2><p className="body-text">{interrupted}</p><button type="button" className="button-secondary" disabled={busy} onClick={resumeRun}>{COPY.recheck}</button>{resumeNote && <p className="secondary-text">{resumeNote}</p>}</section>}
 
-            {(intent || read || activeHinge) && <section className="result-overview" aria-label="Research result"><div className="result-overview-heading"><div><p className="eyebrow">{brief ? "RESEARCH RESULT" : "RESULT IN VIEW"}</p><h2 className="section-title">{brief ? "A concise read, with the path behind it" : "The research path is visible as it forms"}</h2></div>{brief && <span className="brief-complete"><span aria-hidden="true">✓</span> Saved</span>}</div><div className="result-grid"><article className="result-block"><p className="eyebrow">YOUR DECISION</p>{decisionStock ? <StockIdentity stock={decisionStock} size="lg" /> : <strong className="result-value display">Reading</strong>}<p className="result-note">{intent ? `Considering ${actionLabel((intent as { action?: unknown }).action)}.` : "Understanding the language of the decision."}</p></article><article className="result-block result-read-block"><p className="eyebrow">CURRENT READ</p><strong className="result-value display">{read ? readLabel(read) : "Still evaluating"}</strong><p className="result-note">Not a prediction. The human decides.</p></article><article className="result-block result-hinge-block"><p className="eyebrow">DECISION HINGE</p>{decisionStock && <StockIdentity stock={decisionStock} size="sm" showToken={false} />}<strong className="result-hinge-question display">{activeHinge?.question ?? "Finding the question most likely to change the read."}</strong>{activeHinge && <><p className="result-note"><strong>Why it matters.</strong> {activeHinge.why}</p><p className="result-note result-note-muted"><strong>What would change the read.</strong> {activeHinge.changes}</p></>}</article></div></section>}
+            {(intent || read || activeHinge) && <section className="result-overview" aria-label="Research result"><div className="result-overview-heading"><div><p className="eyebrow">{brief ? "RESEARCH RESULT" : "RESULT IN VIEW"}</p><h2 className="section-title">{brief ? "A concise read, with the path behind it" : "The research path is visible as it forms"}</h2></div>{brief && <span className="brief-complete"><span aria-hidden="true">✓</span> Saved</span>}</div><div className="result-grid"><article className="result-block"><p className="eyebrow">YOUR DECISION</p>{decisionStock ? <StockIdentity stock={decisionStock} size="lg" /> : <strong className="result-value display">Reading</strong>}<p className="result-note">{intent ? decisionSummary(intent, decisionStock?.ticker ?? (intent as { asset?: string }).asset ?? null) : "Understanding the language of the decision."}</p></article><article className="result-block result-read-block"><p className="eyebrow">CURRENT READ</p><strong className="result-value display">{read ? readLabel(read) : "Still evaluating"}</strong><p className="result-note">Not a prediction. The human decides.</p></article><article className="result-block result-hinge-block"><p className="eyebrow">DECISION HINGE</p>{decisionStock && <StockIdentity stock={decisionStock} size="sm" showToken={false} />}<strong className="result-hinge-question display">{resultHinge}</strong>{activeHinge ? <><p className="result-note"><strong>Why it matters.</strong> {activeHinge.why}</p><p className="result-note result-note-muted"><strong>What would change the read.</strong> {activeHinge.changes}</p></> : unresolved && <p className="result-note"><strong>Why it matters.</strong> {String((brief as { why?: unknown } | null)?.why ?? stopReason ?? "An answerable research question was not established.")}</p>}</article></div></section>}
 
             {baseline && <section className="context-section" aria-label="Market context"><div className="section-header-row"><div><p className="eyebrow">LIVE CONTEXT</p><h2 className="section-title">What CLINCH is seeing now</h2>{decisionStock && <StockIdentity stock={decisionStock} size="sm" className="context-identity" />}</div><FreshnessBadge status="live" label="Live baseline" /></div>{Object.keys(spot).length || Object.keys(perp).length ? <div className="context-grid"><ContextMetric label="Last price" value={numberText(spot.last)} /><ContextMetric label="24h move" value={percentText(spot.movePct24h)} /><ContextMetric label="Spread" value={numberText(spot.spreadBps, 1)} note={spot.spreadWide === true ? "wide" : spot.spreadWide === false ? "tight" : undefined} /><ContextMetric label="Funding" value={percentText(perp.fundingRate)} note={Object.keys(perp).length ? "stock-perp" : undefined} /></div> : <div className="empty-inline"><span className="state-tag state-unavailable">UNAVAILABLE</span><p className="body-text">Live context is unavailable right now. CLINCH will not fill the gap with a guess.</p></div>}<p className="provenance-line">Bitget market data, read by the server. Missing fields stay unavailable.</p></section>}
 
@@ -651,11 +671,11 @@ export default function Page() {
 
             {skips.length > 0 && <section className="skip-section" aria-label="Skipped research"><p className="eyebrow">WHAT CLINCH SKIPPED</p>{skips.map((skip, index) => <SkipRecord key={skip.check + "-" + index} check={skip.check} reason={skip.reason} />)}</section>}
 
-            {stopReason && <section className="stop-panel" aria-label="Stop state" aria-live="polite"><p className="eyebrow">STOP, WITH REASON</p><h2 className="display stop-title">Why CLINCH stopped here</h2><p className="body-text">{stopReason.replace(/^CLINCH is stopping here\.\s*/i, "") || "The checks still available are unlikely to change this read."}</p><p className="secondary-text">Further supported research is unlikely to materially change the current decision state.</p></section>}
+            {stopReason && <section className="stop-panel" aria-label={unresolved ? "Unresolved state" : "Stop state"} aria-live="polite"><p className="eyebrow">{unresolved ? "UNRESOLVED, WITH REASON" : "STOP, WITH REASON"}</p><h2 className="display stop-title">{unresolved ? "Why CLINCH could not complete this path" : "Why CLINCH stopped here"}</h2><p className="body-text">{stopReason.replace(/^CLINCH is stopping here\.\s*/i, "")}</p><p className="secondary-text">{unresolved ? "The live context is preserved. The decision-changing question remains unresolved." : "Further supported research is unlikely to materially change the current decision state."}</p></section>}
 
             {phase === "clarify" && clarifyQ && <section className="clarify-panel" aria-label="Clarification" aria-live="polite"><p className="eyebrow">ONE DETAIL NEEDED</p><h2 className="hinge-question display">{clarifyQ}</h2><p className="secondary-text">Choose the closest decision. CLINCH will use it to select the right evidence.</p><div className="choice-grid"><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am considering entering now.")}>Enter now</button><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am considering exiting.")}>Exit</button><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am considering waiting.")}>Wait for a better moment</button><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am not deciding yet.")}>I am not deciding yet</button></div></section>}
 
-            {(previousHinges.length > 0 || historyList.length > 0) && <details className="audit-trail"><summary>How CLINCH got here</summary><div className="trail-list">{[...previousHinges, ...historyList.map((h) => ({ hinge: h.hinge, question: h.hinge }))].map((h, index) => <div className="trail-item" key={h.hinge + "-" + index}><span className="trail-marker" aria-hidden="true">✓</span><div><strong>Decision Hinge {index + 1}</strong><p>{h.question}</p></div></div>)}</div></details>}
+            {(previousHinges.length > 0 || historyList.length > 0) && <details className="audit-trail"><summary>How CLINCH got here</summary><div className="trail-list">{[...previousHinges, ...historyList.map((h) => ({ hinge: h.hinge, question: h.question ?? "Saved research question" }))].map((h, index) => <div className="trail-item" key={h.hinge + "-" + index}><span className="trail-marker" aria-hidden="true">✓</span><div><strong>Decision Hinge {index + 1}</strong><p>{h.question}</p></div></div>)}</div></details>}
 
             {brief && <section className="brief-panel" aria-label="Final brief"><div className="brief-heading"><div><p className="eyebrow">FINAL DECISION BRIEF</p><h2 className="display brief-title">A clear read, with room for uncertainty</h2></div><span className="brief-complete"><span aria-hidden="true">✓</span> Saved</span></div><div className="brief-read">{decisionStock && <StockIdentity stock={decisionStock} size="lg" className="brief-identity" />}<p className="eyebrow">CURRENT READ</p><p className="brief-read-value display">{String((brief as { read?: unknown }).read ?? readLabel(read))}</p><p className="brief-decision">{String((brief as { decision?: unknown }).decision ?? "")}</p></div><div className="brief-section"><h3>Why</h3><p className="body-text">{String((brief as { why?: unknown }).why ?? "No completed evidence was available.")}</p></div>{Array.isArray((brief as { findings?: unknown }).findings) && ((brief as { findings: unknown[] }).findings.length > 0) && <div className="brief-section"><h3>Evidence that mattered</h3><ul className="brief-list">{((brief as { findings: unknown[] }).findings).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}{Array.isArray((brief as { completed?: unknown }).completed) && ((brief as { completed: unknown[] }).completed.length > 0) && <div className="brief-section"><h3>Checks completed</h3><div className="completed-list">{((brief as { completed: unknown[] }).completed).map((item, index) => <span key={index}>{String(item)}</span>)}</div></div>}{Array.isArray((brief as { skipped?: unknown }).skipped) && ((brief as { skipped: { check?: unknown; reason?: unknown }[] }).skipped.length > 0) && <div className="brief-section"><h3>What CLINCH skipped</h3><ul className="brief-list">{((brief as { skipped: { check?: unknown; reason?: unknown }[] }).skipped).map((item, index) => <li key={index}><strong>{familyLabel(String(item.check ?? ""))}.</strong> {String(item.reason ?? "")}</li>)}</ul></div>}{Array.isArray((brief as { openQuestions?: unknown }).openQuestions) && ((brief as { openQuestions: unknown[] }).openQuestions.length > 0) && <div className="brief-section"><h3>What remains uncertain</h3><ul className="brief-list">{((brief as { openQuestions: unknown[] }).openQuestions).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}{Array.isArray((brief as { changeTriggers?: unknown }).changeTriggers) && <div className="brief-section"><h3>What could change this decision</h3><ul className="brief-list">{((brief as { changeTriggers: unknown[] }).changeTriggers).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}<details className="trade-details brief-details"><summary>View Research Evidence &amp; Sources</summary><p className="secondary-text">Selected stock: {decisionStock ? `${decisionStock.companyName} (${decisionStock.ticker})` : "the selected stock"}. {String((brief as { freshness?: unknown }).freshness ?? "Freshness was not recorded.")}</p>{Array.isArray((brief as { sources?: unknown }).sources) && <ul className="source-list">{((brief as { sources: unknown[] }).sources).map((item, index) => <li key={index}>{String(item)}</li>)}</ul>}{findings.length > 0 && <ul className="source-list">{findings.map((finding, index) => <li key={finding.hinge + "-source-" + index}>{familyLabel(finding.family)}: {safeSource(finding.source, finding.family)}{shortUtc(finding.observedAt) ? ", observed " + shortUtc(finding.observedAt) : ""}.</li>)}</ul>}</details><div className="human-final"><p className="eyebrow">HUMAN DECISION</p><p className="body-text">{COPY.finalNotice}</p></div><div className="brief-actions"><button type="button" className="cta-primary" onClick={startAnotherDecision}>Start another decision <span aria-hidden="true">↗</span></button><a className="button-secondary" href="/recent">Open recent decisions</a></div><div className="delete-row">{deletePending ? <div className="delete-confirm" role="group" aria-label="Confirm deletion"><p className="secondary-text">Delete this saved brief and its research history? This cannot be undone.</p><div className="delete-confirm-actions"><button type="button" className="quiet-danger" disabled={busy || deleting} onClick={deleteResearch}>{deleting ? "Deleting..." : "Delete it"}</button><button type="button" className="button-plain" disabled={busy || deleting} onClick={() => setDeletePending(false)}>Keep research</button></div></div> : <button type="button" className="quiet-danger" disabled={busy || deleting} onClick={() => setDeletePending(true)}>{COPY.deleteResearch}</button>}</div></section>}
           </div>

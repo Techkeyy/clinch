@@ -1,0 +1,46 @@
+{
+  "deployment": "dpl_x9G5EpGAZk9VoTfxFZXrv7GpY1HR",
+  "publicUrl": "https://clinch-nine.vercel.app",
+  "surface": "fresh desktop browser over HTTPS",
+  "journey": {
+    "stockSelection": "NVIDIA / NVDA",
+    "visibleDecisionTextOmittedTicker": true,
+    "intent": {
+      "asset": "NVDA",
+      "action": "wait",
+      "companyName": "NVIDIA",
+      "normalTicker": "NVDA",
+      "realityTicker": "RNVDAUSDT",
+      "perpSymbol": "NVDAUSDT"
+    },
+    "baseline": {
+      "spotLast": 212.28,
+      "spreadBps": 2.36,
+      "fundingRate": 0.000375,
+      "problems": []
+    },
+    "hinge": {
+      "question": "Is this drift exhausted (setup) or a new leg down?",
+      "family": "spot-structure"
+    },
+    "research": {
+      "family": "spot-structure",
+      "finding": "RNVDAUSDT trades 212.28, -2.25% on the day. Spread is tight at 2.36 basis points. Recent window moved -1.33%. Nearby structure spans 208.93 to 215.27."
+    },
+    "terminal": {
+      "kind": "stopped",
+      "cannotResolve": false,
+      "findingCount": 1,
+      "completedQuestionCount": 1
+    },
+    "brief": {
+      "status": "stopped",
+      "read": "Leaning in",
+      "decision": "Considering whether to wait before entering NVDA.",
+      "changeTriggers": [
+        "A clear break of nearby structure, or a hold that keeps the setup alive."
+      ]
+    }
+  },
+  "proofScreenshot": "proof/p20-research-semantics/public-nvidia.png"
+}

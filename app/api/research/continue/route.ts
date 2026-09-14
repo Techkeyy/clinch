@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getStore } from "@/server/db";
 import { readOwner, ownsSession } from "@/server/auth";
 import { sseEncode, sseResponse, sameOrigin } from "@/server/stream";
-import { parseIntentFlow, resolveAsset, driveLoop, assembleBrief } from "@/server/flow";
+import { parseIntentFlow, resolveAsset, assetIdentity, capabilityData, driveLoop, assembleBrief } from "@/server/flow";
 import { RESEARCH_LOOP_CAP } from "@/config/thresholds";
 import { modelConfigured } from "@/model/provider";
 import { qwenProvider } from "@/model/qwen";
@@ -39,11 +39,13 @@ export async function POST(req: Request) {
     return Response.json({ error: "VERSION_CONFLICT", session: snap(row) }, { status: 409 });
   }
   const st = row.state as unknown as {
-    intent: { asset?: string; action?: string } | null; clarificationRound: number;
+    intent: { asset?: string; action?: string } | null; assetIdentity: import("@/server/flow").AssetIdentity | null; clarificationRound: number;
     dilemma: string; read: string; resolvedTopics: string[]; facts: Record<string, unknown>;
     skips: { check: string; reason: string }[]; uncertainty: string[];
-    hingeHistory: { hinge: string; verdict: string }[]; spotSymbol: string | null;
+    hingeHistory: { hinge: string; topic?: string | null; question?: string | null; verdict: string }[]; spotSymbol: string | null;
     perpSymbol: string | null; context: string; known: string[]; stopReason: string | null;
+    terminal: import("@/server/ux-text").TerminalKind | null;
+    terminalReasonCode: import("@/server/ux-text").TerminalReasonCode | null;
   };
   if (row.status !== "clarifying") {
     return Response.json({ error: "NOT_CLARIFYING", session: snap(row) }, { status: 409 });
@@ -69,6 +71,7 @@ export async function POST(req: Request) {
   if (!resolved.spot) return Response.json({ error: "UNSUPPORTED_ASSET", session: snap(row) }, { status: 422 });
   const canonicalIntent = { ...intent, asset: resolved.ticker ?? intent.asset, resolvedSymbol: resolved.spot };
   st.intent = canonicalIntent as unknown as typeof st.intent;
+  st.assetIdentity = assetIdentity(resolved);
   st.spotSymbol = resolved.spot;
   st.perpSymbol = resolved.perp;
   // Atomic run claim: only one loop may own this session version.
@@ -88,7 +91,7 @@ export async function POST(req: Request) {
           asset: canonicalIntent.asset, spotSymbol: st.spotSymbol ?? "", perpSymbol: st.perpSymbol,
           action: intent.action, read: "undecided", resolvedTopics: [],
           facts: (st.facts ?? {}) as import("@/research/orchestrator").MarketFacts,
-          data: { "spot-structure": "fresh", "perp-positioning": "fresh" },
+          data: capabilityData(st.spotSymbol, st.perpSymbol),
           context: intent.timeframeContext, known: [],
         }, {
           store,
@@ -101,19 +104,22 @@ export async function POST(req: Request) {
           maxIterations: RESEARCH_LOOP_CAP,
         });
         const brief = assembleBrief({ intent: canonicalIntent, read: finalSt.read,
-          hingeHistory: finalSt.hingeHistory, skips: finalSt.skips, uncertainty: finalSt.uncertainty }, st.spotSymbol);
+          hingeHistory: finalSt.hingeHistory, skips: finalSt.skips, uncertainty: finalSt.uncertainty,
+          terminal: finalSt.terminal!, terminalReasonCode: finalSt.terminalReasonCode! }, st.spotSymbol);
         const after = await store.getSession(row.id);
         await store.compareAndSet(row.id, after!.stateVersion, {
-          status: finalSt.read === "cannot-resolve" ? "unresolved" : "stopped",
-          read: finalSt.read, intent,
+          status: finalSt.terminal!,
+          read: finalSt.read === "cannot-resolve" ? "cannot-resolve" : mapRead(finalSt.read), intent,
           state: { ...st, read: finalSt.read, resolvedTopics: finalSt.resolvedTopics, facts: finalSt.facts,
-            skips: finalSt.skips, uncertainty: finalSt.uncertainty, hingeHistory: finalSt.hingeHistory, stopReason: finalSt.stopReason },
+            skips: finalSt.skips, uncertainty: finalSt.uncertainty, hingeHistory: finalSt.hingeHistory, stopReason: finalSt.stopReason,
+            terminal: finalSt.terminal, terminalReasonCode: finalSt.terminalReasonCode },
           brief: { ...brief, polishedText: null, polished: false },
         });
-        send("brief", { brief: { ...brief, polishedText: null, polished: false } });
+        send("brief", { brief: { ...brief, polishedText: null, polished: false }, status: finalSt.terminal });
         finish();
       } catch (e) {
-        send("error", { code: "FAILED", message: e instanceof Error ? e.message : "Research failed." });
+        await store.compareAndSet(row.id, (await store.getSession(row.id))?.stateVersion ?? claimed.stateVersion, { status: "failed", state: { ...st, stopReason: "Research could not complete. Your saved state is preserved; try again." } });
+        send("error", { code: "FAILED", message: "Research could not complete. Your saved state is preserved; try again." });
         finish();
       }
     },
@@ -123,4 +129,11 @@ export async function POST(req: Request) {
 
 function snap(row: { id: string; status: string; read: string; stateVersion: number; state: unknown; brief: unknown }) {
   return { id: row.id, status: row.status, read: row.read, stateVersion: row.stateVersion, state: row.state, brief: row.brief };
+}
+
+function mapRead(read: string): string {
+  if (read === "enter-now") return "leaning-in";
+  if (read === "wait") return "holding-off";
+  if (read === "stand-aside") return "standing-aside";
+  return read;
 }

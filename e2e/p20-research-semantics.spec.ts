@@ -1,0 +1,72 @@
+import { expect, test } from "@playwright/test";
+
+test.describe("P20 research semantics presentation", () => {
+  test("renders an unresolved terminal honestly without a placeholder or kernel terms", async ({ page }) => {
+    const sid = "cccccccc-3333-4333-8333-cccccccccccc";
+    const sse = [
+      "event: session\ndata: " + JSON.stringify({ session: { id: sid, status: "awaiting", read: "undecided", stateVersion: 0 } }) + "\n\n",
+      "event: intent\ndata: " + JSON.stringify({
+        intent: {
+          asset: "NVDA",
+          resolvedSymbol: "RNVDAUSDT",
+          action: "wait",
+          timeframeContext: "overnight",
+          decisionQuestion: "NVIDIA is drifting lower and I am considering a small entry. Should I wait?",
+        },
+        assetIdentity: { companyName: "NVIDIA", normalTicker: "NVDA", realityTicker: "RNVDAUSDT", perpSymbol: "NVDAUSDT", universe: 1173 },
+        spotSymbol: "RNVDAUSDT",
+        perpSymbol: "NVDAUSDT",
+        stateVersion: 1,
+      }) + "\n\n",
+      "event: baseline\ndata: " + JSON.stringify({ facts: { spot: { last: 212.37, spreadBps: 5.7 }, perp: { fundingRate: 0.0004 } }, problems: [], stateVersion: 2 }) + "\n\n",
+      "event: stop\ndata: " + JSON.stringify({
+        reason: "CLINCH established live context for NVDA, but none of its supported research paths can answer the remaining decision question right now.",
+        cannotResolve: true,
+        terminal: "unresolved",
+        reasonCode: "NO_CAPABLE_FAMILY",
+      }) + "\n\n",
+      "event: brief\ndata: " + JSON.stringify({
+        brief: {
+          terminalStatus: "unresolved",
+          terminalReasonCode: "NO_CAPABLE_FAMILY",
+          decision: "Considering whether to wait before entering NVDA.",
+          read: "Cannot resolve",
+          why: "CLINCH established live context for NVDA, but none of its supported research paths can answer the remaining decision question right now.",
+          findings: [],
+          completed: [],
+          skipped: [],
+          openQuestions: ["The remaining decision question could not be answered with the supported live paths."],
+          changeTriggers: ["A supported research path capable of answering the remaining decision question becomes available."],
+          freshness: "Observed during this session.",
+          sources: ["Bitget Reality market data"],
+          disclaimer: "Research support only.",
+        },
+        status: "unresolved",
+      }) + "\n\n",
+      "event: done\ndata: " + JSON.stringify({ sessionId: sid }) + "\n\n",
+    ].join("");
+    await page.route("**/api/stocks", async (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ stocks: [], count: 0, verifiedMarkCount: 0, fallbackMarkCount: 0 }),
+    }));
+    await page.route("**/api/research/start", async (route) => route.fulfill({
+      status: 200,
+      headers: { "Content-Type": "text/event-stream" },
+      body: sse,
+    }));
+    await page.goto("/#app");
+    await page.getByLabel("Describe the trade you are considering").fill("NVIDIA is drifting lower and I am considering a small entry. Should I wait?");
+    await page.getByRole("button", { name: "Find the Decision Hinge" }).click();
+    await expect(page.getByText("Could not establish an answerable Hinge")).toBeVisible();
+    await expect(page.getByText("Research not run")).toBeVisible();
+    await expect(page.getByText("Return an unresolved brief")).toBeVisible();
+    await expect(page.locator(".result-hinge-question")).toHaveText("Not established");
+    await expect(page.getByRole("heading", { name: "Why CLINCH could not complete this path" })).toBeVisible();
+    await expect(page.getByText("Finding the question most likely to change the read.")).toBeHidden();
+    await expect(page.getByText("No research completed.")).toBeHidden();
+    await expect(page.getByText("Further supported research is unlikely to materially change the current decision state.")).toBeHidden();
+    await expect(page.locator("body")).not.toContainText("NO-CAPABLE-FAMILY");
+    await expect(page.locator("body")).not.toContainText("flippable");
+  });
+});

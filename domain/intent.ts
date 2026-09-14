@@ -5,9 +5,10 @@ import { IntentContract } from "../domain/types";
 // No model, no cost, fully testable. Asset candidates are validated against
 // live discovery by the caller; unknown mentions stay unresolved here.
 const ACTION_RULES: { re: RegExp; action: "enter-now" | "exit-now" | "wait" | "stand-aside" }[] = [
+  { re: /\b(should i wait|wait before|wait to|hold off|delay|stand by|sit out|pause|not yet)\b/i, action: "wait" },
   { re: /\b(buy(ing)?|enter(ing)?|entr(y|ies)|go(ing)?\s+long|buy the dip|get in|take (a )?position|bullish on|worth entering)\b/i, action: "enter-now" },
   { re: /\b(sell(ing)?|exit(ing)?|go(ing)?\s+short|get out|close (my|the) position|take profit|bearish on)\b/i, action: "exit-now" },
-  { re: /\b(wait|hold off|delay|stand by|sit out|pause|not yet|should i wait)\b/i, action: "wait" },
+  { re: /\b(wait|hold off|delay|stand by|sit out|pause|not yet)\b/i, action: "wait" },
   { re: /\b(stand aside|stay away|avoid|skip this|do nothing)\b/i, action: "stand-aside" },
 ];
 const SYMBOL_RES = [
