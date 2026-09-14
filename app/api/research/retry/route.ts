@@ -87,7 +87,7 @@ export async function POST(req: Request) {
         });
         const brief = assembleBrief({ intent, read: finalSt.read,
           hingeHistory: finalSt.hingeHistory, skips: finalSt.skips, uncertainty: finalSt.uncertainty,
-          terminal: finalSt.terminal!, terminalReasonCode: finalSt.terminalReasonCode! }, st.spotSymbol);
+          terminal: finalSt.terminal!, terminalReasonCode: finalSt.terminalReasonCode!, facts: finalSt.facts }, st.spotSymbol);
         const after = await store.getSession(row.id);
         await store.compareAndSet(row.id, after!.stateVersion, {
           status: finalSt.terminal!,

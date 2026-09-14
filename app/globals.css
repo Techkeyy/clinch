@@ -473,6 +473,23 @@ a:focus-visible, button:focus-visible, textarea:focus-visible, summary:focus-vis
 .result-note strong { color: var(--ink); }
 .result-note-muted { color: var(--quiet); }
 .result-hinge-question { display: block; font-size: 22px; line-height: 1.2; margin: 31px 0 13px; }
+.decision-interpretation { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 21px; }
+.decision-interpretation-heading { align-items: center; display: flex; justify-content: space-between; gap: 12px; }
+.decision-interpretation-heading .eyebrow { color: var(--petrol-dark); margin: 0; }
+.interpretation-mark { color: var(--petrol); font-size: 24px; line-height: 1; }
+.decision-interpretation-summary { color: var(--ink); font-size: 18px; font-weight: 700; line-height: 1.45; margin: 12px 0 0; max-width: 760px; }
+.interpretation-evidence { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 18px; }
+.interpretation-label { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .08em; margin: 0 0 8px; text-transform: uppercase; }
+.interpretation-list { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 0; padding-left: 18px; }
+.interpretation-list li + li { margin-top: 6px; }
+.decision-trigger-block { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 16px; }
+.decision-trigger-block .interpretation-label { color: var(--petrol-dark); }
+.decision-unresolved { border-top: 1px solid var(--line); color: var(--quiet); font-size: 13px; line-height: 1.5; margin: 18px 0 0; padding-top: 14px; }
+.decision-unresolved strong { color: var(--ink); }
+.context-details { margin-top: 18px; }
+.context-details summary { color: var(--petrol-dark); font-weight: 700; }
+.brief-meaning { background: var(--petrol-wash); border-left: 3px solid var(--petrol); padding: 16px 18px; }
+.brief-meaning h3 { margin-top: 0; }
 .state-tag { display: inline-block; border: 1px solid currentColor; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: .08em; padding: 3px 6px; vertical-align: 1px; }
 .state-checked { color: var(--petrol-dark); }
 .state-skipped { color: var(--amber); }
@@ -532,6 +549,8 @@ a:focus-visible, button:focus-visible, textarea:focus-visible, summary:focus-vis
   .result-block:first-child { border-top: 0; }
   .result-value { margin: 12px 0 7px; }
   .result-hinge-question { margin: 12px 0 10px; }
+  .interpretation-evidence { grid-template-columns: 1fr; gap: 16px; }
+  .decision-interpretation-summary { font-size: 17px; }
 }
 
 /* Typography-only pass. The reference uses one public sans family throughout,

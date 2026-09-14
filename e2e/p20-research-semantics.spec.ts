@@ -37,6 +37,13 @@ test.describe("P20 research semantics presentation", () => {
           skipped: [],
           openQuestions: ["The remaining decision question could not be answered with the supported live paths."],
           changeTriggers: ["A supported research path capable of answering the remaining decision question becomes available."],
+          decisionImplication: {
+            summary: "The available evidence does not answer the decision-changing question yet.",
+            supportiveEvidence: [],
+            cautionEvidence: [],
+            unresolvedPoint: "The decision-changing question remains unresolved.",
+            changeTriggers: ["A supported finding that answers the remaining decision question would change the read."],
+          },
           freshness: "Observed during this session.",
           sources: ["Bitget Reality market data"],
           disclaimer: "Research support only.",
@@ -61,6 +68,10 @@ test.describe("P20 research semantics presentation", () => {
     await expect(page.getByText("Could not establish an answerable Hinge")).toBeVisible();
     await expect(page.getByText("Research not run")).toBeVisible();
     await expect(page.getByText("Return an unresolved brief")).toBeVisible();
+    await expect(page.getByText("WHAT THIS MEANS FOR YOUR DECISION", { exact: true })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Decision interpretation" }).getByText("The available evidence does not answer the decision-changing question yet.")).toBeVisible();
+    await expect(page.getByText("View Live Market Context")).toBeVisible();
+    await expect(page.getByText("212.37")).toBeHidden();
     await expect(page.locator(".result-hinge-question")).toHaveText("Not established");
     await expect(page.getByRole("heading", { name: "Why CLINCH could not complete this path" })).toBeVisible();
     await expect(page.getByText("Finding the question most likely to change the read.")).toBeHidden();

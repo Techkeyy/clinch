@@ -185,7 +185,11 @@ export async function POST(req: Request) {
           const sections: Record<string, string> = {
             decision: brief.decision, read: brief.read, why: brief.why,
             findings: brief.findings.join(" | "), skipped: brief.skipped.map((s) => `${s.check}: ${s.reason}`).join(" | "),
-            uncertainty: brief.openQuestions.join(" | "), triggers: brief.changeTriggers.join(" | "),
+            meaning: brief.decisionImplication.summary,
+            supportive: brief.decisionImplication.supportiveEvidence.join(" | "),
+            caution: brief.decisionImplication.cautionEvidence.join(" | "),
+            unresolved: brief.decisionImplication.unresolvedPoint,
+            uncertainty: brief.openQuestions.join(" | "), triggers: brief.decisionImplication.changeTriggers.join(" | "),
           };
           for (let attempt = 0; attempt < 2; attempt++) {
             const r = await model.polishBrief(sections);

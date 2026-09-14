@@ -4,6 +4,7 @@ import { decide, initialState } from "../domain/kernel";
 import { factsToRaw } from "../research/orchestrator";
 import { assetIdentity, assembleBrief, capabilityData, driveLoop, parseIntentFlow } from "../server/flow";
 import { stockFromRealityTicker } from "../lib/stocks";
+import { deriveDecisionImplication } from "../server/interpretation";
 
 const ownerDilemma = "NVIDIA context: It has been drifting lower tonight and I am considering a small entry. Should I wait?";
 
@@ -149,6 +150,77 @@ describe("P20 owner research semantics", () => {
     expect(brief.completed).toEqual([]);
     expect(brief.why).not.toContain("No research completed");
     expect(text).not.toMatch(/NO-CAPABLE-FAMILY|no-capable-family|flippable|compiler|family eligibility/i);
-    expect(brief.changeTriggers[0]).toMatch(/supported research path/i);
+    expect(brief.changeTriggers[0]).toMatch(/supported finding|remaining decision question/i);
+    expect(brief.decisionImplication.summary).toMatch(/does not answer/i);
+    expect(brief.read).toBe("Cannot resolve");
+  });
+
+  it("derives a decision implication from observed evidence and the selected Hinge", () => {
+    const brief = assembleBrief({
+      intent: {
+        asset: "NVDA",
+        resolvedSymbol: "RNVDAUSDT",
+        action: "wait",
+        timeframeContext: "overnight",
+        decisionQuestion: "Should I wait before entering NVIDIA?",
+        clarificationNeeded: false,
+        clarificationQuestion: null,
+      },
+      read: "enter-now",
+      hingeHistory: [{
+        hinge: "q-structure",
+        topic: "structure-direction",
+        question: "Is this drift exhausted or a new leg down?",
+        verdict: "exhaustion, support holding [exhaustion] :: read now enter-now",
+      }],
+      skips: [],
+      uncertainty: [],
+      terminal: "stopped",
+      terminalReasonCode: "NO_REMAINING_VALUE",
+      facts: {
+        spot: {
+          windowMovePcnt: -1.33,
+          spreadBps: 2.36,
+          spreadWide: false,
+          supportLevel: 208.93,
+          resistanceLevel: 215.27,
+        },
+      },
+    }, "RNVDAUSDT");
+    expect(brief.read).toBe("Leaning in");
+    expect(brief.decisionImplication.summary).toMatch(/supports the contemplated entry/i);
+    expect(brief.decisionImplication.cautionEvidence.join(" ")).toMatch(/still lower/i);
+    expect(brief.decisionImplication.supportiveEvidence.join(" ")).toMatch(/tight at 2.4/i);
+    expect(brief.decisionImplication.changeTriggers.join(" ")).toMatch(/208.93/);
+    expect(JSON.stringify(brief.decisionImplication)).not.toMatch(/change24hPcnt|spreadBps|windowCandles|bidSize|askSize/);
+  });
+
+  it("never leaves a terminal stopped brief at Still evaluating", () => {
+    const brief = assembleBrief({
+      intent: null,
+      read: "undecided",
+      hingeHistory: [],
+      skips: [],
+      uncertainty: [],
+      terminal: "stopped",
+      terminalReasonCode: "NO_REMAINING_VALUE",
+    }, null);
+    expect(brief.read).toBe("Cannot resolve");
+    expect(brief.decisionImplication.summary).toMatch(/does not answer/i);
+  });
+
+  it("keeps unresolved interpretation honest when no normalized evidence exists", () => {
+    const implication = deriveDecisionImplication({
+      intent: null,
+      read: "cannot-resolve",
+      terminal: "unresolved",
+      hingeHistory: [{ topic: "structure-direction", question: "Is the move stabilizing?" }],
+      facts: {},
+      uncertainty: ["The market check was unavailable."],
+    });
+    expect(implication.supportiveEvidence).toEqual([]);
+    expect(implication.cautionEvidence.join(" ")).toMatch(/did not produce/i);
+    expect(implication.changeTriggers.join(" ")).toMatch(/stabilizing/i);
+    expect(implication.summary).toMatch(/does not answer/i);
   });
 });
