@@ -173,7 +173,7 @@ Verification completed locally:
 
 - `npm run typecheck`: PASS.
 - `npm run lint`: PASS.
-- `npm test -- --run`: PASS, 115 tests passed and 4 expected skips.
+- `npm test -- --run`: PASS, 116 tests passed and 4 expected skips.
 - Production build: PASS, including `/api/stocks`.
 - Design-skill UI audit: PASS, zero long-dash errors, zero small-text warnings, zero copy warnings.
 - Desktop and mobile focused browser smoke: PASS with no horizontal overflow.
@@ -192,3 +192,16 @@ Production correction deployment:
 - Fresh public desktop and mobile browser contexts searched `NVIDIA`, `Apple`, `Tesla`, `Amazon`, and `Alphabet`; each returned the expected underlying ticker and `stock-logo is-verified` with an accessible brand-mark label. Both surfaces had zero horizontal overflow.
 - Public screenshot proof is captured at `proof/p20-stock-identity/desktop-NVDA.png`, `desktop-AAPL.png`, `desktop-TSLA.png`, `desktop-AMZN.png`, `desktop-GOOGL.png`, and the matching `mobile-*.png` files.
 - No live research journey was consumed for this correction smoke. The prior P18/P19 production proof remains the evidence for real Qwen, Neon, real Bitget research, secure ownership, and clean-user production flow. Owner manual UAT is the next human action.
+
+Owner UAT stock-selection correction:
+
+- Root cause: before this correction, featured cards called `selectStock(stock, true)` while Browse/search rows called the weaker `selectStock(stock)` branch. Browse/search could therefore update only the hidden selection state when a dilemma already existed, without replacing the visible composer context or showing a persistent selected-stock summary. The row was an interactive button, but its visible response was ambiguous enough to feel inert during owner UAT.
+- Latest Vercel production deployment: `dpl_5KFvfJiB5xsnkWU35PHiWJ1KE3wR`, READY, aliased to `https://clinch-nine.vercel.app`.
+- Selection architecture: `components/stock-discovery.tsx` owns the shared Featured/Browse/search surface; the page owns one canonical `selectStock(stock)` callback. Every selectable card and row invokes that callback. It sets the selected ticker, replaces the stock-context prompt so a replacement cannot retain stale asset text, collapses the result list, and does not call research. `Change` clears the stock context and input for a clean natural-language path.
+- Featured stocks are derived from `FEATURED_STOCK_TICKERS` through the live `stocks` response. Unsupported or unavailable featured tickers do not render. The live capability list currently supplies the requested recognizable featured names.
+- Search is always prominent and accepts company, ticker, and rToken terms. Browse uses the same result list, starts with 24 items, and progressively loads 24 more. Empty results remain truthful; the 1,173-instrument universe is never rendered as one unbounded DOM list.
+- The full card is a semantic button with an accessible label such as `Select NVIDIA, ticker NVDA`, `aria-pressed` selected state, Enter/Space keyboard support, visible hover/focus/pressed/selected states, and a 44px mobile Browse target.
+- Focused browser regressions: 10 passed across desktop and mobile. Vitest: 116 passed with 4 expected skips. Typecheck, lint, production build, and design-skill audit are green.
+- Public interaction smoke against `https://clinch-nine.vercel.app`: Featured NVIDIA, Browse/search Tesla, selected summary, no-auto-research, zero desktop/mobile horizontal overflow, and 44px mobile Browse control all passed.
+- Public proof screenshots are captured at `proof/p20-stock-selection/desktop-fresh-discovery.png`, `desktop-featured-hover-NVDA.png`, `desktop-featured-selected-NVDA.png`, `desktop-browse-results.png`, `desktop-browse-selected-TSLA.png`, `desktop-selected-with-dilemma.png`, `mobile-discovery.png`, `mobile-selected-NVDA.png`, and `mobile-browse-results.png`.
+- P21 remains untouched. Stop for Owner review.
