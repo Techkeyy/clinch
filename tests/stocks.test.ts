@@ -25,7 +25,7 @@ describe("CLINCH stock identity and dynamic universe", () => {
     expect(stockMatchesQuery(stocks.find((stock) => stock.ticker === "NVDA")!, "company or ticker")).toBe(false);
     expect(stockMatchesQuery(stocks.find((stock) => stock.ticker === "NVDA")!, "nvidia")).toBe(true);
     expect(stockMatchesQuery(stocks.find((stock) => stock.ticker === "TSLA")!, "tesla")).toBe(true);
-    expect(stockMatchesQuery(stockFromRealityTicker("RAUSDT")!, "tesla")).toBe(false);
+    expect(stockMatchesQuery(stockFromRealityTicker("RESUSDT")!, "tesla")).toBe(false);
   });
 
   it("uses a truthful monogram for an unknown but valid Reality issuer", () => {

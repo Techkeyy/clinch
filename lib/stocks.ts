@@ -126,7 +126,7 @@ function identityTerms(stock: StockIdentityData): string[] {
 
 function termsOverlap(term: string, query: string): boolean {
   if (term.includes(query)) return true;
-  return term.length >= 2 && query.length >= 2 && query.includes(term);
+  return term.length >= 4 && query.length >= 4 && query.includes(term);
 }
 
 export function stockMatchesQuery(stock: StockIdentityData, query: string): boolean {
