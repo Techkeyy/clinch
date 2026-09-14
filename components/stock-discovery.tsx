@@ -47,9 +47,9 @@ export function StockDiscovery({
     <section className="stock-discovery" aria-labelledby="stock-discovery-title">
       <div className="stock-discovery-header">
         <div>
-          <p className="example-label">Supported stock universe</p>
+          <p className="eyebrow">CHOOSE A STOCK · OPTIONAL</p>
           <h3 id="stock-discovery-title" className="stock-discovery-title">Choose a stock</h3>
-          <p className="stock-discovery-copy">Search the supported Bitget stock universe or start with a featured name.</p>
+          <p className="stock-discovery-copy">Search the supported Bitget universe, or describe the stock directly in your decision.</p>
         </div>
         {!loading && !error && stocks.length > 0 && <p className="stock-browser-status stock-discovery-count" role="status">{stocks.length} supported Reality instruments · {verifiedMarkCount ?? 0} verified marks · {fallbackMarkCount ?? 0} fallbacks</p>}
       </div>
@@ -72,7 +72,7 @@ export function StockDiscovery({
           placeholder="Search by company, ticker, or rToken"
           autoComplete="off"
         />
-        <p className="stock-search-help">Try NVIDIA, NVDA, or rNVDA. Selecting a stock sets context only; CLINCH will not start research until you submit your decision.</p>
+        <p className="stock-search-help">Try NVIDIA, NVDA, or rNVDA. Selection adds context; research starts only when you submit.</p>
       </div>
 
       {loading && <p className="stock-browser-status" role="status">Loading supported stocks...</p>}

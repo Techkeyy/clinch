@@ -205,3 +205,22 @@ Owner UAT stock-selection correction:
 - Public interaction smoke against `https://clinch-nine.vercel.app`: Featured NVIDIA, Browse/search Tesla, selected summary, no-auto-research, zero desktop/mobile horizontal overflow, and 44px mobile Browse control all passed.
 - Public proof screenshots are captured at `proof/p20-stock-selection/desktop-fresh-discovery.png`, `desktop-featured-hover-NVDA.png`, `desktop-featured-selected-NVDA.png`, `desktop-browse-results.png`, `desktop-browse-selected-TSLA.png`, `desktop-selected-with-dilemma.png`, `mobile-discovery.png`, `mobile-selected-NVDA.png`, and `mobile-browse-results.png`.
 - P21 remains untouched. Stop for Owner review.
+
+## Owner flow-order correction
+
+Date: 2026-09-14
+
+The final Owner correction keeps stock choice optional and changes only the App's entry order. The initial flow is now:
+
+`Choose a stock · Optional` → selected stock summary when present → `What are you deciding?` → `Find the Decision Hinge`.
+
+- `StockDiscovery` is rendered before the dilemma composer on desktop and mobile.
+- The stock support copy now explicitly permits direct natural-language entry: `Search the supported Bitget universe, or describe the stock directly in your decision.`
+- Selecting a stock no longer overwrites the textarea with a ticker-bearing sentence. The selected stock supplies hidden submission context, while the textarea uses a non-repetitive placeholder. With no selection, the placeholder demonstrates direct ticker-based natural language.
+- Featured, Browse, search, Change, keyboard, pressed, selected, bounded-list, no-auto-research, logo, stock-universe, Qwen, Neon, Bitget, Hinge, SKIP, STOP, persistence, retry, and ownership behavior remain unchanged.
+- Natural-language-only submission continues to send the user's exact text. Selected-stock submission sends the selected company/ticker as context plus the user's own decision text; no backend route or research kernel behavior changed.
+- Regression coverage now proves DOM order, optional copy, selected and unselected placeholders, selected-context submission, natural-language-only submission, no-auto-research, desktop/mobile ordering, and the existing stock search/selection contract.
+- Focused Playwright verification: 12 passed across desktop and mobile. Vitest: 116 passed with 4 expected skips. Typecheck, lint, and production build passed.
+- Screenshot proof is captured at `proof/p20-order-correction/desktop-fresh-app.png`, `desktop-selected-nvda.png`, `mobile-fresh-app.png`, and `mobile-selected-nvda.png`.
+
+P20 remains OWNER UAT REQUIRED. P21 remains untouched.

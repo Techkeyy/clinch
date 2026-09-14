@@ -22,7 +22,8 @@ test.describe("P20 targeted corrections", () => {
     await expect(page.locator(".stock-result .stock-token-meta")).toHaveText("Bitget rToken · rNVDA");
     await page.locator(".stock-result").click();
     await expect(page.getByText("SELECTED STOCK")).toBeVisible();
-    await expect(page.getByLabel("Describe the trade you are considering")).toHaveValue("I am considering NVIDIA (NVDA). Should I buy now or wait?");
+    await expect(page.getByLabel("Describe the trade you are considering")).toHaveValue("");
+    await expect(page.getByLabel("Describe the trade you are considering")).toHaveAttribute("placeholder", "It has been drifting lower tonight and I'm considering a small entry. Should I wait?");
   });
 
   test("Research Again clears the historical locator and creates a fresh session request", async ({ page }) => {

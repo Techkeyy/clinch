@@ -6,7 +6,7 @@ import { trackRecent, untrackRecent } from "@/lib/recent";
 import { FreshnessBadge, SkipRecord } from "@/components/research";
 import { StockIdentity } from "@/components/stock-identity";
 import { StockDiscovery } from "@/components/stock-discovery";
-import { displayStockFromMention, stockFromRealityTicker, stockPrompt, type StockIdentityData } from "@/lib/stocks";
+import { displayStockFromMention, stockFromRealityTicker, type StockIdentityData } from "@/lib/stocks";
 import { STALE_RUN_MS } from "@/config/thresholds";
 
 interface StreamEvent { type: string; data: Record<string, unknown>; }
@@ -373,13 +373,17 @@ export default function Page() {
     const idempotencyKey = crypto.randomUUID().replace(/-/g, "").slice(0, 32);
     keyRef.current = idempotencyKey;
     try {
-      await runStream("/api/research/start", { dilemma: dilemma.trim(), idempotencyKey });
+      const selectedContext = selectedMarket ? stocks.find((stock) => stock.ticker === selectedMarket) : null;
+      const submittedDilemma = selectedContext
+        ? `${selectedContext.companyName} (${selectedContext.ticker}) context: ${dilemma.trim()}`
+        : dilemma.trim();
+      await runStream("/api/research/start", { dilemma: submittedDilemma, idempotencyKey });
     } catch {
       setError("Could not reach CLINCH. Check your connection and retry.");
       setPhase("error");
       setBusy(false);
     }
-  }, [busy, dilemma, runStream]);
+  }, [busy, dilemma, runStream, selectedMarket, stocks]);
 
   const resetWorkspace = useCallback(() => {
     setPhase("idle");
@@ -592,7 +596,6 @@ export default function Page() {
   const selectedStock = stocks.find((stock) => stock.ticker === selectedMarket) ?? null;
   const selectStock = useCallback((stock: StockIdentityData) => {
     setSelectedMarket(stock.ticker);
-    setDilemma(stockPrompt(stock));
   }, []);
   const clearStockSelection = useCallback(() => {
     setSelectedMarket(null);
@@ -609,14 +612,14 @@ export default function Page() {
         </section>
 
       <main className={hasJourney ? "workspace workspace-active" : "workspace workspace-initial"}>
+        <StockDiscovery stocks={stocks} selectedStock={selectedStock} verifiedMarkCount={verifiedMarkCount} fallbackMarkCount={fallbackMarkCount} loading={stocksLoading} error={stocksError} onSelect={selectStock} onClear={clearStockSelection} />
         <section className={hasJourney ? "decision-composer decision-composer-compact" : "decision-composer"} aria-label="Decision input">
-          <p className="eyebrow">{hasJourney ? "RESEARCH AGAIN" : "START WITH THE DECISION"}</p>
+          <p className="eyebrow">{hasJourney ? "RESEARCH AGAIN" : "WHAT ARE YOU DECIDING?"}</p>
           <h2 className="hero-question display">{hasJourney ? "What should CLINCH check next?" : "What are you deciding?"}</h2>
           <p className="hero-support">{hasJourney ? "Describe another trading decision and CLINCH will start a fresh, focused research pass." : "Bring the question in your own words. CLINCH will find the Hinge before it chooses what to research."}</p>
           <label className="input-label" htmlFor="dilemma">{COPY.inputLabel}</label>
-          <textarea id="dilemma" className="input-box" value={dilemma} onChange={(e) => setDilemma(e.target.value)} placeholder="Example: NVIDIA has been drifting lower tonight. I am considering a small entry now, but I am not sure whether waiting makes more sense." maxLength={2000} disabled={busy} />
+          <textarea id="dilemma" className="input-box" value={dilemma} onChange={(e) => setDilemma(e.target.value)} placeholder={selectedStock ? COPY.selectedStockPlaceholder : COPY.inputPlaceholder} maxLength={2000} disabled={busy} />
           <div className="input-meta"><span>{dilemma.length > 1700 ? String(dilemma.length) + " / 2000" : "Use your own words. CLINCH will infer the asset and timing."}</span></div>
-          <StockDiscovery stocks={stocks} selectedStock={selectedStock} verifiedMarkCount={verifiedMarkCount} fallbackMarkCount={fallbackMarkCount} loading={stocksLoading} error={stocksError} onSelect={selectStock} onClear={clearStockSelection} />
           <button type="button" className="cta-primary" disabled={busy || dilemma.trim().length < 4} onClick={start}>{busy ? "Researching your decision..." : "Find the Decision Hinge"} <span aria-hidden="true">↗</span></button>
           <p className="trust-line">CLINCH researches the decision. It does not place trades. <span>No signup.</span></p>
         </section>

@@ -40,14 +40,15 @@ test.describe("P20 canonical stock selection", () => {
 
     await page.getByRole("button", { name: "Select NVIDIA, ticker NVDA" }).click();
     await expect(page.getByText("SELECTED STOCK")).toBeVisible();
-    await expect(page.getByLabel("Describe the trade you are considering")).toHaveValue("I am considering NVIDIA (NVDA). Should I buy now or wait?");
+    await expect(page.getByLabel("Describe the trade you are considering")).toHaveValue("");
+    await expect(page.getByLabel("Describe the trade you are considering")).toHaveAttribute("placeholder", "It has been drifting lower tonight and I'm considering a small entry. Should I wait?");
     expect(researchStarts).toBe(0);
 
     await page.getByRole("button", { name: "Change" }).click();
     await page.getByLabel("Search by company, ticker, or rToken").fill("NVDA");
     await page.locator(".stock-result").click();
     await expect(page.getByText("NVIDIA").last()).toBeVisible();
-    await expect(page.getByLabel("Describe the trade you are considering")).toHaveValue("I am considering NVIDIA (NVDA). Should I buy now or wait?");
+    await expect(page.getByLabel("Describe the trade you are considering")).toHaveValue("");
 
     await page.getByRole("button", { name: "Change" }).click();
     await page.getByLabel("Search by company, ticker, or rToken").fill("rNVDA");
@@ -57,8 +58,43 @@ test.describe("P20 canonical stock selection", () => {
 
     await page.getByRole("button", { name: "Select Tesla, ticker TSLA" }).click();
     await expect(page.getByText("Tesla").last()).toBeVisible();
-    await expect(page.getByLabel("Describe the trade you are considering")).toHaveValue("I am considering Tesla (TSLA). Should I buy now or wait?");
+    await expect(page.getByLabel("Describe the trade you are considering")).toHaveValue("");
+    await expect(page.getByLabel("Describe the trade you are considering")).toHaveAttribute("placeholder", "It has been drifting lower tonight and I'm considering a small entry. Should I wait?");
     expect(researchStarts).toBe(0);
+  });
+
+  test("stock context renders before the composer and both entry modes submit truthfully", async ({ page }) => {
+    let requestBody: { dilemma?: string } | null = null;
+    await page.route("**/api/research/start", async (route) => {
+      requestBody = JSON.parse(route.request().postData() ?? "{}") as { dilemma?: string };
+      await route.fulfill({ status: 200, headers: { "Content-Type": "text/event-stream" }, body: "event: done\ndata: {}\n\n" });
+    });
+    await openApp(page);
+
+    await expect(page.getByText("CHOOSE A STOCK · OPTIONAL")).toBeVisible();
+    await expect(page.getByText("Search the supported Bitget universe, or describe the stock directly in your decision.")).toBeVisible();
+    const orderIsCorrect = await page.locator(".workspace").evaluate((workspace) => {
+      const discovery = workspace.querySelector(".stock-discovery");
+      const composer = workspace.querySelector(".decision-composer");
+      return Boolean(discovery && composer && (discovery.compareDocumentPosition(composer) & Node.DOCUMENT_POSITION_FOLLOWING));
+    });
+    expect(orderIsCorrect).toBe(true);
+
+    await expect(page.getByLabel("Describe the trade you are considering")).toHaveAttribute("placeholder", "NVDA has been drifting lower tonight and I'm considering a small entry. Should I wait?");
+    await page.getByRole("button", { name: "Select NVIDIA, ticker NVDA" }).click();
+    await expect(page.getByText("SELECTED STOCK")).toBeVisible();
+    await expect(page.getByLabel("Describe the trade you are considering")).toHaveAttribute("placeholder", "It has been drifting lower tonight and I'm considering a small entry. Should I wait?");
+    await page.getByLabel("Describe the trade you are considering").fill("It is drifting lower tonight and I am considering a small entry.");
+    await page.getByRole("button", { name: "Find the Decision Hinge" }).click();
+    await expect.poll(() => requestBody?.dilemma).toContain("NVIDIA (NVDA) context:");
+    await expect.poll(() => requestBody?.dilemma).toContain("It is drifting lower tonight");
+
+    await page.reload();
+    requestBody = null;
+    await expect(page.getByLabel("Describe the trade you are considering")).toHaveAttribute("placeholder", "NVDA has been drifting lower tonight and I'm considering a small entry. Should I wait?");
+    await page.getByLabel("Describe the trade you are considering").fill("I'm considering NVDA after tonight's move");
+    await page.getByRole("button", { name: "Find the Decision Hinge" }).click();
+    await expect.poll(() => requestBody?.dilemma).toBe("I'm considering NVDA after tonight's move");
   });
 
   test("keyboard selection, natural-language entry, empty search, and progressive Browse remain accessible", async ({ page }) => {
@@ -66,9 +102,10 @@ test.describe("P20 canonical stock selection", () => {
 
     await page.getByRole("button", { name: "Select NVIDIA, ticker NVDA" }).press("Enter");
     await expect(page.getByText("SELECTED STOCK")).toBeVisible();
+    await expect(page.getByLabel("Describe the trade you are considering")).toHaveValue("");
     await page.getByRole("button", { name: "Change" }).click();
     await page.getByRole("button", { name: "Select Tesla, ticker TSLA" }).press("Space");
-    await expect(page.getByLabel("Describe the trade you are considering")).toHaveValue("I am considering Tesla (TSLA). Should I buy now or wait?");
+    await expect(page.getByLabel("Describe the trade you are considering")).toHaveValue("");
 
     await page.getByRole("button", { name: "Change" }).click();
     await page.getByLabel("Describe the trade you are considering").fill("I am thinking about NVDA after tonight's move, but I am not ready to choose a stock card.");
