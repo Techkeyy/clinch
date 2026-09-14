@@ -5,7 +5,8 @@ import { COPY } from "@/lib/copy";
 import { trackRecent, untrackRecent } from "@/lib/recent";
 import { FreshnessBadge, SkipRecord } from "@/components/research";
 import { StockIdentity } from "@/components/stock-identity";
-import { displayStockFromMention, stockFromRealityTicker, stockMatchesQuery, stockPrompt, type StockIdentityData } from "@/lib/stocks";
+import { StockDiscovery } from "@/components/stock-discovery";
+import { displayStockFromMention, stockFromRealityTicker, stockPrompt, type StockIdentityData } from "@/lib/stocks";
 import { STALE_RUN_MS } from "@/config/thresholds";
 
 interface StreamEvent { type: string; data: Record<string, unknown>; }
@@ -212,8 +213,6 @@ export default function Page() {
   const [fallbackMarkCount, setFallbackMarkCount] = useState<number | null>(null);
   const [stocksLoading, setStocksLoading] = useState(false);
   const [stocksError, setStocksError] = useState(false);
-  const [stockBrowserOpen, setStockBrowserOpen] = useState(false);
-  const [stockQuery, setStockQuery] = useState("");
   const [stockRequestStarted, setStockRequestStarted] = useState(false);
   const keyRef = useRef<string | null>(null);
 
@@ -404,6 +403,7 @@ export default function Page() {
     setRecoveryStatus(null);
     setResumeNote(null);
     setDeletePending(false);
+    setSelectedMarket(null);
     keyRef.current = null;
   }, []);
 
@@ -576,7 +576,6 @@ export default function Page() {
     String(baseline?.spotSymbol ?? (intent as { resolvedSymbol?: unknown } | null)?.resolvedSymbol ?? (intent as { asset?: unknown } | null)?.asset ?? ""),
     stocks,
   ) ?? stockFromRealityTicker(spotSymbol);
-  const filteredStocks = stocks.filter((stock) => stockMatchesQuery(stock, stockQuery)).slice(0, 12);
   const hasJourney = phase !== "idle" || Boolean(intent || baseline || brief || sessionId);
   const activeHinge = hinges.length ? hinges[hinges.length - 1] : null;
   const previousHinges = hinges.slice(0, -1);
@@ -590,10 +589,15 @@ export default function Page() {
     navigateSurface("dashboard", anchor);
     window.setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
   }, [navigateSurface]);
-  const selectStock = (stock: StockIdentityData, forcePrompt = false) => {
+  const selectedStock = stocks.find((stock) => stock.ticker === selectedMarket) ?? null;
+  const selectStock = useCallback((stock: StockIdentityData) => {
     setSelectedMarket(stock.ticker);
-    if (forcePrompt || !dilemma.trim()) setDilemma(stockPrompt(stock));
-  };
+    setDilemma(stockPrompt(stock));
+  }, []);
+  const clearStockSelection = useCallback(() => {
+    setSelectedMarket(null);
+    setDilemma("");
+  }, []);
 
   return (
     <div className="app-shell">
@@ -610,27 +614,9 @@ export default function Page() {
           <h2 className="hero-question display">{hasJourney ? "What should CLINCH check next?" : "What are you deciding?"}</h2>
           <p className="hero-support">{hasJourney ? "Describe another trading decision and CLINCH will start a fresh, focused research pass." : "Bring the question in your own words. CLINCH will find the Hinge before it chooses what to research."}</p>
           <label className="input-label" htmlFor="dilemma">{COPY.inputLabel}</label>
-          <textarea id="dilemma" className="input-box" value={dilemma} onChange={(e) => { setDilemma(e.target.value); setSelectedMarket(null); }} placeholder="Example: NVIDIA has been drifting lower tonight. I am considering a small entry now, but I am not sure whether waiting makes more sense." maxLength={2000} disabled={busy} />
+          <textarea id="dilemma" className="input-box" value={dilemma} onChange={(e) => setDilemma(e.target.value)} placeholder="Example: NVIDIA has been drifting lower tonight. I am considering a small entry now, but I am not sure whether waiting makes more sense." maxLength={2000} disabled={busy} />
           <div className="input-meta"><span>{dilemma.length > 1700 ? String(dilemma.length) + " / 2000" : "Use your own words. CLINCH will infer the asset and timing."}</span></div>
-          <div className="market-picker" aria-label="Supported stock search and examples">
-            <div><span className="example-label">Supported stock universe</span><span className="market-picker-note">Natural-language entry remains open. Bitget discovery is checked before a stock can run.</span></div>
-            {stocksLoading && <p className="stock-browser-status" role="status">Loading supported stocks...</p>}
-            {!stocksLoading && stocksError && <p className="stock-browser-status" role="status">Supported stocks are unavailable right now. You can still describe a stock in your own words.</p>}
-            {!stocksLoading && !stocksError && stocks.length > 0 && <p className="stock-browser-status" role="status">CLINCH can research {stocks.length} supported Reality instruments. {verifiedMarkCount ?? 0} verified brand mark{verifiedMarkCount === 1 ? "" : "s"}; {fallbackMarkCount ?? 0} ticker monogram fallback{fallbackMarkCount === 1 ? "" : "s"}.</p>}
-            {!stocksLoading && !stocksError && stocks.length > 0 && <div className="stock-browser">
-              <button type="button" className="stock-browser-toggle" aria-expanded={stockBrowserOpen} aria-controls="stock-browser-panel" onClick={() => setStockBrowserOpen((open) => !open)}>{stockBrowserOpen ? "Hide supported stocks" : "Browse supported stocks"}</button>
-              {stockBrowserOpen && <div className="stock-browser-panel" id="stock-browser-panel">
-                <label className="stock-search-label" htmlFor="stock-search">Search stocks</label>
-                <input id="stock-search" className="stock-search" value={stockQuery} onChange={(e) => setStockQuery(e.target.value)} placeholder="Search company or ticker" autoComplete="off" />
-                <p className="stock-search-help">Search by company name, normal ticker, or the Bitget rToken label. CLINCH only runs stocks returned by the live supported universe.</p>
-                <div className="stock-result-list" role="listbox" aria-label="Supported stocks">
-                  {filteredStocks.map((stock) => <button type="button" role="option" aria-selected={selectedMarket === stock.ticker} className={selectedMarket === stock.ticker ? "stock-result is-selected" : "stock-result"} key={stock.ticker} disabled={busy} onClick={() => selectStock(stock)}><StockIdentity stock={stock} /></button>)}
-                  {filteredStocks.length === 0 && <p className="stock-browser-status">No supported stock matches that search.</p>}
-                </div>
-              </div>}
-            </div>}
-            {!stocksLoading && !stocksError && stocks.length > 0 && <div className="stock-examples"><span className="stock-examples-label">Examples from the supported universe</span><div className="market-chip-row">{stocks.slice(0, 3).map((stock) => <button type="button" className={selectedMarket === stock.ticker ? "stock-identity-button is-selected" : "stock-identity-button"} disabled={busy} key={stock.ticker} onClick={() => selectStock(stock, true)}><StockIdentity stock={stock} size="sm" /></button>)}</div></div>}
-          </div>
+          <StockDiscovery stocks={stocks} selectedStock={selectedStock} verifiedMarkCount={verifiedMarkCount} fallbackMarkCount={fallbackMarkCount} loading={stocksLoading} error={stocksError} onSelect={selectStock} onClear={clearStockSelection} />
           <button type="button" className="cta-primary" disabled={busy || dilemma.trim().length < 4} onClick={start}>{busy ? "Researching your decision..." : "Find the Decision Hinge"} <span aria-hidden="true">↗</span></button>
           <p className="trust-line">CLINCH researches the decision. It does not place trades. <span>No signup.</span></p>
         </section>

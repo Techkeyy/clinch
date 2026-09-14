@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findStockByMention, researchableRealityStocks, stockFromRealityTicker, stockMatchesQuery } from "@/lib/stocks";
+import { featuredSupportedStocks, findStockByMention, researchableRealityStocks, stockFromRealityTicker, stockMatchesQuery } from "@/lib/stocks";
 import { FutInstrument, SpotInstrument } from "@/research/bitget/endpoints";
 
 const spot = [
@@ -37,6 +37,15 @@ describe("CLINCH stock identity and dynamic universe", () => {
     expect(stockFromRealityTicker("RNVDAUSDT")).toMatchObject({ logoKey: "nvidia", markKind: "verified" });
     expect(stockFromRealityTicker("RAMZNUSDT")).toMatchObject({ logoKey: "amazon", markKind: "verified" });
     expect(stockFromRealityTicker("RORCLUSDT")).toMatchObject({ logoKey: "monogram", markKind: "fallback" });
+  });
+
+  it("derives featured cards from the live supported universe", () => {
+    const stocks = researchableRealityStocks([
+      ...spot,
+      { symbol: "RAMZNUSDT", category: "SPOT", status: "online", isReality: "yes" },
+      { symbol: "RMSFTUSDT", category: "SPOT", status: "online", isReality: "yes" },
+    ].map((row) => SpotInstrument.parse(row)), futures);
+    expect(featuredSupportedStocks(stocks).map((stock) => stock.ticker)).toEqual(["NVDA", "TSLA", "AMZN", "MSFT"]);
   });
 
   it("rejects malformed non-Reality symbols instead of inventing support", () => {

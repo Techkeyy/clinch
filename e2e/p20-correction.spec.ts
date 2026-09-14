@@ -14,14 +14,14 @@ test.describe("P20 targeted corrections", () => {
       body: JSON.stringify({ stocks: STOCKS, count: STOCKS.length, verifiedMarkCount: 2, fallbackMarkCount: 1, source: "Bitget Reality instruments plus CLINCH spot research capability" }),
     }));
     await page.goto("/#app");
-    await expect(page.getByText("CLINCH can research 3 supported Reality instruments. 2 verified brand marks; 1 ticker monogram fallback.")).toBeVisible();
-    await page.getByRole("button", { name: "Browse supported stocks" }).click();
-    await page.getByLabel("Search stocks").fill("nvidia");
-    await expect(page.getByRole("option")).toHaveCount(1);
+    await expect(page.getByRole("heading", { name: "Choose a stock" })).toBeVisible();
+    await page.getByLabel("Search by company, ticker, or rToken").fill("nvidia");
+    await expect(page.locator(".stock-result")).toHaveCount(1);
     await expect(page.getByText("NVIDIA").first()).toBeVisible();
     await expect(page.getByText("NVDA").first()).toBeVisible();
     await expect(page.locator(".stock-result .stock-token-meta")).toHaveText("Bitget rToken · rNVDA");
-    await page.getByRole("option").click();
+    await page.locator(".stock-result").click();
+    await expect(page.getByText("SELECTED STOCK")).toBeVisible();
     await expect(page.getByLabel("Describe the trade you are considering")).toHaveValue("I am considering NVIDIA (NVDA). Should I buy now or wait?");
   });
 

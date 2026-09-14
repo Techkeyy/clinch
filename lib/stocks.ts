@@ -43,6 +43,13 @@ export function stockMarkKind(logoKey: string): StockMarkKind {
   return VERIFIED_LOGO_KEYS.has(logoKey) ? "verified" : "fallback";
 }
 
+export const FEATURED_STOCK_TICKERS = ["NVDA", "AAPL", "TSLA", "AMZN", "MSFT", "GOOGL", "META", "AMD"] as const;
+
+export function featuredSupportedStocks<T extends StockIdentityData>(stocks: T[]): T[] {
+  const byTicker = new Map(stocks.map((stock) => [stock.ticker, stock]));
+  return FEATURED_STOCK_TICKERS.map((ticker) => byTicker.get(ticker)).filter((stock): stock is T => Boolean(stock));
+}
+
 // Bitget's instruments endpoint gives CLINCH the live symbol universe, while
 // this small directory supplies human names and stable local marks for the
 // most recognizable U.S. issuers. Unknown issuers remain truthful with a
