@@ -4,7 +4,10 @@ export interface StockIdentityData {
   companyName: string;
   ticker: string;
   logoKey: string;
+  markKind: StockMarkKind;
 }
+
+export type StockMarkKind = "verified" | "fallback";
 
 export interface DiscoveredStock extends StockIdentityData {
   realityTicker: string;
@@ -15,6 +18,29 @@ interface StockDirectoryEntry {
   companyName: string;
   logoKey: string;
   aliases?: string[];
+}
+
+export const VERIFIED_LOGO_KEYS = new Set([
+  "apple",
+  "amd",
+  "amazon",
+  "broadcom",
+  "coinbase",
+  "google",
+  "intel",
+  "meta",
+  "microsoft",
+  "netflix",
+  "nvidia",
+  "palantir",
+  "qualcomm",
+  "shopify",
+  "tesla",
+  "visa",
+]);
+
+export function stockMarkKind(logoKey: string): StockMarkKind {
+  return VERIFIED_LOGO_KEYS.has(logoKey) ? "verified" : "fallback";
 }
 
 // Bitget's instruments endpoint gives CLINCH the live symbol universe, while
@@ -34,15 +60,15 @@ const DIRECTORY: Record<string, StockDirectoryEntry> = {
   MSFT: { companyName: "Microsoft", logoKey: "microsoft", aliases: ["microsoft corporation", "microsoft"] },
   NFLX: { companyName: "Netflix", logoKey: "netflix", aliases: ["netflix"] },
   NVDA: { companyName: "NVIDIA", logoKey: "nvidia", aliases: ["nvidia corporation", "nvidia"] },
-  ORCL: { companyName: "Oracle", logoKey: "oracle", aliases: ["oracle corporation", "oracle"] },
+  ORCL: { companyName: "Oracle", logoKey: "monogram", aliases: ["oracle corporation", "oracle"] },
   PLTR: { companyName: "Palantir", logoKey: "palantir", aliases: ["palantir technologies", "palantir"] },
   QCOM: { companyName: "Qualcomm", logoKey: "qualcomm", aliases: ["qualcomm"] },
-  QQQ: { companyName: "Invesco QQQ", logoKey: "qqq", aliases: ["invesco qqq", "qqq"] },
+  QQQ: { companyName: "Invesco QQQ", logoKey: "monogram", aliases: ["invesco qqq", "qqq"] },
   SHOP: { companyName: "Shopify", logoKey: "shopify", aliases: ["shopify"] },
-  SPY: { companyName: "SPDR S&P 500 ETF", logoKey: "spy", aliases: ["spdr", "s&p 500", "spy"] },
+  SPY: { companyName: "SPDR S&P 500 ETF", logoKey: "monogram", aliases: ["spdr", "s&p 500", "spy"] },
   TSLA: { companyName: "Tesla", logoKey: "tesla", aliases: ["tesla inc", "tesla"] },
   V: { companyName: "Visa", logoKey: "visa", aliases: ["visa inc", "visa"] },
-  WMT: { companyName: "Walmart", logoKey: "walmart", aliases: ["walmart"] },
+  WMT: { companyName: "Walmart", logoKey: "monogram", aliases: ["walmart"] },
 };
 
 function clean(value: string): string {
@@ -63,11 +89,13 @@ export function stockFromRealityTicker(realityTicker: string, perpTicker: string
   const ticker = tickerFromRealitySymbol(reality);
   if (!ticker) return null;
   const known = DIRECTORY[ticker];
+  const logoKey = known?.logoKey ?? "monogram";
   return {
     companyName: known?.companyName ?? `Stock ${ticker}`,
     ticker,
     realityTicker: reality,
-    logoKey: known?.logoKey ?? "monogram",
+    logoKey,
+    markKind: stockMarkKind(logoKey),
     perpTicker,
   };
 }

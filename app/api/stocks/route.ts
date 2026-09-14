@@ -17,10 +17,14 @@ export async function GET(req: Request) {
       // stays absent when the optional futures instrument discovery is down.
     }
     const stocks = researchableRealityStocks(spot, futures);
-    const publicStocks = stocks.map(({ companyName, ticker, logoKey }) => ({ companyName, ticker, logoKey }));
+    const publicStocks = stocks.map(({ companyName, ticker, logoKey, markKind }) => ({ companyName, ticker, logoKey, markKind }));
+    const verifiedMarkCount = publicStocks.filter((stock) => stock.markKind === "verified").length;
+    const fallbackMarkCount = publicStocks.length - verifiedMarkCount;
     return Response.json({
       stocks: publicStocks,
       count: publicStocks.length,
+      verifiedMarkCount,
+      fallbackMarkCount,
       source: "Bitget Reality instruments plus CLINCH spot research capability",
       generatedAt: new Date().toISOString(),
     }, {

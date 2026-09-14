@@ -28,7 +28,13 @@ describe("CLINCH stock identity and dynamic universe", () => {
 
   it("uses a truthful monogram for an unknown but valid Reality issuer", () => {
     const stock = stockFromRealityTicker("RZZZUSDT");
-    expect(stock).toMatchObject({ ticker: "ZZZ", companyName: "Stock ZZZ", logoKey: "monogram", perpTicker: null });
+    expect(stock).toMatchObject({ ticker: "ZZZ", companyName: "Stock ZZZ", logoKey: "monogram", markKind: "fallback", perpTicker: null });
+  });
+
+  it("classifies package-backed marks separately from the fallback", () => {
+    expect(stockFromRealityTicker("RNVDAUSDT")).toMatchObject({ logoKey: "nvidia", markKind: "verified" });
+    expect(stockFromRealityTicker("RAMZNUSDT")).toMatchObject({ logoKey: "amazon", markKind: "verified" });
+    expect(stockFromRealityTicker("RORCLUSDT")).toMatchObject({ logoKey: "monogram", markKind: "fallback" });
   });
 
   it("rejects malformed non-Reality symbols instead of inventing support", () => {

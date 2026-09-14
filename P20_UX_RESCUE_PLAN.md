@@ -152,7 +152,15 @@ Stock universe and naming:
 
 - The old three-chip list is replaced by a dynamic `/api/stocks` route backed by Bitget's official SPOT instruments endpoint and the existing CLINCH spot research capability. Online Reality symbols are the live universe; optional stock-perp mapping is derived only when the discovered RWA futures instrument exists.
 - Search accepts company name, normal ticker, and Bitget rToken ticker. The deterministic extractor now recognizes common company names as well as ticker forms, while the server canonicalizes the resolved intent to the normal ticker and keeps raw exchange symbols in server state and validated research adapters.
-- A single `StockIdentity` component renders the company name, normal ticker, secondary `Bitget rToken · rTICKER` explanation, local recognizable issuer mark, or a stable monogram fallback. It is used in stock search results, examples, selected decisions, parsed result state, live context, Hinge, findings, final brief, and Recent research.
+- A single `StockIdentity` component renders the company name, normal ticker, secondary `Bitget rToken · rTICKER` explanation, a verified package-backed brand mark where one is catalogued, or a visibly distinct ticker monogram fallback. It is used in stock search results, examples, selected decisions, parsed result state, live context, Hinge, findings, final brief, and Recent research.
+
+Stock mark source and licensing strategy:
+
+- CLINCH does not claim that the Bitget instrument API supplies issuer logos; it supplies symbols and Reality eligibility, not brand assets.
+- Verified marks are bundled locally from `simple-icons@16.31.0` where the maintained catalog has a matching issuer entry. Simple Icons publishes each icon's source metadata and legal disclaimer; the package is CC0-1.0, while its disclaimer makes clear that trademark rights are not waived.
+- Amazon and Microsoft use their matching entries from `@fortawesome/free-brands-svg-icons@7.3.0`, the official Font Awesome Free Brands package. Its package license is CC BY 4.0 AND MIT; the repository preserves the package attribution and the brand marks remain the property of their owners.
+- There are no remote logo URLs, Google Image results, hand-drawn issuer approximations, or invented marks. A directory entry is classified as `verified` only when it has a matching imported package asset. Long-tail issuers and unsupported package entries retain the dashed ticker-monogram fallback and remain fully searchable/researchable.
+- `/api/stocks` reports the live supported Reality instrument count plus verified-mark and fallback counts. This is instrument coverage, not a claim of 1,173 unique underlying companies.
 
 Version conflict correction:
 
@@ -179,6 +187,6 @@ Production correction deployment:
 - Correction commit: `d37855e` (`fix: align stock discovery and research again flow`).
 - Vercel production deployment: `dpl_3hyHiQB6pJAR7JMCCbcY2aw9E1y2`, READY.
 - Public URL: `https://clinch-nine.vercel.app`.
-- Public `GET /api/stocks` over HTTPS returned 1,173 stocks with source `Bitget Reality instruments plus CLINCH spot research capability`. The public payload contains display metadata only; raw spot and perp symbols remain server-side.
+- Public `GET /api/stocks` over HTTPS returned 1,173 supported Reality instruments with source `Bitget Reality instruments plus CLINCH spot research capability`. The public payload contains display metadata only; raw spot and perp symbols remain server-side.
 - Public desktop search rendered `NVIDIA`, `NVDA`, and `Bitget rToken · rNVDA`. Public desktop and mobile smoke both had zero horizontal overflow; mobile primary CTA measured 50px.
 - No live research journey was consumed for this correction smoke. The prior P18/P19 production proof remains the evidence for real Qwen, Neon, real Bitget research, secure ownership, and clean-user production flow. Owner manual UAT is the next human action.

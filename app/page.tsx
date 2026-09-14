@@ -208,6 +208,8 @@ export default function Page() {
   const [surface, setSurface] = useState<Surface>("dashboard");
   const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
   const [stocks, setStocks] = useState<StockIdentityData[]>([]);
+  const [verifiedMarkCount, setVerifiedMarkCount] = useState<number | null>(null);
+  const [fallbackMarkCount, setFallbackMarkCount] = useState<number | null>(null);
   const [stocksLoading, setStocksLoading] = useState(false);
   const [stocksError, setStocksError] = useState(false);
   const [stockBrowserOpen, setStockBrowserOpen] = useState(false);
@@ -239,8 +241,12 @@ export default function Page() {
     fetch("/api/stocks")
       .then(async (res) => {
         if (!res.ok) throw new Error("stock discovery unavailable");
-        const body = await res.json() as { stocks?: unknown };
-        setStocks(Array.isArray(body.stocks) ? body.stocks as StockIdentityData[] : []);
+        const body = await res.json() as { stocks?: unknown; verifiedMarkCount?: unknown; fallbackMarkCount?: unknown };
+        const nextStocks = Array.isArray(body.stocks) ? body.stocks as StockIdentityData[] : [];
+        const verified = typeof body.verifiedMarkCount === "number" ? body.verifiedMarkCount : nextStocks.filter((stock) => stock.markKind === "verified").length;
+        setStocks(nextStocks);
+        setVerifiedMarkCount(verified);
+        setFallbackMarkCount(typeof body.fallbackMarkCount === "number" ? body.fallbackMarkCount : nextStocks.length - verified);
       })
       .catch(() => setStocksError(true))
       .finally(() => setStocksLoading(false));
@@ -610,7 +616,7 @@ export default function Page() {
             <div><span className="example-label">Supported stock universe</span><span className="market-picker-note">Natural-language entry remains open. Bitget discovery is checked before a stock can run.</span></div>
             {stocksLoading && <p className="stock-browser-status" role="status">Loading supported stocks...</p>}
             {!stocksLoading && stocksError && <p className="stock-browser-status" role="status">Supported stocks are unavailable right now. You can still describe a stock in your own words.</p>}
-            {!stocksLoading && !stocksError && stocks.length > 0 && <p className="stock-browser-status" role="status">CLINCH can research {stocks.length} supported Reality stocks.</p>}
+            {!stocksLoading && !stocksError && stocks.length > 0 && <p className="stock-browser-status" role="status">CLINCH can research {stocks.length} supported Reality instruments. {verifiedMarkCount ?? 0} verified brand mark{verifiedMarkCount === 1 ? "" : "s"}; {fallbackMarkCount ?? 0} ticker monogram fallback{fallbackMarkCount === 1 ? "" : "s"}.</p>}
             {!stocksLoading && !stocksError && stocks.length > 0 && <div className="stock-browser">
               <button type="button" className="stock-browser-toggle" aria-expanded={stockBrowserOpen} aria-controls="stock-browser-panel" onClick={() => setStockBrowserOpen((open) => !open)}>{stockBrowserOpen ? "Hide supported stocks" : "Browse supported stocks"}</button>
               {stockBrowserOpen && <div className="stock-browser-panel" id="stock-browser-panel">
