@@ -156,6 +156,7 @@ Stock universe and naming:
 
 Stock mark source and licensing strategy:
 
+- This correction supersedes the earlier handcrafted inline marks. Those approximations were not treated as official and are no longer rendered by `StockIdentity`.
 - CLINCH does not claim that the Bitget instrument API supplies issuer logos; it supplies symbols and Reality eligibility, not brand assets.
 - Verified marks are bundled locally from `simple-icons@16.31.0` where the maintained catalog has a matching issuer entry. Simple Icons publishes each icon's source metadata and legal disclaimer; the package is CC0-1.0, while its disclaimer makes clear that trademark rights are not waived.
 - Amazon and Microsoft use their matching entries from `@fortawesome/free-brands-svg-icons@7.3.0`, the official Font Awesome Free Brands package. Its package license is CC BY 4.0 AND MIT; the repository preserves the package attribution and the brand marks remain the property of their owners.
@@ -172,7 +173,7 @@ Verification completed locally:
 
 - `npm run typecheck`: PASS.
 - `npm run lint`: PASS.
-- `npm test -- --run`: PASS, 114 tests passed and 4 expected skips.
+- `npm test -- --run`: PASS, 115 tests passed and 4 expected skips.
 - Production build: PASS, including `/api/stocks`.
 - Design-skill UI audit: PASS, zero long-dash errors, zero small-text warnings, zero copy warnings.
 - Desktop and mobile focused browser smoke: PASS with no horizontal overflow.
@@ -184,9 +185,10 @@ P20 remains OWNER UAT REQUIRED. P21 remains untouched.
 
 Production correction deployment:
 
-- Correction commit: `d37855e` (`fix: align stock discovery and research again flow`).
-- Vercel production deployment: `dpl_3hyHiQB6pJAR7JMCCbcY2aw9E1y2`, READY.
+- Correction commits: `a225971` (`fix: use verified stock brand marks`) and `b2a7f23` (`fix: ignore short ticker substrings in search`).
+- Vercel production deployment: `dpl_42iMtZWkukisbYc9it9YC12rgt8C`, READY.
 - Public URL: `https://clinch-nine.vercel.app`.
-- Public `GET /api/stocks` over HTTPS returned 1,173 supported Reality instruments with source `Bitget Reality instruments plus CLINCH spot research capability`. The public payload contains display metadata only; raw spot and perp symbols remain server-side.
-- Public desktop search rendered `NVIDIA`, `NVDA`, and `Bitget rToken · rNVDA`. Public desktop and mobile smoke both had zero horizontal overflow; mobile primary CTA measured 50px.
+- Public `GET /api/stocks` over HTTPS returned 1,173 supported Reality instruments, 16 verified package-backed marks, and 1,157 ticker-monogram fallbacks, with source `Bitget Reality instruments plus CLINCH spot research capability`. The public payload contains display metadata only; raw spot and perp symbols remain server-side.
+- Fresh public desktop and mobile browser contexts searched `NVIDIA`, `Apple`, `Tesla`, `Amazon`, and `Alphabet`; each returned the expected underlying ticker and `stock-logo is-verified` with an accessible brand-mark label. Both surfaces had zero horizontal overflow.
+- Public screenshot proof is captured at `proof/p20-stock-identity/desktop-NVDA.png`, `desktop-AAPL.png`, `desktop-TSLA.png`, `desktop-AMZN.png`, `desktop-GOOGL.png`, and the matching `mobile-*.png` files.
 - No live research journey was consumed for this correction smoke. The prior P18/P19 production proof remains the evidence for real Qwen, Neon, real Bitget research, secure ownership, and clean-user production flow. Owner manual UAT is the next human action.
