@@ -222,5 +222,7 @@ The final Owner correction keeps stock choice optional and changes only the App'
 - Regression coverage now proves DOM order, optional copy, selected and unselected placeholders, selected-context submission, natural-language-only submission, no-auto-research, desktop/mobile ordering, and the existing stock search/selection contract.
 - Focused Playwright verification: 12 passed across desktop and mobile. Vitest: 116 passed with 4 expected skips. Typecheck, lint, and production build passed.
 - Screenshot proof is captured at `proof/p20-order-correction/desktop-fresh-app.png`, `desktop-selected-nvda.png`, `mobile-fresh-app.png`, and `mobile-selected-nvda.png`.
+- Production deployment: commit `60e17bc`, Vercel deployment `dpl_B8RunHpETgh2RoPqgBydvEeCNGnJ`, READY, aliased to `https://clinch-nine.vercel.app`.
+- Public HTTPS smoke: 2 passed across fresh desktop and mobile contexts against the real production `/api/stocks` route. The stock-first order, optional copy, Tesla search/selection, selected placeholder, and zero horizontal overflow were verified. No local DNS pin, hardcoded IP, TLS bypass, or research submission was used.
 
 P20 remains OWNER UAT REQUIRED. P21 remains untouched.
