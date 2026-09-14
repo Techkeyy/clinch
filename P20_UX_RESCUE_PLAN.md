@@ -173,3 +173,12 @@ Verification completed locally:
 P14 status remains CUT / DEFERRED. The current official Bitget REST documentation describes user-created API keys with read-only or read/write permission configuration, plus separate trade, transfer, and withdrawal capabilities. It does not provide a clean delegated browser authorization flow for this product surface. CLINCH therefore keeps the original guest and public-data core, adds no credential form, adds no connection button, and requests no trading or withdrawal permission. A later P14 reopening would require an official permission-scoped delegated flow, server-side token handling, revocation, and a separate owner authorization decision. Reference: https://www.bitget.com/docs/classic/rest-api.
 
 P20 remains OWNER UAT REQUIRED. P21 remains untouched.
+
+Production correction deployment:
+
+- Correction commit: `d37855e` (`fix: align stock discovery and research again flow`).
+- Vercel production deployment: `dpl_3hyHiQB6pJAR7JMCCbcY2aw9E1y2`, READY.
+- Public URL: `https://clinch-nine.vercel.app`.
+- Public `GET /api/stocks` over HTTPS returned 1,173 stocks with source `Bitget Reality instruments plus CLINCH spot research capability`. The public payload contains display metadata only; raw spot and perp symbols remain server-side.
+- Public desktop search rendered `NVIDIA`, `NVDA`, and `Bitget rToken · rNVDA`. Public desktop and mobile smoke both had zero horizontal overflow; mobile primary CTA measured 50px.
+- No live research journey was consumed for this correction smoke. The prior P18/P19 production proof remains the evidence for real Qwen, Neon, real Bitget research, secure ownership, and clean-user production flow. Owner manual UAT is the next human action.
