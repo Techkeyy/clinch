@@ -73,42 +73,207 @@ function ContextMetric({ label, value, note }: { label: string; value: string | 
   );
 }
 
-function DecisionInterpretation({ brief }: { brief: Record<string, unknown> }) {
-  const raw = brief.decisionImplication;
-  if (!raw || typeof raw !== "object") return null;
-  const implication = raw as {
-    summary?: unknown;
-    supportiveEvidence?: unknown;
-    cautionEvidence?: unknown;
-    unresolvedPoint?: unknown;
-    changeTriggers?: unknown;
-    futureRechecks?: unknown;
-  };
-  const list = (value: unknown): string[] => Array.isArray(value)
+function stringList(value: unknown): string[] {
+  return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
     : [];
-  const supportive = list(implication.supportiveEvidence);
-  const caution = list(implication.cautionEvidence);
-  const triggers = list(implication.changeTriggers);
-  const futureRechecks = list(brief.futureRechecks);
-  const stopped = brief.terminalStatus === "stopped";
+}
+
+function humanResearchFamily(family: string): string {
+  if (family === "spot-structure") return "Recent price behavior";
+  if (family === "perp-positioning") return "Futures trader positioning";
+  return "Supported market evidence";
+}
+
+function researchFamilyFromTopic(topic: string | null | undefined): string {
+  if (topic === "structure-direction" || topic === "move-reality") return "spot-structure";
+  if (topic === "crowd-timing" || topic === "dislocation") return "perp-positioning";
+  return "supported-evidence";
+}
+
+function plainMarketLanguage(value: string): string {
+  return value
+    .replace(/The spread is tight at [^,]+, so the observed move has usable liquidity context\./gi, "Buying and selling conditions look normal.")
+    .replace(/The spread is wide at [^,]+, so timing evidence is less reliable\./gi, "Buying and selling conditions are less reliable right now.")
+    .replace(/Funding is calm at [^,]+, with no elevated crowding signal in this check\./gi, "Futures trader positioning looks calm.")
+    .replace(/Funding is elevated at [^,]+, which points to more crowded positioning\./gi, "Futures trader positioning looks crowded.")
+    .replace(/Perp pricing is [^,]+, so the gap needs to persist to matter\./gi, "The futures price is separated from the stock price, so this signal needs to persist to matter.")
+    .replace(/Perp pricing is tracking the index closely in this check\./gi, "The stock and futures prices are moving closely together.")
+    .replace(/\bperp-index gap\b/gi, "gap between the stock and futures prices")
+    .replace(/\bspot-perp gap\b/gi, "gap between the stock and futures prices")
+    .replace(/\bopen interest\b/gi, "open futures positions")
+    .replace(/\bbasis points?\b/gi, "small price gap")
+    .replace(/\bmarket structure\b/gi, "recent price behavior")
+    .replace(/\bdislocation\b/gi, "price gap")
+    .replace(/\bpositioning\b/gi, "trader behavior")
+    .replace(/\bperp\b/gi, "futures")
+    .replace(/\bdrift\b/gi, "recent move")
+    .replace(/normalized market observation/gi, "clear market signal")
+    .replace(/supported market observation/gi, "supported market signal")
+    .replace(/timing read/gi, "timing decision")
+    .replace(/current read/gi, "current conclusion");
+}
+
+function uniqueStrings(items: string[]): string[] {
+  return Array.from(new Set(items.map((item) => item.trim()).filter(Boolean)));
+}
+
+function technicalValue(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return Number.isFinite(value) ? String(value) : "Unavailable";
+  if (typeof value === "boolean") return value ? "true" : "false";
+  try {
+    return JSON.stringify(value) ?? "Unavailable";
+  } catch {
+    return String(value);
+  }
+}
+
+function TechnicalEvidence({
+  brief,
+  findings,
+  skips,
+  historyList,
+  spotSymbol,
+  spot,
+  perp,
+}: {
+  brief: Record<string, unknown>;
+  findings: Finding[];
+  skips: Skip[];
+  historyList: { hinge: string; topic?: string | null; question?: string | null; verdict: string }[];
+  spotSymbol: string;
+  spot: Record<string, unknown>;
+  perp: Record<string, unknown>;
+}) {
+  const briefSources = stringList(brief.sources);
+  const briefCompleted = stringList(brief.completed);
+  const briefSkipped = Array.isArray(brief.skipped)
+    ? (brief.skipped as { check?: unknown; reason?: unknown }[]).filter((item) => item && typeof item === "object")
+    : [];
+  const exactFindings = findings.length
+    ? findings
+    : historyList.map((item) => ({
+      hinge: item.hinge,
+      family: researchFamilyFromTopic(item.topic),
+      summary: item.question ?? "Saved research question",
+      observedAt: null,
+      source: "Persisted research record",
+      facts: {},
+    }));
   return (
-    <section className="decision-interpretation" aria-label="Decision interpretation">
-      <div className="decision-interpretation-heading">
-        <p className="eyebrow">WHAT THIS MEANS FOR YOUR DECISION</p>
-        <span className="interpretation-mark" aria-hidden="true">↳</span>
+    <div className="technical-evidence">
+      <p className="technical-evidence-intro">Advanced users can inspect the exact market records CLINCH retained for this answer.</p>
+      <dl className="technical-summary-grid">
+        <div><dt>Instrument</dt><dd>{spotSymbol}</dd></div>
+        <div><dt>Freshness</dt><dd>{String(brief.freshness ?? "Not recorded")}</dd></div>
+        <div><dt>Terminal state</dt><dd>{String(brief.terminalStatus ?? "Not recorded")}</dd></div>
+        <div><dt>Reason code</dt><dd>{String(brief.terminalReasonCode ?? "Not recorded")}</dd></div>
+      </dl>
+      {[["Spot market record", spot], ["Futures market record", perp]].map(([label, values]) => {
+        const entries = Object.entries(values as Record<string, unknown>);
+        if (!entries.length) return null;
+        return <section className="technical-record" key={String(label)}><h4>{String(label)}</h4><dl className="technical-fact-list">{entries.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{technicalValue(value)}</dd></div>)}</dl></section>;
+      })}
+      {exactFindings.length > 0 && <section className="technical-record"><h4>Checked records</h4><div className="technical-record-list">{exactFindings.map((finding, index) => <article key={finding.hinge + "-technical-" + index}><p><strong>{humanResearchFamily(finding.family)}</strong> <span>{finding.hinge}</span></p><p>{finding.summary}</p><p>{safeSource(finding.source, finding.family)}{shortUtc(finding.observedAt) ? ", observed " + shortUtc(finding.observedAt) : ""}.</p>{Object.keys(finding.facts).length > 0 && <dl className="technical-fact-list">{Object.entries(finding.facts).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{technicalValue(value)}</dd></div>)}</dl>}</article>)}</div></section>}
+      {briefCompleted.length > 0 && <section className="technical-record"><h4>Exact completed questions</h4><ul className="technical-list">{briefCompleted.map((item, index) => <li key={"completed-" + index}>{item}</li>)}</ul></section>}
+      {(skips.length > 0 || briefSkipped.length > 0) && <section className="technical-record"><h4>Exact skipped records</h4><ul className="technical-list">{(skips.length ? skips : briefSkipped.map((item) => ({ check: String(item.check ?? ""), reason: String(item.reason ?? "") }))).map((item, index) => <li key={"skipped-" + index}><strong>{item.check}</strong>: {item.reason}</li>)}</ul></section>}
+      {briefSources.length > 0 && <section className="technical-record"><h4>Source provenance</h4><ul className="technical-list">{briefSources.map((item, index) => <li key={"source-" + index}>{item}</li>)}</ul></section>}
+    </div>
+  );
+}
+
+function DecisionAnswer({
+  brief,
+  dilemma,
+  activeHinge,
+  findings,
+  skips,
+  historyList,
+  stopReason,
+  terminalStatus,
+  spotSymbol,
+  spot,
+  perp,
+}: {
+  brief: Record<string, unknown>;
+  dilemma: string;
+  activeHinge: { hinge: string; question: string; why: string; changes: string; family: string } | null;
+  findings: Finding[];
+  skips: Skip[];
+  historyList: { hinge: string; topic?: string | null; question?: string | null; verdict: string }[];
+  stopReason: string | null;
+  terminalStatus: "stopped" | "unresolved" | null;
+  spotSymbol: string;
+  spot: Record<string, unknown>;
+  perp: Record<string, unknown>;
+}) {
+  const implication = (brief.decisionImplication && typeof brief.decisionImplication === "object")
+    ? brief.decisionImplication as Record<string, unknown>
+    : {};
+  const unresolved = brief.terminalStatus === "unresolved" || terminalStatus === "unresolved";
+  const question = dilemma.trim() || String(brief.decision ?? "Your decision");
+  const read = String(brief.read ?? "Cannot resolve");
+  const summary = plainMarketLanguage(String(implication.summary ?? brief.why ?? "The available evidence has been translated into a plain-English conclusion."));
+  const whyItems = uniqueStrings([
+    ...stringList(implication.supportiveEvidence),
+    ...stringList(implication.cautionEvidence),
+  ].map(plainMarketLanguage)).slice(0, 3);
+  const watchItems = uniqueStrings([
+    ...stringList(brief.changeTriggers),
+    ...stringList(implication.changeTriggers),
+  ].map(plainMarketLanguage)).slice(0, 3);
+  const fallbackWhy = whyItems.length ? whyItems : ["The available market evidence was weighed against the decision you described."];
+  const fallbackWatch = watchItems.length ? watchItems : ["A supported market signal that materially changes this conclusion would be worth checking."];
+  const stopSentence = unresolved
+    ? "CLINCH stopped because the available supported evidence did not answer the key question."
+    : stopReason
+      ? "CLINCH stopped because the key question was answered well enough and more supported research was unlikely to change the conclusion."
+      : "CLINCH stopped because the key question was answered well enough and more supported research was unlikely to change the conclusion.";
+  const pathQuestion = activeHinge?.question
+    ?? historyList[historyList.length - 1]?.question
+    ?? stringList(brief.openQuestions)[0]
+    ?? "What evidence is most likely to change this decision?";
+  const checked = findings.length
+    ? findings.map((finding) => ({ label: humanResearchFamily(finding.family), reason: "Most useful for answering the key question." }))
+    : historyList.map((item) => ({ label: humanResearchFamily(researchFamilyFromTopic(item.topic)), reason: "Selected as the most relevant supported check." }));
+  const skipped = skips.length
+    ? skips
+    : (Array.isArray(brief.skipped) ? (brief.skipped as { check?: unknown; reason?: unknown }[]).map((item) => ({ check: String(item.check ?? ""), reason: String(item.reason ?? "") })) : []);
+  const found = uniqueStrings([
+    ...findings.map((finding) => finding.summary),
+    ...stringList(brief.findings),
+  ].map(plainMarketLanguage));
+  const pathFindings = found.length ? found : ["The available evidence was recorded for the conclusion above."];
+  return (
+    <section className="answer-surface" aria-label="CLINCH answer">
+      <div className="answer-heading"><div><p className="eyebrow">YOUR QUESTION</p><h2 className="answer-question">{question}</h2></div><span className="brief-complete"><span aria-hidden="true">✓</span> Saved</span></div>
+      <div className="answer-read"><p className="eyebrow">CLINCH READ</p><p className="answer-read-value display">{read}</p><p className="answer-summary">{summary}</p></div>
+      <div className="answer-grid">
+        <section className="answer-list-block"><h3>WHY</h3><ul>{fallbackWhy.map((item, index) => <li key={"why-" + index}>{item}</li>)}</ul></section>
+        <section className="answer-list-block"><h3>WHAT TO WATCH</h3><ul>{fallbackWatch.map((item, index) => <li key={"watch-" + index}>{item}</li>)}</ul></section>
       </div>
-      <p className="decision-interpretation-summary">{String(implication.summary ?? "The available evidence has been translated into a decision implication.")}</p>
-      {(supportive.length > 0 || caution.length > 0) && <div className="interpretation-evidence">
-        {supportive.length > 0 && <div><p className="interpretation-label">Supports this read</p><ul className="interpretation-list">{supportive.map((item, index) => <li key={"support-" + index}>{item}</li>)}</ul></div>}
-        {caution.length > 0 && <div><p className="interpretation-label">Keeps this from being certain</p><ul className="interpretation-list"><>{caution.map((item, index) => <li key={"caution-" + index}>{item}</li>)}</></ul></div>}
-      </div>}
-      <div className="decision-trigger-block">
-        <p className="interpretation-label">WHAT WOULD CHANGE THE CURRENT READ</p>
-        <ul className="interpretation-list">{(triggers.length ? triggers : ["A supported finding that answers the remaining decision question would change the read."]).map((item, index) => <li key={"trigger-" + index}>{item}</li>)}</ul>
-      </div>
-      {futureRechecks.length > 0 && <div className="future-recheck-block"><p className="interpretation-label">WHEN TO RE-CHECK</p><ul className="interpretation-list">{futureRechecks.map((item, index) => <li key={"future-" + index}>{item}</li>)}</ul></div>}
-      <p className="decision-unresolved"><strong>{stopped ? "Remaining uncertainty." : "Still open."}</strong> {String(implication.unresolvedPoint ?? "The remaining decision question is held open for the human decision.")}</p>
+      <section className="answer-stop"><h3>WHY CLINCH STOPPED</h3><p>{stopSentence}</p></section>
+      <details className="research-path">
+        <summary><span>See how CLINCH reached this</span><span className="disclosure-arrow" aria-hidden="true">↓</span></summary>
+        <div className="research-path-body">
+          <div className="path-flow">
+            <div className="path-step"><p className="path-step-label">YOUR DECISION</p><p>{question}</p></div>
+            <div className="path-connector" aria-hidden="true">↓</div>
+            <div className="path-step"><p className="path-step-label">THE KEY QUESTION</p><p>{plainMarketLanguage(pathQuestion)}</p></div>
+            <div className="path-connector" aria-hidden="true">↓</div>
+            <section className="path-step path-check-step"><p className="path-step-label">WHAT CLINCH COULD CHECK</p>{checked.map((item, index) => <div className="path-check-row" key={"checked-" + index}><span className="path-check-icon" aria-hidden="true">✓</span><div><p><strong>{item.label}</strong> <span className="state-tag state-checked">CHECKED</span></p><span>{item.reason}</span></div></div>)}{skipped.map((item, index) => <div className="path-check-row is-skipped" key={"path-skipped-" + index}><span className="path-check-icon" aria-hidden="true">○</span><div><p><strong>{humanResearchFamily(item.check)}</strong> <span className="state-tag state-skipped">SKIPPED</span></p><span>{plainMarketLanguage(item.reason) || "Unlikely to change the current conclusion."}</span></div></div>)}</section>
+            <div className="path-connector" aria-hidden="true">↓</div>
+            <section className="path-step"><p className="path-step-label">WHAT CLINCH FOUND</p><ul className="path-finding-list">{pathFindings.map((item, index) => <li key={"found-" + index}>{item}</li>)}</ul></section>
+            <div className="path-connector" aria-hidden="true">↓</div>
+            <section className="path-step path-stop-step"><p className="path-step-label">STOP</p><p>{stopSentence}</p></section>
+          </div>
+          <details className="technical-disclosure">
+            <summary><span>View technical evidence &amp; sources</span><span className="disclosure-arrow" aria-hidden="true">↓</span></summary>
+            <TechnicalEvidence brief={brief} findings={findings} skips={skips} historyList={historyList} spotSymbol={spotSymbol} spot={spot} perp={perp} />
+          </details>
+        </div>
+      </details>
     </section>
   );
 }
@@ -588,7 +753,10 @@ export default function Page() {
           terminal?: "stopped" | "unresolved" | null;
           terminalReasonCode?: string | null;
         };
-        if (restored.intent && typeof restored.intent === "object") setIntent(restored.intent);
+        if (restored.intent && typeof restored.intent === "object") {
+          setIntent(restored.intent);
+          if (typeof restored.intent.decisionQuestion === "string") setDilemma(restored.intent.decisionQuestion);
+        }
         if (restored.facts && typeof restored.facts === "object") {
           setBaseline({ facts: restored.facts, spotSymbol: restored.spotSymbol ?? null });
         }
@@ -712,23 +880,30 @@ export default function Page() {
 
             {interrupted && <section className="state-panel state-recovery" aria-label="Interrupted research" role="status"><p className="eyebrow">SAVED STATE RESTORED</p><h2 className="section-title">{recoveryStatus === "active" ? "Research is still running" : "Research paused safely"}</h2><p className="body-text">{interrupted}</p><button type="button" className="button-secondary" disabled={busy} onClick={resumeRun}>{COPY.recheck}</button>{resumeNote && <p className="secondary-text">{resumeNote}</p>}</section>}
 
-            {(intent || read || activeHinge) && <section className="result-overview" aria-label="Research result"><div className="result-overview-heading"><div><p className="eyebrow">{brief ? "RESEARCH RESULT" : "RESULT IN VIEW"}</p><h2 className="section-title">{brief ? "A concise read, with the path behind it" : "The research path is visible as it forms"}</h2></div>{brief && <span className="brief-complete"><span aria-hidden="true">✓</span> Saved</span>}</div><div className="result-grid"><article className="result-block"><p className="eyebrow">YOUR DECISION</p>{decisionStock ? <StockIdentity stock={decisionStock} size="lg" /> : <strong className="result-value display">Reading</strong>}<p className="result-note">{intent ? decisionSummary(intent, decisionStock?.ticker ?? (intent as { asset?: string }).asset ?? null) : "Understanding the language of the decision."}</p></article><article className="result-block result-read-block"><p className="eyebrow">CURRENT READ</p><strong className="result-value display">{brief && typeof (brief as { read?: unknown }).read === "string" ? String((brief as { read: string }).read) : read ? readLabel(read, terminalStatus) : "Still evaluating"}</strong><p className="result-note">Not a prediction. The human decides.</p></article><article className="result-block result-hinge-block"><p className="eyebrow">DECISION HINGE</p>{decisionStock && <StockIdentity stock={decisionStock} size="sm" showToken={false} />}<strong className="result-hinge-question display">{resultHinge}</strong>{activeHinge ? <><p className="result-note"><strong>Why it matters.</strong> {activeHinge.why}</p><p className="result-note result-note-muted"><strong>What would change the read.</strong> {activeHinge.changes}</p></> : unresolved && <p className="result-note"><strong>Why it matters.</strong> {String((brief as { why?: unknown } | null)?.why ?? stopReason ?? "An answerable research question was not established.")}</p>}</article></div>{brief && <DecisionInterpretation brief={brief} />}</section>}
+            {brief && <DecisionAnswer brief={brief} dilemma={dilemma} activeHinge={activeHinge} findings={findings} skips={skips} historyList={historyList} stopReason={stopReason} terminalStatus={terminalStatus} spotSymbol={spotSymbol} spot={spot} perp={perp} />}
 
-            {baseline && <section className="context-section" aria-label="Market context"><div className="section-header-row"><div><p className="eyebrow">LIVE CONTEXT</p><h2 className="section-title">What CLINCH is seeing now</h2>{decisionStock && <StockIdentity stock={decisionStock} size="sm" className="context-identity" />}</div><FreshnessBadge status="live" label="Live baseline" /></div>{Object.keys(spot).length || Object.keys(perp).length ? <details className="trade-details context-details"><summary>View Live Market Context</summary><div className="context-grid"><ContextMetric label="Last price" value={numberText(spot.last)} /><ContextMetric label="24h move" value={percentText(spot.movePct24h)} /><ContextMetric label="Spread" value={numberText(spot.spreadBps, 1)} note={spot.spreadWide === true ? "wide" : spot.spreadWide === false ? "tight" : undefined} /><ContextMetric label="Funding" value={percentText(perp.fundingRate)} note={Object.keys(perp).length ? "stock-perp" : undefined} /></div></details> : <div className="empty-inline"><span className="state-tag state-unavailable">UNAVAILABLE</span><p className="body-text">Live context is unavailable right now. CLINCH will not fill the gap with a guess.</p></div>}<p className="provenance-line">Bitget market data, read by the server. Missing fields stay unavailable.</p></section>}
+            {(intent || read || activeHinge) && !brief && <section className="result-overview" aria-label="Research result"><div className="result-overview-heading"><div><p className="eyebrow">{brief ? "RESEARCH RESULT" : "RESULT IN VIEW"}</p><h2 className="section-title">{brief ? "A concise read, with the path behind it" : "The research path is visible as it forms"}</h2></div>{brief && <span className="brief-complete"><span aria-hidden="true">✓</span> Saved</span>}</div><div className="result-grid"><article className="result-block"><p className="eyebrow">YOUR DECISION</p>{decisionStock ? <StockIdentity stock={decisionStock} size="lg" /> : <strong className="result-value display">Reading</strong>}<p className="result-note">{intent ? decisionSummary(intent, decisionStock?.ticker ?? (intent as { asset?: string }).asset ?? null) : "Understanding the language of the decision."}</p></article><article className="result-block result-read-block"><p className="eyebrow">CURRENT READ</p><strong className="result-value display">{brief && typeof (brief as { read?: unknown }).read === "string" ? String((brief as { read: string }).read) : read ? readLabel(read, terminalStatus) : "Still evaluating"}</strong><p className="result-note">Not a prediction. The human decides.</p></article><article className="result-block result-hinge-block"><p className="eyebrow">DECISION HINGE</p>{decisionStock && <StockIdentity stock={decisionStock} size="sm" showToken={false} />}<strong className="result-hinge-question display">{resultHinge}</strong>{activeHinge ? <><p className="result-note"><strong>Why it matters.</strong> {activeHinge.why}</p><p className="result-note result-note-muted"><strong>What would change the read.</strong> {activeHinge.changes}</p></> : unresolved && <p className="result-note"><strong>Why it matters.</strong> {String((brief as { why?: unknown } | null)?.why ?? stopReason ?? "An answerable research question was not established.")}</p>}</article></div></section>}
+
+            {baseline && !brief && <section className="context-section" aria-label="Market context"><div className="section-header-row"><div><p className="eyebrow">LIVE CONTEXT</p><h2 className="section-title">What CLINCH is seeing now</h2>{decisionStock && <StockIdentity stock={decisionStock} size="sm" className="context-identity" />}</div><FreshnessBadge status="live" label="Live baseline" /></div>{Object.keys(spot).length || Object.keys(perp).length ? <details className="trade-details context-details"><summary>View Live Market Context</summary><div className="context-grid"><ContextMetric label="Last price" value={numberText(spot.last)} /><ContextMetric label="24h move" value={percentText(spot.movePct24h)} /><ContextMetric label="Spread" value={numberText(spot.spreadBps, 1)} note={spot.spreadWide === true ? "wide" : spot.spreadWide === false ? "tight" : undefined} /><ContextMetric label="Funding" value={percentText(perp.fundingRate)} note={Object.keys(perp).length ? "stock-perp" : undefined} /></div></details> : <div className="empty-inline"><span className="state-tag state-unavailable">UNAVAILABLE</span><p className="body-text">Live context is unavailable right now. CLINCH will not fill the gap with a guess.</p></div>}<p className="provenance-line">Bitget market data, read by the server. Missing fields stay unavailable.</p></section>}
 
             {statusLine && !terminalStatus && !brief && phase !== "error" && <section className="live-status" aria-label="Research progress" aria-live="polite"><span className="status-pulse" aria-hidden="true" /><div><p className="eyebrow">NOW</p><p className="status-copy">{statusLine}</p></div></section>}
 
-            {findings.length > 0 && <section className="findings-section" aria-label="Evidence findings"><div className="section-header-row"><div><p className="eyebrow">WHAT CLINCH CHECKED</p><h2 className="section-title">Evidence that mattered</h2>{decisionStock && <StockIdentity stock={decisionStock} size="sm" className="finding-identity" />}</div><span className="count-label">{findings.length} {findings.length === 1 ? "check" : "checks"}</span></div><div className="finding-list">{findings.map((finding, index) => <article className="finding finding-checked" key={finding.hinge + "-" + index}><div className="finding-marker" aria-hidden="true">{String(index + 1).padStart(2, "0")}</div><div className="finding-body"><p className="finding-family"><span className="state-tag state-checked">CHECKED</span> {familyLabel(finding.family)}</p><p className="finding-summary">{finding.summary}</p><p className="finding-provenance">{safeSource(finding.source, finding.family)}{shortUtc(finding.observedAt) ? ", observed " + shortUtc(finding.observedAt) : ""}.</p>{Object.keys(finding.facts).length > 0 && <details className="trade-details"><summary>View Research Evidence &amp; Sources</summary><dl className="fact-list">{Object.entries(finding.facts).slice(0, 8).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{typeof value === "boolean" ? (value ? "Yes" : "No") : String(value)}</dd></div>)}</dl></details>}</div></article>)}</div></section>}
+            {findings.length > 0 && !brief && <section className="findings-section" aria-label="Evidence findings"><div className="section-header-row"><div><p className="eyebrow">WHAT CLINCH CHECKED</p><h2 className="section-title">Evidence that mattered</h2>{decisionStock && <StockIdentity stock={decisionStock} size="sm" className="finding-identity" />}</div><span className="count-label">{findings.length} {findings.length === 1 ? "check" : "checks"}</span></div><div className="finding-list">{findings.map((finding, index) => <article className="finding finding-checked" key={finding.hinge + "-" + index}><div className="finding-marker" aria-hidden="true">{String(index + 1).padStart(2, "0")}</div><div className="finding-body"><p className="finding-family"><span className="state-tag state-checked">CHECKED</span> {familyLabel(finding.family)}</p><p className="finding-summary">{finding.summary}</p><p className="finding-provenance">{safeSource(finding.source, finding.family)}{shortUtc(finding.observedAt) ? ", observed " + shortUtc(finding.observedAt) : ""}.</p>{Object.keys(finding.facts).length > 0 && <details className="trade-details"><summary>View Research Evidence &amp; Sources</summary><dl className="fact-list">{Object.entries(finding.facts).slice(0, 8).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{typeof value === "boolean" ? (value ? "Yes" : "No") : String(value)}</dd></div>)}</dl></details>}</div></article>)}</div></section>}
 
-            {skips.length > 0 && <section className="skip-section" aria-label="Skipped research"><p className="eyebrow">WHAT CLINCH SKIPPED</p>{skips.map((skip, index) => <SkipRecord key={skip.check + "-" + index} check={skip.check} reason={skip.reason} />)}</section>}
+            {skips.length > 0 && !brief && <section className="skip-section" aria-label="Skipped research"><p className="eyebrow">WHAT CLINCH SKIPPED</p>{skips.map((skip, index) => <SkipRecord key={skip.check + "-" + index} check={skip.check} reason={skip.reason} />)}</section>}
 
-            {stopReason && <section className="stop-panel" aria-label={unresolved ? "Unresolved state" : "Stop state"} aria-live="polite"><p className="eyebrow">{unresolved ? "UNRESOLVED, WITH REASON" : "STOP, WITH REASON"}</p><h2 className="display stop-title">{unresolved ? "Why CLINCH could not complete this path" : "Why CLINCH stopped here"}</h2><p className="body-text">{stopReason.replace(/^CLINCH is stopping here\.\s*/i, "")}</p><p className="secondary-text">{unresolved ? "The live context is preserved. The decision-changing question remains unresolved." : "Further supported research is unlikely to materially change the current decision state."}</p></section>}
+            {stopReason && !brief && <section className="stop-panel" aria-label={unresolved ? "Unresolved state" : "Stop state"} aria-live="polite"><p className="eyebrow">{unresolved ? "UNRESOLVED, WITH REASON" : "STOP, WITH REASON"}</p><h2 className="display stop-title">{unresolved ? "Why CLINCH could not complete this path" : "Why CLINCH stopped here"}</h2><p className="body-text">{stopReason.replace(/^CLINCH is stopping here\.\s*/i, "")}</p><p className="secondary-text">{unresolved ? "The live context is preserved. The decision-changing question remains unresolved." : "Further supported research is unlikely to materially change the current decision state."}</p></section>}
 
             {phase === "clarify" && clarifyQ && <section className="clarify-panel" aria-label="Clarification" aria-live="polite"><p className="eyebrow">ONE DETAIL NEEDED</p><h2 className="hinge-question display">{clarifyQ}</h2><p className="secondary-text">Choose the closest decision. CLINCH will use it to select the right evidence.</p><div className="choice-grid"><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am considering entering now.")}>Enter now</button><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am considering exiting.")}>Exit</button><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am considering waiting.")}>Wait for a better moment</button><button type="button" className="choice-button" disabled={busy} onClick={() => answerClarify("I am not deciding yet.")}>I am not deciding yet</button></div></section>}
 
-            {(previousHinges.length > 0 || historyList.length > 0) && <details className="audit-trail"><summary>How CLINCH got here</summary><div className="trail-list">{[...previousHinges, ...historyList.map((h) => ({ hinge: h.hinge, question: h.question ?? "Saved research question" }))].map((h, index) => <div className="trail-item" key={h.hinge + "-" + index}><span className="trail-marker" aria-hidden="true">✓</span><div><strong>Decision Hinge {index + 1}</strong><p>{h.question}</p></div></div>)}</div></details>}
+            {(previousHinges.length > 0 || historyList.length > 0) && !brief && <details className="audit-trail"><summary>How CLINCH got here</summary><div className="trail-list">{[...previousHinges, ...historyList.map((h) => ({ hinge: h.hinge, question: h.question ?? "Saved research question" }))].map((h, index) => <div className="trail-item" key={h.hinge + "-" + index}><span className="trail-marker" aria-hidden="true">✓</span><div><strong>Decision Hinge {index + 1}</strong><p>{h.question}</p></div></div>)}</div></details>}
 
-            {brief && <section className="brief-panel" aria-label="Final brief"><div className="brief-heading"><div><p className="eyebrow">FINAL DECISION BRIEF</p><h2 className="display brief-title">A clear read, with room for uncertainty</h2></div><span className="brief-complete"><span aria-hidden="true">✓</span> Saved</span></div><div className="brief-read">{decisionStock && <StockIdentity stock={decisionStock} size="lg" className="brief-identity" />}<p className="eyebrow">CURRENT READ</p><p className="brief-read-value display">{String((brief as { read?: unknown }).read ?? readLabel(read, terminalStatus))}</p><p className="brief-decision">{String((brief as { decision?: unknown }).decision ?? "")}</p></div><div className="brief-section brief-meaning"><h3>What this means for your decision</h3><p className="body-text">{String((brief as { decisionImplication?: { summary?: unknown } }).decisionImplication?.summary ?? "The available evidence has been translated into a decision implication.")}</p></div><div className="brief-section"><h3>Why</h3><p className="body-text">{String((brief as { why?: unknown }).why ?? "No completed evidence was available.")}</p></div>{Array.isArray((brief as { findings?: unknown }).findings) && ((brief as { findings: unknown[] }).findings.length > 0) && <div className="brief-section"><h3>Evidence that mattered</h3><ul className="brief-list">{((brief as { findings: unknown[] }).findings).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}{Array.isArray((brief as { completed?: unknown }).completed) && ((brief as { completed: unknown[] }).completed.length > 0) && <div className="brief-section"><h3>Checks completed</h3><div className="completed-list">{((brief as { completed: unknown[] }).completed).map((item, index) => <span key={index}>{String(item)}</span>)}</div></div>}{Array.isArray((brief as { skipped?: unknown }).skipped) && ((brief as { skipped: { check?: unknown; reason?: unknown }[] }).skipped.length > 0) && <div className="brief-section"><h3>What CLINCH skipped</h3><ul className="brief-list">{((brief as { skipped: { check?: unknown; reason?: unknown }[] }).skipped).map((item, index) => <li key={index}><strong>{familyLabel(String(item.check ?? ""))}.</strong> {String(item.reason ?? "")}</li>)}</ul></div>}{Array.isArray((brief as { openQuestions?: unknown }).openQuestions) && ((brief as { openQuestions: unknown[] }).openQuestions.length > 0) && <div className="brief-section"><h3>What remains uncertain</h3><ul className="brief-list">{((brief as { openQuestions: unknown[] }).openQuestions).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}{Array.isArray((brief as { changeTriggers?: unknown }).changeTriggers) && <div className="brief-section"><h3>What would change the current read</h3><ul className="brief-list">{((brief as { changeTriggers: unknown[] }).changeTriggers).map((item, index) => <li key={index}>{String(item)}</li>)}</ul></div>}{Array.isArray((brief as { futureRechecks?: unknown }).futureRechecks) && ((brief as { futureRechecks: unknown[] }).futureRechecks.length > 0) && <div className="brief-section"><h3>When to re-check</h3><ul className="brief-list">{((brief as { futureRechecks: unknown[] }).futureRechecks).map((item, index) => <li key={"future-brief-" + index}>{String(item)}</li>)}</ul></div>}<details className="trade-details brief-details"><summary>View Research Evidence &amp; Sources</summary><p className="secondary-text">Selected stock: {decisionStock ? `${decisionStock.companyName} (${decisionStock.ticker})` : "the selected stock"}. {String((brief as { freshness?: unknown }).freshness ?? "Freshness was not recorded.")}</p>{Array.isArray((brief as { sources?: unknown }).sources) && <ul className="source-list">{((brief as { sources: unknown[] }).sources).map((item, index) => <li key={index}>{String(item)}</li>)}</ul>}{findings.length > 0 && <ul className="source-list">{findings.map((finding, index) => <li key={finding.hinge + "-source-" + index}>{familyLabel(finding.family)}: {safeSource(finding.source, finding.family)}{shortUtc(finding.observedAt) ? ", observed " + shortUtc(finding.observedAt) : ""}.</li>)}</ul>}</details><SaveResearchPrompt sessionId={sessionId} /><div className="human-final"><p className="eyebrow">HUMAN DECISION</p><p className="body-text">{COPY.finalNotice}</p></div><div className="brief-actions"><button type="button" className="cta-primary" onClick={startAnotherDecision}>Start another decision <span aria-hidden="true">↗</span></button><a className="button-secondary" href="/recent">Open recent decisions</a></div><div className="delete-row">{deletePending ? <div className="delete-confirm" role="group" aria-label="Confirm deletion"><p className="secondary-text">Delete this saved brief and its research history? This cannot be undone.</p><div className="delete-confirm-actions"><button type="button" className="quiet-danger" disabled={busy || deleting} onClick={deleteResearch}>{deleting ? "Deleting..." : "Delete it"}</button><button type="button" className="button-plain" disabled={busy || deleting} onClick={() => setDeletePending(false)}>Keep research</button></div></div> : <button type="button" className="quiet-danger" disabled={busy || deleting} onClick={() => setDeletePending(true)}>{COPY.deleteResearch}</button>}</div></section>}
+            {brief && <section className="brief-actions-panel" aria-label="Research follow-up">
+              <SaveResearchPrompt sessionId={sessionId} />
+              <div className="human-final"><p className="eyebrow">HUMAN DECISION</p><p className="body-text">{COPY.finalNotice}</p></div>
+              <div className="brief-actions"><button type="button" className="cta-primary" onClick={startAnotherDecision}>Start another decision <span aria-hidden="true">↗</span></button><a className="button-secondary" href="/recent">Open recent decisions</a></div>
+              <div className="delete-row">{deletePending ? <div className="delete-confirm" role="group" aria-label="Confirm deletion"><p className="secondary-text">Delete this saved brief and its research history? This cannot be undone.</p><div className="delete-confirm-actions"><button type="button" className="quiet-danger" disabled={busy || deleting} onClick={deleteResearch}>{deleting ? "Deleting..." : "Delete it"}</button><button type="button" className="button-plain" disabled={busy || deleting} onClick={() => setDeletePending(false)}>Keep research</button></div></div> : <button type="button" className="quiet-danger" disabled={busy || deleting} onClick={() => setDeletePending(true)}>{COPY.deleteResearch}</button>}</div>
+            </section>}
           </div>
         )}
       </main>
