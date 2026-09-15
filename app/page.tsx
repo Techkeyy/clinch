@@ -45,12 +45,14 @@ function safeSource(source: string, family: string): string {
 
 function readLabel(read: unknown, terminalStatus?: "stopped" | "unresolved" | null): string {
   const labels: Record<string, string> = {
-    "leaning-in": COPY.readLeaningIn, "enter-now": COPY.readLeaningIn,
-    "holding-off": COPY.readHoldingOff, wait: COPY.readHoldingOff,
-    "standing-aside": COPY.readStandingAside, "stand-aside": COPY.readStandingAside,
-    "cannot-resolve": COPY.readCannotResolve, undecided: terminalStatus ? COPY.readCannotResolve : "Still evaluating",
+    "leaning-in": "Slightly favorable", "enter-now": "Slightly favorable", "slightly favorable": "Slightly favorable",
+    "holding-off": "Better to wait", wait: "Better to wait", "better to wait": "Better to wait",
+    "standing-aside": "No clear advantage", "stand-aside": "No clear advantage", "no clear advantage": "No clear advantage",
+    "cannot-resolve": "Not enough evidence yet", undecided: "Not enough evidence yet", "not enough evidence yet": "Not enough evidence yet",
+    "leaning in": "Slightly favorable", "holding off": "Better to wait", "standing aside": "No clear advantage", "cannot resolve": "Not enough evidence yet",
   };
-  return labels[String(read ?? "")] ?? (terminalStatus ? COPY.readCannotResolve : String(read ?? "Still evaluating"));
+  const key = String(read ?? "").trim().toLowerCase();
+  return labels[key] ?? (terminalStatus ? "Not enough evidence yet" : "Still evaluating");
 }
 
 function numberText(value: unknown, digits = 2): string | null {
@@ -91,18 +93,30 @@ function researchFamilyFromTopic(topic: string | null | undefined): string {
   return "supported-evidence";
 }
 
-function plainMarketLanguage(value: string): string {
-  return value
-    .replace(/The spread is tight at [^,]+, so the observed move has usable liquidity context\./gi, "Buying and selling conditions look normal.")
-    .replace(/The spread is wide at [^,]+, so timing evidence is less reliable\./gi, "Buying and selling conditions are less reliable right now.")
+function plainMarketLanguage(value: string, assetName = "This stock"): string {
+  let text = value
+    .replace(/R[A-Z0-9]{2,12}USDT/gi, assetName)
+    .replace(/Is this drift exhausted(?:\s*\(setup\))? or a new leg down\?/gi, `Has the recent drop on ${assetName} started stabilizing, or could the price keep falling?`)
+    .replace(/Is the move stabilizing\?/gi, `Has the recent drop on ${assetName} started stabilizing?`)
+    .replace(/selected Hinge/gi, "key question")
+    .replace(/\bnearby support\b/gi, "recent low")
+    .replace(/\bnew leg down\b/gi, "price could keep falling")
+    .replace(/\bsetup\b/gi, "plan")
+    .replace(/(?:The )?spread (?:is|was) tight at \d+(?:\.\d+)? basis points?\./gi, "Buying and selling prices are close together, so trading conditions look normal.")
+    .replace(/(?:The )?spread (?:is|was) wide at \d+(?:\.\d+)? basis points?\./gi, "Buying and selling prices are farther apart, so timing evidence is less reliable.")
+    .replace(/The spread is tight at [^,]+, so the observed move has usable liquidity context\./gi, "Buying and selling prices are close together, so trading conditions look normal.")
+    .replace(/The spread is wide at [^,]+, so timing evidence is less reliable\./gi, "Buying and selling prices are farther apart, so timing evidence is less reliable.")
     .replace(/Funding is calm at [^,]+, with no elevated crowding signal in this check\./gi, "Futures trader positioning looks calm.")
     .replace(/Funding is elevated at [^,]+, which points to more crowded positioning\./gi, "Futures trader positioning looks crowded.")
     .replace(/Perp pricing is [^,]+, so the gap needs to persist to matter\./gi, "The futures price is separated from the stock price, so this signal needs to persist to matter.")
     .replace(/Perp pricing is tracking the index closely in this check\./gi, "The stock and futures prices are moving closely together.")
+    .replace(/Price was within nearby structure from ([\d,.]+) to ([\d,.]+)\./gi, `${assetName} is trading between recent low and high levels around $1 and $2.`)
+    .replace(/Nearby structure (?:is visible between|was marked from) ([\d,.]+) to ([\d,.]+)(?:, while price was ([\d,.]+))?\./gi, `${assetName} is trading between recent low and high levels around $1 and $2.`)
+    .replace(/\bnearby structure\b/gi, "recent price range")
     .replace(/\bperp-index gap\b/gi, "gap between the stock and futures prices")
     .replace(/\bspot-perp gap\b/gi, "gap between the stock and futures prices")
     .replace(/\bopen interest\b/gi, "open futures positions")
-    .replace(/\bbasis points?\b/gi, "small price gap")
+    .replace(/\b(?:\d+(?:\.\d+)?\s+)?basis points?\b/gi, "a small price gap")
     .replace(/\bmarket structure\b/gi, "recent price behavior")
     .replace(/\bdislocation\b/gi, "price gap")
     .replace(/\bpositioning\b/gi, "trader behavior")
@@ -112,6 +126,7 @@ function plainMarketLanguage(value: string): string {
     .replace(/supported market observation/gi, "supported market signal")
     .replace(/timing read/gi, "timing decision")
     .replace(/current read/gi, "current conclusion");
+  return text;
 }
 
 function uniqueStrings(items: string[]): string[] {
@@ -137,6 +152,7 @@ function TechnicalEvidence({
   spotSymbol,
   spot,
   perp,
+  assetName,
 }: {
   brief: Record<string, unknown>;
   findings: Finding[];
@@ -145,6 +161,7 @@ function TechnicalEvidence({
   spotSymbol: string;
   spot: Record<string, unknown>;
   perp: Record<string, unknown>;
+  assetName: string;
 }) {
   const briefSources = stringList(brief.sources);
   const briefCompleted = stringList(brief.completed);
@@ -170,14 +187,14 @@ function TechnicalEvidence({
         <div><dt>Terminal state</dt><dd>{String(brief.terminalStatus ?? "Not recorded")}</dd></div>
         <div><dt>Reason code</dt><dd>{String(brief.terminalReasonCode ?? "Not recorded")}</dd></div>
       </dl>
-      {[["Spot market record", spot], ["Futures market record", perp]].map(([label, values]) => {
+      {[["BASELINE SPOT CONTEXT", spot], ["BASELINE FUTURES CONTEXT", perp]].map(([label, values]) => {
         const entries = Object.entries(values as Record<string, unknown>);
         if (!entries.length) return null;
-        return <section className="technical-record" key={String(label)}><h4>{String(label)}</h4><dl className="technical-fact-list">{entries.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{technicalValue(value)}</dd></div>)}</dl></section>;
+        return <section className="technical-record" key={String(label)}><h4>{String(label)}</h4><p className="technical-record-note">Collected for orientation; not used to support the current read by itself.</p><dl className="technical-fact-list">{entries.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{technicalValue(value)}</dd></div>)}</dl></section>;
       })}
-      {exactFindings.length > 0 && <section className="technical-record"><h4>Checked records</h4><div className="technical-record-list">{exactFindings.map((finding, index) => <article key={finding.hinge + "-technical-" + index}><p><strong>{humanResearchFamily(finding.family)}</strong> <span>{finding.hinge}</span></p><p>{finding.summary}</p><p>{safeSource(finding.source, finding.family)}{shortUtc(finding.observedAt) ? ", observed " + shortUtc(finding.observedAt) : ""}.</p>{Object.keys(finding.facts).length > 0 && <dl className="technical-fact-list">{Object.entries(finding.facts).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{technicalValue(value)}</dd></div>)}</dl>}</article>)}</div></section>}
+      {exactFindings.length > 0 && <section className="technical-record"><h4>COMPLETED RESEARCH</h4><p className="technical-record-note">These records were completed and may support the read.</p><div className="technical-record-list">{exactFindings.map((finding, index) => <article key={finding.hinge + "-technical-" + index}><p><strong>{humanResearchFamily(finding.family)}</strong> <span>{finding.hinge}</span></p><p>{finding.summary}</p><p>{safeSource(finding.source, finding.family)}{shortUtc(finding.observedAt) ? ", observed " + shortUtc(finding.observedAt) : ""}.</p>{Object.keys(finding.facts).length > 0 && <dl className="technical-fact-list">{Object.entries(finding.facts).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{technicalValue(value)}</dd></div>)}</dl>}</article>)}</div></section>}
       {briefCompleted.length > 0 && <section className="technical-record"><h4>Exact completed questions</h4><ul className="technical-list">{briefCompleted.map((item, index) => <li key={"completed-" + index}>{item}</li>)}</ul></section>}
-      {(skips.length > 0 || briefSkipped.length > 0) && <section className="technical-record"><h4>Exact skipped records</h4><ul className="technical-list">{(skips.length ? skips : briefSkipped.map((item) => ({ check: String(item.check ?? ""), reason: String(item.reason ?? "") }))).map((item, index) => <li key={"skipped-" + index}><strong>{item.check}</strong>: {item.reason}</li>)}</ul></section>}
+      {(skips.length > 0 || briefSkipped.length > 0) && <section className="technical-record"><h4>SKIPPED RESEARCH</h4><p className="technical-record-note">These checks were not used as directional evidence.</p><ul className="technical-list">{(skips.length ? skips : briefSkipped.map((item) => ({ check: String(item.check ?? ""), reason: String(item.reason ?? "") }))).map((item, index) => <li key={"skipped-" + index}><strong>{item.check}</strong>: {item.reason}</li>)}</ul></section>}
       {briefSources.length > 0 && <section className="technical-record"><h4>Source provenance</h4><ul className="technical-list">{briefSources.map((item, index) => <li key={"source-" + index}>{item}</li>)}</ul></section>}
     </div>
   );
@@ -195,6 +212,7 @@ function DecisionAnswer({
   spotSymbol,
   spot,
   perp,
+  assetName,
 }: {
   brief: Record<string, unknown>;
   dilemma: string;
@@ -207,43 +225,48 @@ function DecisionAnswer({
   spotSymbol: string;
   spot: Record<string, unknown>;
   perp: Record<string, unknown>;
+  assetName: string;
 }) {
   const implication = (brief.decisionImplication && typeof brief.decisionImplication === "object")
     ? brief.decisionImplication as Record<string, unknown>
     : {};
   const unresolved = brief.terminalStatus === "unresolved" || terminalStatus === "unresolved";
   const question = dilemma.trim() || String(brief.decision ?? "Your decision");
-  const read = String(brief.read ?? "Cannot resolve");
-  const summary = plainMarketLanguage(String(implication.summary ?? brief.why ?? "The available evidence has been translated into a plain-English conclusion."));
+  const read = readLabel(brief.read ?? "Cannot resolve", terminalStatus);
+  const summary = plainMarketLanguage(String(implication.summary ?? brief.why ?? "The available evidence has been translated into a plain-English conclusion."), assetName);
   const whyItems = uniqueStrings([
     ...stringList(implication.supportiveEvidence),
     ...stringList(implication.cautionEvidence),
-  ].map(plainMarketLanguage)).slice(0, 3);
+  ].map((item) => plainMarketLanguage(item, assetName))).slice(0, 3);
+  const contextItems = uniqueStrings(stringList(implication.contextEvidence).map((item) => plainMarketLanguage(item, assetName))).slice(0, 2);
   const watchItems = uniqueStrings([
     ...stringList(brief.changeTriggers),
     ...stringList(implication.changeTriggers),
-  ].map(plainMarketLanguage)).slice(0, 3);
-  const fallbackWhy = whyItems.length ? whyItems : ["The available market evidence was weighed against the decision you described."];
+  ].map((item) => plainMarketLanguage(item, assetName))).slice(0, 3);
+  const fallbackWhy = whyItems.length ? whyItems : ["The completed evidence did not establish a clear directional advantage."];
   const fallbackWatch = watchItems.length ? watchItems : ["A supported market signal that materially changes this conclusion would be worth checking."];
-  const stopSentence = unresolved
-    ? "CLINCH stopped because the available supported evidence did not answer the key question."
-    : stopReason
-      ? "CLINCH stopped because the key question was answered well enough and more supported research was unlikely to change the conclusion."
-      : "CLINCH stopped because the key question was answered well enough and more supported research was unlikely to change the conclusion.";
   const pathQuestion = activeHinge?.question
     ?? historyList[historyList.length - 1]?.question
     ?? stringList(brief.openQuestions)[0]
     ?? "What evidence is most likely to change this decision?";
+  const readablePathQuestion = plainMarketLanguage(pathQuestion, assetName);
   const checked = findings.length
     ? findings.map((finding) => ({ label: humanResearchFamily(finding.family), reason: "Most useful for answering the key question." }))
     : historyList.map((item) => ({ label: humanResearchFamily(researchFamilyFromTopic(item.topic)), reason: "Selected as the most relevant supported check." }));
   const skipped = skips.length
     ? skips
     : (Array.isArray(brief.skipped) ? (brief.skipped as { check?: unknown; reason?: unknown }[]).map((item) => ({ check: String(item.check ?? ""), reason: String(item.reason ?? "") })) : []);
-  const found = uniqueStrings([
-    ...findings.map((finding) => finding.summary),
-    ...stringList(brief.findings),
-  ].map(plainMarketLanguage));
+  const findingSource = stringList(brief.findings).length ? stringList(brief.findings) : findings.map((finding) => finding.summary);
+  const found = uniqueStrings(findingSource.flatMap((item) => plainMarketLanguage(item, assetName).replace(/([.!?])\s+/g, "$1|").split("|")));
+  const qualifyingSkip = skipped.find((item) => /did not require|not expected|unlikely|cannot matter|mooted|settled/i.test(item.reason));
+  const checkedLabel = checked[0]?.label ?? "Completed research";
+  const stopSentence = unresolved
+    ? qualifyingSkip
+      ? `CLINCH stopped because the available supported evidence did not answer the key question. ${humanResearchFamily(qualifyingSkip.check)} was not used as directional evidence in this path.`
+      : "CLINCH stopped because the available supported evidence did not answer the key question."
+    : qualifyingSkip
+      ? `${checkedLabel} gave CLINCH enough evidence for this read. ${humanResearchFamily(qualifyingSkip.check)} was not expected to materially change it, so CLINCH stopped.`
+      : "CLINCH stopped because the key question was answered well enough and more supported research was unlikely to change the conclusion.";
   const pathFindings = found.length ? found : ["The available evidence was recorded for the conclusion above."];
   return (
     <section className="answer-surface" aria-label="CLINCH answer">
@@ -253,6 +276,7 @@ function DecisionAnswer({
         <section className="answer-list-block"><h3>WHY</h3><ul>{fallbackWhy.map((item, index) => <li key={"why-" + index}>{item}</li>)}</ul></section>
         <section className="answer-list-block"><h3>WHAT TO WATCH</h3><ul>{fallbackWatch.map((item, index) => <li key={"watch-" + index}>{item}</li>)}</ul></section>
       </div>
+      {contextItems.length > 0 && <section className="answer-context" aria-label="Market context"><p className="answer-context-label">MARKET CONTEXT</p><ul>{contextItems.map((item, index) => <li key={"context-" + index}>{item}</li>)}</ul></section>}
       <section className="answer-stop"><h3>WHY CLINCH STOPPED</h3><p>{stopSentence}</p></section>
       <details className="research-path">
         <summary><span>See how CLINCH reached this</span><span className="disclosure-arrow" aria-hidden="true">↓</span></summary>
@@ -260,7 +284,7 @@ function DecisionAnswer({
           <div className="path-flow">
             <div className="path-step"><p className="path-step-label">YOUR DECISION</p><p>{question}</p></div>
             <div className="path-connector" aria-hidden="true">↓</div>
-            <div className="path-step"><p className="path-step-label">THE KEY QUESTION</p><p>{plainMarketLanguage(pathQuestion)}</p></div>
+            <div className="path-step"><p className="path-step-label">THE KEY QUESTION</p><p>{readablePathQuestion}</p></div>
             <div className="path-connector" aria-hidden="true">↓</div>
             <section className="path-step path-check-step"><p className="path-step-label">WHAT CLINCH COULD CHECK</p>{checked.map((item, index) => <div className="path-check-row" key={"checked-" + index}><span className="path-check-icon" aria-hidden="true">✓</span><div><p><strong>{item.label}</strong> <span className="state-tag state-checked">CHECKED</span></p><span>{item.reason}</span></div></div>)}{skipped.map((item, index) => <div className="path-check-row is-skipped" key={"path-skipped-" + index}><span className="path-check-icon" aria-hidden="true">○</span><div><p><strong>{humanResearchFamily(item.check)}</strong> <span className="state-tag state-skipped">SKIPPED</span></p><span>{plainMarketLanguage(item.reason) || "Unlikely to change the current conclusion."}</span></div></div>)}</section>
             <div className="path-connector" aria-hidden="true">↓</div>
@@ -270,7 +294,7 @@ function DecisionAnswer({
           </div>
           <details className="technical-disclosure">
             <summary><span>View technical evidence &amp; sources</span><span className="disclosure-arrow" aria-hidden="true">↓</span></summary>
-            <TechnicalEvidence brief={brief} findings={findings} skips={skips} historyList={historyList} spotSymbol={spotSymbol} spot={spot} perp={perp} />
+            <TechnicalEvidence brief={brief} findings={findings} skips={skips} historyList={historyList} spotSymbol={spotSymbol} spot={spot} perp={perp} assetName={assetName} />
           </details>
         </div>
       </details>
@@ -491,7 +515,7 @@ export default function Page() {
       setStopReason(String((d as { reason?: unknown }).reason ?? "Stopped."));
       const terminal = (d as { terminal?: unknown }).terminal;
       if (terminal === "stopped" || terminal === "unresolved") setTerminalStatus(terminal);
-      if ((d as { cannotResolve?: boolean }).cannotResolve) setRead("Cannot resolve");
+      if ((d as { cannotResolve?: boolean }).cannotResolve) setRead("Not enough evidence yet");
       setStatusLine(null);
     } else if (e.type === "brief") {
       setBrief((d.brief ?? null) as Record<string, unknown> | null);
@@ -738,7 +762,7 @@ export default function Page() {
         if (!res.ok) return;
         const j = await res.json();
         const sess = j.session as { id: string; status: string; read: string; stateVersion: number; state: Record<string, unknown>; brief: Record<string, unknown> | null; updatedAt?: string };
-        const steps = (j.steps ?? []) as { kind: string; family: string | null; requestSummary: string | null; resultSummary: unknown; finishedAt: string | null }[];
+        const steps = (j.steps ?? []) as { kind: string; family: string | null; requestSummary: string | null; resultSummary: unknown; provenance?: unknown; finishedAt: string | null }[];
         if (cancelled) return;
         setSessionId(sess.id);
         setStateVersion(sess.stateVersion);
@@ -760,13 +784,34 @@ export default function Page() {
         if (restored.facts && typeof restored.facts === "object") {
           setBaseline({ facts: restored.facts, spotSymbol: restored.spotSymbol ?? null });
         }
-        setSkips(Array.isArray(restored.skips) ? restored.skips : []);
-        setHistoryList(Array.isArray(restored.hingeHistory) ? restored.hingeHistory : []);
-        const restoredStatus = sess.brief && typeof sess.brief.terminalStatus === "string"
+       setSkips(Array.isArray(restored.skips) ? restored.skips : []);
+       setHistoryList(Array.isArray(restored.hingeHistory) ? restored.hingeHistory : []);
+        const savedResearchFindings = steps.filter((s) => s.kind === "research").map((s) => {
+          let hinge = "";
+          try {
+            const parsed = JSON.parse(s.requestSummary ?? "{}") as { hinge?: unknown };
+            if (typeof parsed.hinge === "string") hinge = parsed.hinge;
+          } catch { /* keep blank */ }
+          let result: { facts?: unknown } = {};
+          if (s.resultSummary && typeof s.resultSummary === "object") result = s.resultSummary as { facts?: unknown };
+          else if (typeof s.resultSummary === "string") { try { result = JSON.parse(s.resultSummary) as { facts?: unknown }; } catch { /* keep empty */ } }
+          const provenance = Array.isArray(s.provenance) && s.provenance[0] && typeof s.provenance[0] === "object"
+            ? s.provenance[0] as { endpointFamily?: unknown; symbol?: unknown; fetchedAt?: unknown; sourceTimestamp?: unknown }
+            : null;
+          return {
+            hinge, family: s.family ?? "",
+            facts: result.facts && typeof result.facts === "object" ? result.facts as Record<string, unknown> : {},
+            summary: "Saved " + (s.family ?? "market") + " finding" + (hinge ? " for Hinge " + hinge : "") + " (restored from this session).",
+            observedAt: typeof provenance?.fetchedAt === "string" ? provenance.fetchedAt : s.finishedAt,
+            source: provenance?.endpointFamily && provenance?.symbol ? String(provenance.endpointFamily) + " " + String(provenance.symbol) : "Saved from this session",
+          };
+        });
+       const restoredStatus = sess.brief && typeof sess.brief.terminalStatus === "string"
           ? sess.brief.terminalStatus
           : restored.terminal ?? (sess.status === "stopped" || sess.status === "unresolved" ? sess.status : null);
         if (restoredStatus === "stopped" || restoredStatus === "unresolved") setTerminalStatus(restoredStatus);
         if (sess.brief) {
+          setFindings(savedResearchFindings);
           setBrief(sess.brief as Record<string, unknown>);
           const b = sess.brief as { read?: unknown };
           if (typeof b.read === "string") setRead(b.read);
@@ -816,7 +861,7 @@ export default function Page() {
   const hasJourney = phase !== "idle" || Boolean(intent || baseline || brief || sessionId);
   const activeHinge = hinges.length ? hinges[hinges.length - 1] : null;
   const previousHinges = hinges.slice(0, -1);
-  const unresolved = terminalStatus === "unresolved" || read === "Cannot resolve";
+  const unresolved = terminalStatus === "unresolved" || read === "Cannot resolve" || read === "Not enough evidence yet";
   const incompleteResearch = unresolved && ["RESEARCH_UNAVAILABLE", "ITERATION_CAP", "INCOMPLETE"].includes(String((brief as { terminalReasonCode?: unknown } | null)?.terminalReasonCode ?? ""));
   const resultHinge = activeHinge?.question
     ?? (unresolved ? "Not established" : Array.isArray((brief as { completed?: unknown[] } | null)?.completed)
@@ -880,7 +925,7 @@ export default function Page() {
 
             {interrupted && <section className="state-panel state-recovery" aria-label="Interrupted research" role="status"><p className="eyebrow">SAVED STATE RESTORED</p><h2 className="section-title">{recoveryStatus === "active" ? "Research is still running" : "Research paused safely"}</h2><p className="body-text">{interrupted}</p><button type="button" className="button-secondary" disabled={busy} onClick={resumeRun}>{COPY.recheck}</button>{resumeNote && <p className="secondary-text">{resumeNote}</p>}</section>}
 
-            {brief && <DecisionAnswer brief={brief} dilemma={dilemma} activeHinge={activeHinge} findings={findings} skips={skips} historyList={historyList} stopReason={stopReason} terminalStatus={terminalStatus} spotSymbol={spotSymbol} spot={spot} perp={perp} />}
+            {brief && <DecisionAnswer brief={brief} dilemma={dilemma} activeHinge={activeHinge} findings={findings} skips={skips} historyList={historyList} stopReason={stopReason} terminalStatus={terminalStatus} spotSymbol={spotSymbol} spot={spot} perp={perp} assetName={decisionStock?.companyName ?? String((intent as { asset?: unknown } | null)?.asset ?? "This stock")} />}
 
             {(intent || read || activeHinge) && !brief && <section className="result-overview" aria-label="Research result"><div className="result-overview-heading"><div><p className="eyebrow">{brief ? "RESEARCH RESULT" : "RESULT IN VIEW"}</p><h2 className="section-title">{brief ? "A concise read, with the path behind it" : "The research path is visible as it forms"}</h2></div>{brief && <span className="brief-complete"><span aria-hidden="true">✓</span> Saved</span>}</div><div className="result-grid"><article className="result-block"><p className="eyebrow">YOUR DECISION</p>{decisionStock ? <StockIdentity stock={decisionStock} size="lg" /> : <strong className="result-value display">Reading</strong>}<p className="result-note">{intent ? decisionSummary(intent, decisionStock?.ticker ?? (intent as { asset?: string }).asset ?? null) : "Understanding the language of the decision."}</p></article><article className="result-block result-read-block"><p className="eyebrow">CURRENT READ</p><strong className="result-value display">{brief && typeof (brief as { read?: unknown }).read === "string" ? String((brief as { read: string }).read) : read ? readLabel(read, terminalStatus) : "Still evaluating"}</strong><p className="result-note">Not a prediction. The human decides.</p></article><article className="result-block result-hinge-block"><p className="eyebrow">DECISION HINGE</p>{decisionStock && <StockIdentity stock={decisionStock} size="sm" showToken={false} />}<strong className="result-hinge-question display">{resultHinge}</strong>{activeHinge ? <><p className="result-note"><strong>Why it matters.</strong> {activeHinge.why}</p><p className="result-note result-note-muted"><strong>What would change the read.</strong> {activeHinge.changes}</p></> : unresolved && <p className="result-note"><strong>Why it matters.</strong> {String((brief as { why?: unknown } | null)?.why ?? stopReason ?? "An answerable research question was not established.")}</p>}</article></div></section>}
 

@@ -16,6 +16,7 @@ export interface BriefSections {
     summary: string;
     supportiveEvidence: string[];
     cautionEvidence: string[];
+    contextEvidence: string[];
     unresolvedPoint: string;
     changeTriggers: string[];
   };
@@ -30,6 +31,7 @@ export function renderStructuredBrief(b: BriefSections): string {
     `What this means: ${b.decisionImplication.summary}`,
     ...b.decisionImplication.supportiveEvidence.map((f) => `Supporting evidence: ${f}`),
     ...b.decisionImplication.cautionEvidence.map((f) => `Caution evidence: ${f}`),
+    ...b.decisionImplication.contextEvidence.map((f) => `Market context: ${f}`),
     `What remains unresolved: ${b.decisionImplication.unresolvedPoint}`,
     `Why: ${b.why}`,
     ...b.findings.map((f, i) => `Finding ${i + 1}: ${f}`),

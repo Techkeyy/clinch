@@ -30,7 +30,7 @@ test.describe("P20 research semantics presentation", () => {
           terminalStatus: "unresolved",
           terminalReasonCode: "NO_CAPABLE_FAMILY",
           decision: "Considering whether to wait before entering NVDA.",
-          read: "Cannot resolve",
+          read: "Not enough evidence yet",
           why: "CLINCH established live context for NVDA, but none of its supported research paths can answer the remaining decision question right now.",
           findings: [],
           completed: [],
@@ -41,6 +41,7 @@ test.describe("P20 research semantics presentation", () => {
             summary: "The available evidence does not answer the decision-changing question yet.",
             supportiveEvidence: [],
             cautionEvidence: [],
+            contextEvidence: [],
             unresolvedPoint: "The decision-changing question remains unresolved.",
             changeTriggers: ["A supported finding that answers the remaining decision question would change the read."],
           },
@@ -68,15 +69,13 @@ test.describe("P20 research semantics presentation", () => {
     await expect(page.getByText("Could not establish an answerable Hinge")).toBeVisible();
     await expect(page.getByText("Research not run")).toBeVisible();
     await expect(page.getByText("Return an unresolved brief")).toBeVisible();
-    await expect(page.getByText("WHAT THIS MEANS FOR YOUR DECISION", { exact: true })).toBeVisible();
-    await expect(page.getByRole("region", { name: "Decision interpretation" }).getByText("The available evidence does not answer the decision-changing question yet.")).toBeVisible();
-    await expect(page.getByText("View Live Market Context")).toBeVisible();
-    await expect(page.getByText("212.37")).toBeHidden();
-    await expect(page.locator(".result-hinge-question")).toHaveText("Not established");
-    await expect(page.getByRole("heading", { name: "Why CLINCH could not complete this path" })).toBeVisible();
-    await expect(page.getByText("Finding the question most likely to change the read.")).toBeHidden();
-    await expect(page.getByText("No research completed.")).toBeHidden();
-    await expect(page.getByText("Further supported research is unlikely to materially change the current decision state.")).toBeHidden();
+    await expect(page.locator(".answer-surface")).toBeVisible();
+    await expect(page.getByText("CLINCH READ", { exact: true })).toBeVisible();
+    await expect(page.locator(".answer-read-value")).toHaveText("Not enough evidence yet");
+    await page.getByText("See how CLINCH reached this", { exact: true }).click();
+    await expect(page.getByText("THE KEY QUESTION", { exact: true })).toBeVisible();
+    await expect(page.getByText("STOP", { exact: true })).toBeVisible();
+    await expect(page.getByText("View technical evidence & sources", { exact: true })).toBeVisible();
     await expect(page.locator("body")).not.toContainText("NO-CAPABLE-FAMILY");
     await expect(page.locator("body")).not.toContainText("flippable");
   });

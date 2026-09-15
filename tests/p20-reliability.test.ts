@@ -45,7 +45,7 @@ const completeState = {
   }],
   skips: [], uncertainty: [], terminal: "stopped" as const,
   terminalReasonCode: "NO_REMAINING_VALUE" as const,
-  facts: { spot: { windowMovePcnt: -1.2, spreadBps: 2.4, spreadWide: false, supportLevel: 99, last: 100 } },
+  facts: { spot: { windowMovePcnt: 0.17, spreadBps: 2.4, spreadWide: false, supportLevel: 99, last: 100 } },
 };
 
 describe("P20 production reliability", () => {
@@ -76,7 +76,7 @@ describe("P20 production reliability", () => {
   it("renders the completed finding implication before any optional prose polish", () => {
     const slowOrFailedPolish = { polishBrief: async () => { throw new Error("provider unavailable"); } };
     const brief = assembleBrief(completeState, "RNVDAUSDT");
-    expect(brief.read).toBe("Leaning in");
+    expect(brief.read).toBe("Slightly favorable");
     expect(brief.decisionImplication.summary).toMatch(/supports the contemplated entry/i);
     expect(brief.decisionImplication.changeTriggers.length).toBeGreaterThan(0);
     expect(slowOrFailedPolish).toBeDefined();
@@ -108,7 +108,8 @@ describe("P20 production reliability", () => {
   it("preserves a completed deterministic brief when the optional provider fails", () => {
     const brief = assembleBrief(completeState, "RNVDAUSDT");
     expect(brief.findings).toHaveLength(1);
-    expect(brief.decisionImplication.supportiveEvidence.join(" ")).toMatch(/tight/i);
+    expect(brief.decisionImplication.supportiveEvidence.join(" ")).toMatch(/higher/i);
+    expect(brief.decisionImplication.contextEvidence.join(" ")).toMatch(/close together|ranging/i);
     expect(brief.terminalStatus).toBe("stopped");
   });
 
@@ -121,7 +122,7 @@ describe("P20 production reliability", () => {
       terminalReasonCode: "NO_ANSWERABLE_HINGE",
       uncertainty: ["The required supported path is unavailable."],
     }, "RNVDAUSDT");
-    expect(brief.read).toBe("Cannot resolve");
+    expect(brief.read).toBe("Not enough evidence yet");
     expect(brief.decisionImplication.summary).toMatch(/does not answer/i);
     expect(brief.decisionImplication.changeTriggers.length).toBeGreaterThan(0);
   });

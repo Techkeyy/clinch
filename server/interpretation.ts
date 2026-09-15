@@ -6,6 +6,7 @@ export interface DecisionImplication {
   summary: string;
   supportiveEvidence: string[];
   cautionEvidence: string[];
+  contextEvidence: string[];
   unresolvedPoint: string;
   changeTriggers: string[];
 }
@@ -128,6 +129,7 @@ function structureInterpretation(
   facts: MarketFacts,
   supportive: string[],
   caution: string[],
+  context: string[],
   triggers: string[],
 ): void {
   const sp = facts.spot ?? {};
@@ -135,24 +137,24 @@ function structureInterpretation(
   const spread = sp.spreadBps;
 
   if (typeof move === "number") {
-    if (move < 0) caution.push(`The observed window is still lower by ${Math.abs(move).toFixed(2)}%.`);
-    else if (move > 0) supportive.push(`The observed window is higher by ${move.toFixed(2)}%.`);
-    else supportive.push("The observed window is holding flat.");
+    if (move < 0) caution.push("The observed window is still lower by " + Math.abs(move).toFixed(2) + "%.");
+    else if (move > 0) supportive.push("The observed window is higher by " + move.toFixed(2) + "%.");
+    else context.push("The recent price move is holding flat.");
   }
   if (typeof spread === "number") {
     if (sp.spreadWide === true || spread > BANDS.SPREAD_WIDE_BPS) {
-      caution.push(`The spread is wide at ${spread.toFixed(1)} basis points, so timing evidence is less reliable.`);
+      context.push("Buying and selling prices are farther apart, so timing evidence is less reliable.");
     } else {
-      supportive.push(`The spread is tight at ${spread.toFixed(1)} basis points, so the observed move has usable liquidity context.`);
+      context.push("Buying and selling prices are close together, so trading conditions look normal.");
     }
   }
   if (typeof sp.supportLevel === "number" && typeof sp.resistanceLevel === "number") {
-    supportive.push(`Nearby structure is visible between ${price(sp.supportLevel)} and ${price(sp.resistanceLevel)}.`);
-    triggers.push(`A hold around nearby support at ${price(sp.supportLevel)} followed by movement toward ${price(sp.resistanceLevel)} would make the entry case more supportive.`);
-    triggers.push(`A clean break below nearby support at ${price(sp.supportLevel)} would support waiting longer.`);
+    context.push("Recent prices are ranging between " + price(sp.supportLevel) + " and " + price(sp.resistanceLevel) + ".");
+    triggers.push("A hold around nearby support at " + price(sp.supportLevel) + " followed by movement toward " + price(sp.resistanceLevel) + " would make the entry case more supportive.");
+    triggers.push("A clean break below nearby support at " + price(sp.supportLevel) + " would support waiting longer.");
   } else if (typeof sp.supportLevel === "number") {
-    supportive.push(`Nearby support is visible at ${price(sp.supportLevel)}.`);
-    triggers.push(`A clear hold or break around nearby support at ${price(sp.supportLevel)} would change the timing read.`);
+    context.push("A recent low is visible around " + price(sp.supportLevel) + ".");
+    triggers.push("A clear hold or break around nearby support at " + price(sp.supportLevel) + " would change the timing read.");
   } else if (typeof move === "number") {
     triggers.push(move < 0
       ? "A clear stabilization of the lower move, or renewed downside follow-through, would change this timing read."
@@ -164,24 +166,25 @@ function positioningInterpretation(
   facts: MarketFacts,
   supportive: string[],
   caution: string[],
+  context: string[],
   triggers: string[],
 ): void {
   const pp = facts.perp ?? {};
   if (typeof pp.fundingRate === "number") {
     if (pp.fundingRate >= BANDS.FUNDING_ELEVATED) {
-      caution.push(`Funding is elevated at ${(pp.fundingRate * 100).toFixed(3)}%, which points to more crowded positioning.`);
+      caution.push("Futures trader positioning looks more crowded, which makes the timing less comfortable.");
       triggers.push("A normalization or further build in funding would change the crowding read.");
     } else {
-      supportive.push(`Funding is calm at ${(pp.fundingRate * 100).toFixed(4)}%, with no elevated crowding signal in this check.`);
+      context.push("Futures trader positioning looks calm, with no elevated crowding signal in this check.");
       triggers.push("A sharp change in funding or open interest would change the positioning read.");
     }
   }
   if (typeof pp.markIndexDislocationBps === "number") {
     if (Math.abs(pp.markIndexDislocationBps) >= BANDS.DISLOCATION_WIDE_BPS) {
-      caution.push(`Perp pricing is ${Math.abs(pp.markIndexDislocationBps).toFixed(1)} basis points from index, so the gap needs to persist to matter.`);
+      caution.push("The futures price is separated from the stock price, so that gap needs to persist to matter.");
       triggers.push("Persistence or normalization of the spot-perp gap would change the dislocation read.");
     } else {
-      supportive.push("Perp pricing is tracking the index closely in this check.");
+      context.push("The stock and futures prices are moving closely together.");
       triggers.push("A persistent widening or continued normalization of the spot-perp gap would change the dislocation read.");
     }
   }
@@ -214,13 +217,14 @@ export function deriveDecisionImplication(input: InterpretationInput): DecisionI
   const completedFacts = factsForCompletedResearch(input.facts, input.hingeHistory);
   const supportiveEvidence: string[] = [];
   const cautionEvidence: string[] = [];
+  const contextEvidence: string[] = [];
   const changeTriggers: string[] = [];
 
   if (last?.topic === "structure-direction" || last?.topic === "move-reality" || completedFacts.spot) {
-    structureInterpretation(completedFacts, supportiveEvidence, cautionEvidence, changeTriggers);
+    structureInterpretation(completedFacts, supportiveEvidence, cautionEvidence, contextEvidence, changeTriggers);
   }
   if (last?.topic === "crowd-timing" || last?.topic === "dislocation" || completedFacts.perp) {
-    positioningInterpretation(completedFacts, supportiveEvidence, cautionEvidence, changeTriggers);
+    positioningInterpretation(completedFacts, supportiveEvidence, cautionEvidence, contextEvidence, changeTriggers);
   }
 
   if (!supportiveEvidence.length && !cautionEvidence.length && input.uncertainty.length) {
@@ -236,6 +240,7 @@ export function deriveDecisionImplication(input: InterpretationInput): DecisionI
     summary: readSummary(input.read, input.terminal),
     supportiveEvidence,
     cautionEvidence,
+    contextEvidence,
     unresolvedPoint: input.terminal === "unresolved"
       ? question ?? "The decision-changing question remains unresolved."
       : remainingUncertainty(completedFacts),

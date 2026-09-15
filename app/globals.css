@@ -795,6 +795,27 @@ body {
   padding-left: 19px;
 }
 .answer-list-block li + li, .path-finding-list li + li { margin-top: 8px; }
+.answer-context {
+  border-bottom: 1px solid var(--line);
+  padding: 17px 0 18px;
+}
+.answer-context-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  line-height: 1.35;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+.answer-context ul {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.48;
+  margin: 0;
+  padding-left: 18px;
+}
+.answer-context li + li { margin-top: 5px; }
 .answer-stop {
   border-bottom: 1px solid var(--line);
   padding: 21px 0 23px;
@@ -945,6 +966,12 @@ body {
   font-weight: 750;
   line-height: 1.35;
   margin: 0 0 10px;
+}
+.technical-record-note {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  margin: -3px 0 10px;
 }
 .technical-fact-list {
   display: grid;

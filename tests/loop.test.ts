@@ -63,6 +63,16 @@ describe("model tiering and transport failures", () => {
     const { bitgetGet } = await import("../research/bitget/client");
     await expect(bitgetGet("https://api.bitget.com/api/v3/market/tickers?category=SPOT&symbol=RNVDAUSDT", "v3-ticker", 50, hanging)).rejects.toMatchObject({ code: "UPSTREAM_FAILURE" });
   });
+  it("keeps the timeout active while a Bitget response body is consumed", async () => {
+    const bodyHanging = (async (_url: string, init?: { signal?: AbortSignal }) => ({
+      status: 200,
+      json: () => new Promise((_, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+      }),
+    })) as unknown as typeof fetch;
+    const { bitgetGet } = await import("../research/bitget/client");
+    await expect(bitgetGet("https://api.bitget.com/api/v3/market/tickers?category=SPOT&symbol=RNVDAUSDT", "v3-ticker", 20, bodyHanging)).rejects.toMatchObject({ code: "UPSTREAM_FAILURE" });
+  });
 });
 describe("orchestrator step with mocked Bitget", () => {
   it("researches a breakdown hinge and updates the read, with honest skips", async () => {

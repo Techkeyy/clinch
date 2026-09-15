@@ -76,14 +76,14 @@ export interface FlowState {
   terminalReasonCode: TerminalReasonCode | null;
 }
 export const READ_LABEL: Record<string, string> = {
-  "enter-now": "Leaning in", wait: "Holding off", "stand-aside": "Standing aside",
-  "leaning-in": "Leaning in", "holding-off": "Holding off", "standing-aside": "Standing aside",
-  undecided: "Cannot resolve", "cannot-resolve": "Cannot resolve",
+  "enter-now": "Slightly favorable", wait: "Better to wait", "stand-aside": "No clear advantage",
+  "leaning-in": "Slightly favorable", "holding-off": "Better to wait", "standing-aside": "No clear advantage",
+  undecided: "Not enough evidence yet", "cannot-resolve": "Not enough evidence yet",
 };
 
 export function finalReadLabel(read: string, terminal: TerminalKind): string {
   const label = READ_LABEL[read];
-  return label && label !== "Undecided" ? label : terminal === "unresolved" ? "Cannot resolve" : "Cannot resolve";
+  return label && label !== "Undecided" ? label : "Not enough evidence yet";
 }
 
 function topicsOf(cands: Candidate[], ids: string[]): string[] {
@@ -106,6 +106,7 @@ export async function resolveAsset(
   fetchImpl?: FetchImpl,
   requestedTicker?: string | null,
   requestedRealityTicker?: string | null,
+  fallbackMention?: string | null,
 ): Promise<{ spot: string | null; perp: string | null; ticker: string | null; companyName: string | null; universe: number }> {
   if (!mention) return { spot: null, perp: null, ticker: null, companyName: null, universe: 0 };
   const spot = await discoverSpot(fetchImpl);
@@ -115,7 +116,8 @@ export async function resolveAsset(
   } catch {
     // The spot research path remains truthful if optional futures discovery is unavailable.
   }
-  const hit = resolveResearchableStock(mention, spot, fut, requestedTicker, requestedRealityTicker);
+  const hit = resolveResearchableStock(mention, spot, fut, requestedTicker, requestedRealityTicker)
+    ?? (fallbackMention && fallbackMention !== mention ? resolveResearchableStock(fallbackMention, spot, fut) : null);
   const universe = buildResearchableStockCatalog(spot, fut).length;
   return {
     spot: hit?.realityTicker ?? null,

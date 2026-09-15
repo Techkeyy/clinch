@@ -19,15 +19,18 @@ export async function bitgetGet<T>(url: string, endpointFamily: string, timeoutM
       throw new BitgetError("UPSTREAM_FAILURE", endpointFamily, `Upstream timeout after ${timeoutMs}ms`);
     }
     throw new BitgetError("UPSTREAM_FAILURE", endpointFamily, `Network failure: ${err instanceof Error ? err.message : String(err)}`);
-  } finally {
-    clearTimeout(timer);
   }
   let body: unknown = null;
   try {
     body = await res.json();
-  } catch {
+  } catch (err) {
+    clearTimeout(timer);
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new BitgetError("UPSTREAM_FAILURE", endpointFamily, `Upstream timeout after ${timeoutMs}ms`);
+    }
     throw new BitgetError("MALFORMED_RESPONSE", endpointFamily, `Non-JSON response (HTTP ${res.status})`, res.status);
   }
+  clearTimeout(timer);
   const rec = body as { code?: unknown; msg?: unknown; data?: unknown };
   if (typeof rec.code !== "string" || rec.code !== "00000") {
     throw classifyUpstream(endpointFamily, String(rec.code ?? "UNKNOWN"), String(rec.msg ?? "unknown error"), res.status);

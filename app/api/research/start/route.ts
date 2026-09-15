@@ -139,7 +139,7 @@ export async function POST(req: Request) {
           return;
         }
         send("progress", { stage: "asset", label: "Resolving supported market context." });
-        const resolved = await timedStage(timing, "asset-resolution", () => resolveAsset(intent.asset, undefined, parsed.data.selectedTicker, parsed.data.selectedRealityTicker)).catch(() => ({ spot: null, perp: null, ticker: null, companyName: null, universe: 0 }));
+        const resolved = await timedStage(timing, "asset-resolution", () => resolveAsset(intent.asset, undefined, parsed.data.selectedTicker, parsed.data.selectedRealityTicker, parsed.data.dilemma)).catch(() => ({ spot: null, perp: null, ticker: null, companyName: null, universe: 0 }));
         if (!resolved.spot) {
           await failSession(store, sessionId, "failed", "The requested stock is not currently available from Bitget's Reality market data.");
           send("error", { code: "UNSUPPORTED_ASSET", message: "That stock is not currently available to research from Bitget's Reality market data. Try searching supported stocks or describe another stock." });

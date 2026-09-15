@@ -66,6 +66,9 @@ export function needForTopic(topic: string | undefined): { family: "spot-structu
 
 // Deterministic finding classification: hinge topic + facts -> branch outcome or null.
 // Conservative: returns null when evidence does not clearly match a branch.
+// A visible range and usable liquidity are context. They do not establish
+// favorable entry direction. Structure can resolve favorably only when the
+// completed window itself provides a positive directional signal.
 export function classifyFinding(topic: string | undefined, facts: MarketFacts): string | null {
   const sp = facts.spot ?? {};
   const pp = facts.perp ?? {};
@@ -78,7 +81,9 @@ export function classifyFinding(topic: string | undefined, facts: MarketFacts): 
     if (sp.supportLevel !== undefined && sp.last !== undefined && sp.supportLevel !== null && sp.last !== null) {
       if (sp.windowMovePcnt !== undefined && sp.windowMovePcnt !== null && sp.windowMovePcnt <= -1 &&
           sp.last < sp.supportLevel * 1.002) return "breakdown on expanding volume [breakdown]";
-      return "exhaustion, support holding [exhaustion]";
+      if (sp.windowMovePcnt !== undefined && sp.windowMovePcnt !== null && sp.windowMovePcnt > 0) {
+        return "exhaustion, support holding [exhaustion]";
+      }
     }
     return null;
   }

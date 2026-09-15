@@ -35,9 +35,9 @@ export const COPY = {
   reviewBrief: "Review saved brief",
   deleteResearch: "Delete this research",
   recentTitle: "Recent decisions",
-  readLeaningIn: "Leaning in",
-  readHoldingOff: "Holding off",
-  readStandingAside: "Standing aside",
-  readCannotResolve: "Cannot resolve",
+  readLeaningIn: "Slightly favorable",
+  readHoldingOff: "Better to wait",
+  readStandingAside: "No clear advantage",
+  readCannotResolve: "Not enough evidence yet",
 } as const;
 export type CopyKey = keyof typeof COPY;

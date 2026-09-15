@@ -16,10 +16,12 @@ function shortDate(iso: string): string {
 
 function readLabel(read: string): string {
   const labels: Record<string, string> = {
-    "leaning-in": "Leaning in", "holding-off": "Holding off",
-    "standing-aside": "Standing aside", "cannot-resolve": "Cannot resolve",
+    "enter-now": "Slightly favorable", "leaning-in": "Slightly favorable",
+    wait: "Better to wait", "holding-off": "Better to wait",
+    "stand-aside": "No clear advantage", "standing-aside": "No clear advantage",
+    undecided: "Not enough evidence yet", "cannot-resolve": "Not enough evidence yet",
   };
-  return labels[read] ?? read;
+  return labels[read] ?? (read || "Not enough evidence yet");
 }
 
 export default function RecentPage() {

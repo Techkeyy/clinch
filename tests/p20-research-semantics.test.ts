@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { compileSemantics } from "../domain/semantics";
 import { decide, initialState } from "../domain/kernel";
-import { factsToRaw } from "../research/orchestrator";
+import { classifyFinding, factsToRaw } from "../research/orchestrator";
 import { assetIdentity, assembleBrief, capabilityData, driveLoop, parseIntentFlow } from "../server/flow";
 import { stockFromRealityTicker } from "../lib/stocks";
 import { deriveDecisionImplication } from "../server/interpretation";
@@ -216,17 +216,17 @@ describe("P20 owner research semantics", () => {
     }, "RNVDAUSDT");
     const text = JSON.stringify(brief);
     expect(brief.decision).toBe("Considering whether to wait before entering NVDA.");
-    expect(brief.read).toBe("Cannot resolve");
+    expect(brief.read).toBe("Not enough evidence yet");
     expect(brief.completed).toEqual([]);
     expect(brief.why).not.toContain("No research completed");
     expect(text).not.toMatch(/NO-CAPABLE-FAMILY|no-capable-family|flippable|compiler|family eligibility/i);
     expect(brief.changeTriggers[0]).toMatch(/supported market-structure|stabilizing|downside/i);
     expect(brief.changeTriggers[0]).not.toContain("Should I wait");
     expect(brief.decisionImplication.summary).toMatch(/does not answer/i);
-    expect(brief.read).toBe("Cannot resolve");
+    expect(brief.read).toBe("Not enough evidence yet");
   });
 
-  it("derives a decision implication from observed evidence and the selected Hinge", () => {
+  it("derives a directionally supported implication from observed evidence and the selected Hinge", () => {
     const brief = assembleBrief({
       intent: {
         asset: "NVDA",
@@ -250,7 +250,7 @@ describe("P20 owner research semantics", () => {
       terminalReasonCode: "NO_REMAINING_VALUE",
       facts: {
         spot: {
-          windowMovePcnt: -1.33,
+          windowMovePcnt: 0.17,
           spreadBps: 2.36,
           spreadWide: false,
           supportLevel: 208.93,
@@ -258,10 +258,10 @@ describe("P20 owner research semantics", () => {
         },
       },
     }, "RNVDAUSDT");
-    expect(brief.read).toBe("Leaning in");
+    expect(brief.read).toBe("Slightly favorable");
     expect(brief.decisionImplication.summary).toMatch(/supports the contemplated entry/i);
-    expect(brief.decisionImplication.cautionEvidence.join(" ")).toMatch(/still lower/i);
-    expect(brief.decisionImplication.supportiveEvidence.join(" ")).toMatch(/tight at 2.4/i);
+    expect(brief.decisionImplication.supportiveEvidence.join(" ")).toMatch(/higher by 0.17/i);
+    expect(brief.decisionImplication.contextEvidence.join(" ")).toMatch(/close together|ranging/i);
     expect(brief.decisionImplication.changeTriggers.join(" ")).toMatch(/208.93/);
     expect(JSON.stringify(brief.decisionImplication)).not.toMatch(/change24hPcnt|spreadBps|windowCandles|bidSize|askSize/);
   });
@@ -276,7 +276,7 @@ describe("P20 owner research semantics", () => {
       terminal: "stopped",
       terminalReasonCode: "NO_REMAINING_VALUE",
     }, null);
-    expect(brief.read).toBe("Cannot resolve");
+    expect(brief.read).toBe("Not enough evidence yet");
     expect(brief.decisionImplication.summary).toMatch(/does not answer/i);
   });
 
@@ -312,10 +312,11 @@ describe("P20 owner research semantics", () => {
     const interpretation = [
       ...brief.decisionImplication.supportiveEvidence,
       ...brief.decisionImplication.cautionEvidence,
+      ...brief.decisionImplication.contextEvidence,
       ...brief.decisionImplication.changeTriggers,
     ].join(" ");
     expect(interpretation).not.toMatch(/funding|open interest|perp|dislocation|index/i);
-    expect(interpretation).toMatch(/0\.17|tight|structure/i);
+    expect(interpretation).toMatch(/0\.17|close together|ranging/i);
     expect(brief.findings.join(" ")).not.toMatch(/exhaustion|support holding/i);
     expect(brief.why).toMatch(/0\.17|210\.29|212\.96|4\.7/);
     expect(brief.why).not.toMatch(/exhaustion|support holding/i);
@@ -346,7 +347,7 @@ describe("P20 owner research semantics", () => {
       },
     }, "RNVDAUSDT");
     expect(brief.findings.join(" ")).toMatch(/recent window|funding/i);
-    expect(brief.decisionImplication.cautionEvidence.join(" ")).toMatch(/funding|perp/i);
+    expect(brief.decisionImplication.cautionEvidence.join(" ")).toMatch(/crowded|positioning/i);
     expect(brief.decisionImplication.changeTriggers.join(" ")).toMatch(/funding|positioning|gap|dislocation/i);
     expect(brief.futureRechecks).toEqual([]);
   });
@@ -364,6 +365,60 @@ describe("P20 owner research semantics", () => {
     expect(implication.cautionEvidence.join(" ")).toMatch(/did not produce/i);
     expect(implication.changeTriggers.join(" ")).toMatch(/stabilizing/i);
     expect(implication.summary).toMatch(/does not answer/i);
+  });
+
+  it("does not turn a lower move plus normal spread and a visible range into a favorable read", () => {
+    const facts = {
+      spot: { last: 355.85, windowMovePcnt: -1.04, spreadBps: 2.81, spreadWide: false, supportLevel: 354.05, resistanceLevel: 362.39 },
+    };
+    expect(classifyFinding("structure-direction", facts)).toBeNull();
+    const implication = deriveDecisionImplication({
+      intent: null, read: "undecided", terminal: "unresolved",
+      hingeHistory: [{ topic: "structure-direction", question: "Has the recent drop started stabilizing?" }],
+      facts, uncertainty: ["The selected market check did not resolve the decision question."],
+    });
+    expect(implication.supportiveEvidence).toEqual([]);
+    expect(implication.cautionEvidence.join(" ")).toMatch(/lower/i);
+    expect(implication.contextEvidence.join(" ")).toMatch(/close together|ranging/i);
+  });
+
+  it("allows a genuine positive structural signal to remain favorable", () => {
+    const facts = { spot: { last: 212.74, windowMovePcnt: 0.17, spreadWide: false, supportLevel: 210.29, resistanceLevel: 212.96 } };
+    expect(classifyFinding("structure-direction", facts)).toContain("[exhaustion]");
+    const implication = deriveDecisionImplication({
+      intent: { asset: "NVDA", resolvedSymbol: "RNVDAUSDT", action: "enter-now", timeframeContext: "now", decisionQuestion: "Should I enter NVDA now?", clarificationNeeded: false, clarificationQuestion: null },
+      read: "enter-now", terminal: "stopped",
+      hingeHistory: [{ topic: "structure-direction", question: "Has the recent move started stabilizing?" }],
+      facts, uncertainty: [],
+    });
+    expect(implication.supportiveEvidence.join(" ")).toMatch(/higher by 0.17/i);
+  });
+
+  it("keeps mixed directional and crowd evidence cautious", () => {
+    const implication = deriveDecisionImplication({
+      intent: null, read: "wait", terminal: "stopped",
+      hingeHistory: [{ topic: "structure-direction" }, { topic: "crowd-timing" }],
+      facts: {
+        spot: { windowMovePcnt: 0.17, spreadWide: false, supportLevel: 210, resistanceLevel: 213 },
+        perp: { fundingRate: 0.0012 },
+      },
+      uncertainty: [],
+    });
+    expect(implication.supportiveEvidence.join(" ")).toMatch(/higher/i);
+    expect(implication.cautionEvidence.join(" ")).toMatch(/crowded/i);
+  });
+
+  it("preserves Better to wait and Not enough evidence yet as distinct non-favorable reads", () => {
+    const waiting = assembleBrief({
+      intent: null, read: "wait", hingeHistory: [], skips: [], uncertainty: [],
+      terminal: "stopped", terminalReasonCode: "NO_REMAINING_VALUE",
+    }, null);
+    const unresolved = assembleBrief({
+      intent: null, read: "cannot-resolve", hingeHistory: [], skips: [],
+      uncertainty: ["No supported path was available."], terminal: "unresolved", terminalReasonCode: "NO_CAPABLE_FAMILY",
+    }, null);
+    expect(waiting.read).toBe("Better to wait");
+    expect(unresolved.read).toBe("Not enough evidence yet");
   });
 
   it("returns a precise unresolved terminal for an unsupported news capability", async () => {
