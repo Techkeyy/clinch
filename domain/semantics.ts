@@ -38,8 +38,17 @@ const TEMPLATES: Template[] = [
   { id: "T-STRUCT", topic: "structure-direction", family: "spot-structure",
     when: (s) => {
       if (!["enter-now", "wait", "exit-now"].includes(s.action)) return null;
-      if (!(s.spot.drift === "down-quiet" || ["holding", "broken", "testing"].includes(s.spot.support ?? ""))) return null;
-      return [`action=${s.action}`, `drift=${s.spot.drift}/support=${s.spot.support}`];
+      const entryTiming = ["enter-now", "wait"].includes(s.action);
+      const spotCapable = s.data["spot-structure"] === "fresh";
+      const structureSignal = s.spot.drift === "down-quiet" || ["holding", "broken", "testing"].includes(s.spot.support ?? "");
+      const competingSpecificSignal =
+        (["sharp-up-20min", "spike"].includes(s.spot.move ?? "") && (s.spot.book === "thin" || s.spot.spread === "wide")) ||
+        ["extreme", "elevated"].includes(s.positioning.funding ?? "") ||
+        s.positioning.oi === "surging" ||
+        s.positioning.dislocation === "wide";
+      const genericEntry = spotCapable && entryTiming && !competingSpecificSignal && !s.resolved.includes("move-reality");
+      if (!genericEntry && !structureSignal) return null;
+      return [`action=${s.action}`, spotCapable ? "spot-structure=fresh" : `drift=${s.spot.drift}/support=${s.spot.support}`];
     },
     question: "Is this drift exhausted (setup) or a new leg down?",
     why: "Direction decides whether any entry logic exists at all.",
@@ -49,7 +58,10 @@ const TEMPLATES: Template[] = [
     ] },
   { id: "T-CROWD", topic: "crowd-timing", family: "perp-positioning",
     when: (s) => {
-      if (!(["extreme", "elevated"].includes(s.positioning.funding ?? "") || s.positioning.oi === "surging")) return null;
+      const entryTiming = ["enter-now", "wait"].includes(s.action);
+      const perpOnly = s.data["perp-positioning"] === "fresh" && s.data["spot-structure"] !== "fresh";
+      const signal = ["extreme", "elevated"].includes(s.positioning.funding ?? "") || s.positioning.oi === "surging";
+      if (!((entryTiming && perpOnly) || signal)) return null;
       return [`funding=${s.positioning.funding}/oi=${s.positioning.oi}`];
     },
     question: "Does leveraged crowding change the timing of this action?",

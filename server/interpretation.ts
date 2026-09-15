@@ -106,6 +106,27 @@ function positioningInterpretation(
   }
 }
 
+function unresolvedTrigger(input: InterpretationInput): string {
+  const uncertainty = input.uncertainty.join(" ");
+  const lastTopic = input.hingeHistory[input.hingeHistory.length - 1]?.topic;
+  if (/news|catalyst|event|headline|earnings/i.test(uncertainty)) {
+    return "A supported news or event source covering the relevant catalyst would change this read.";
+  }
+  if (lastTopic === "structure-direction" || lastTopic === "move-reality") {
+    return "A supported market-structure observation that distinguishes whether the move is stabilizing or downside is still extending would change this timing read.";
+  }
+  if (lastTopic === "crowd-timing" || lastTopic === "dislocation") {
+    return "A supported positioning observation that shows whether crowding or dislocation is changing would change this timing read.";
+  }
+  if (input.intent?.action === "exit-now") {
+    return "A supported market-structure or positioning observation showing whether the move is reversing would change this exit read.";
+  }
+  if (input.intent?.action === "enter-now" || input.intent?.action === "wait") {
+    return "A supported market-structure observation that distinguishes whether the move is stabilizing or downside is still extending would change this timing read.";
+  }
+  return "A supported evidence source that directly covers the missing capability would change this read.";
+}
+
 export function deriveDecisionImplication(input: InterpretationInput): DecisionImplication {
   const last = input.hingeHistory[input.hingeHistory.length - 1];
   const question = cleanQuestion(last?.question) ?? cleanQuestion(input.intent?.decisionQuestion);
@@ -124,9 +145,9 @@ export function deriveDecisionImplication(input: InterpretationInput): DecisionI
     cautionEvidence.push("The available check did not produce a normalized market observation that can support a stronger read.");
   }
   if (!changeTriggers.length) {
-    changeTriggers.push(question
-      ? `A supported finding that answers “${question}” would change the read.`
-      : "A supported finding that answers the remaining decision question would change the read.");
+    changeTriggers.push(input.terminal === "unresolved"
+      ? unresolvedTrigger(input)
+      : "A supported market observation that materially changes the current read would change this decision.");
   }
 
   return {

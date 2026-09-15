@@ -3,6 +3,7 @@ import { getStore } from "@/server/db";
 import { readOwner, ownsSession } from "@/server/auth";
 import { sseEncode, sseResponse, sameOrigin } from "@/server/stream";
 import { parseIntentFlow, resolveAsset, assetIdentity, capabilityData, driveLoop, assembleBrief } from "@/server/flow";
+import { unsupportedEvidenceReason } from "@/domain/intent";
 import { RESEARCH_LOOP_CAP } from "@/config/thresholds";
 import { modelConfigured } from "@/model/provider";
 import { qwenProvider } from "@/model/qwen";
@@ -58,8 +59,9 @@ export async function POST(req: Request) {
   const combined = `${st.dilemma}\nUser clarification: ${parsed.data.text}`;
   const model = modelConfigured() ? qwenProvider : null;
   const intent = await parseIntentFlow(combined, model);
+  const unsupportedReason = unsupportedEvidenceReason(combined);
   st.intent = intent as unknown as typeof st.intent;
-  if (intent.clarificationNeeded || intent.action === "unclear") {
+  if ((intent.clarificationNeeded || intent.action === "unclear") && !unsupportedReason) {
     const clarified = await store.compareAndSet(row.id, row.stateVersion, { intent, state: st as unknown as Record<string, unknown> });
     if (!clarified) {
       const current = await store.getSession(row.id);
@@ -93,6 +95,7 @@ export async function POST(req: Request) {
           facts: (st.facts ?? {}) as import("@/research/orchestrator").MarketFacts,
           data: capabilityData(st.spotSymbol, st.perpSymbol),
           context: intent.timeframeContext, known: [],
+          unsupportedReason: unsupportedReason ?? undefined,
         }, {
           store,
           onEvent: (e) => send(e.type, e.data),

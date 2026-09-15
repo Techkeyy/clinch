@@ -22,12 +22,19 @@ export function terminalReasonCode(internalReason: string): TerminalReasonCode {
   return "INCOMPLETE";
 }
 
-export function userUnresolvedReason(code: TerminalReasonCode, assetLabel?: string | null): string {
+function unresolvedEvidenceNeed(action?: string | null, assetLabel?: string | null): string {
+  const asset = assetLabel && assetLabel !== "unknown" ? assetLabel : "this asset";
+  if (action === "exit-now") return "whether " + asset + " is reversing or still moving against the exit decision";
+  if (action === "enter-now" || action === "wait") return "whether " + asset + " is stabilizing enough to enter now or whether downside is still extending";
+  return "the market capability needed to answer the decision";
+}
+
+export function userUnresolvedReason(code: TerminalReasonCode, assetLabel?: string | null, action?: string | null): string {
   const asset = assetLabel ? ` for ${assetLabel}` : "";
   switch (code) {
     case "NO_CAPABLE_FAMILY":
     case "NO_ANSWERABLE_HINGE":
-      return `CLINCH established live context${asset}, but none of its supported research paths can answer the remaining decision question right now.`;
+      return `CLINCH established live context${asset}, but it still needs supported evidence about ${unresolvedEvidenceNeed(action, assetLabel)}. No available research family can answer that question right now.`;
     case "EXECUTOR_UNAVAILABLE":
       return `CLINCH identified a decision question${asset}, but the required supported market path or instrument was unavailable.`;
     case "RESEARCH_UNAVAILABLE":

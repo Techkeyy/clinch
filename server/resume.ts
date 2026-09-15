@@ -16,6 +16,7 @@ export interface SavedResumeState {
   context?: string;
   known?: string[];
   hingeHistory?: { hinge?: string; topic?: string | null; verdict?: string }[];
+  unsupportedReason?: string;
 }
 
 // buildResumeInput derives the driveLoop seed from persisted server state alone.
@@ -38,6 +39,7 @@ export function buildResumeInput(st: SavedResumeState): LoopInput {
     skips: (st.skips ?? []).map((s) => ({ ...s })),
     uncertainty: [...(st.uncertainty ?? [])],
     stopReason: st.stopReason ?? null,
+    unsupportedReason: st.unsupportedReason,
     hingeHistory: (st.hingeHistory ?? []).map((h) => ({
       hinge: h.hinge ?? "restored",
       topic: h.topic ?? null,

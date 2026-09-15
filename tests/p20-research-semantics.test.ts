@@ -5,6 +5,7 @@ import { factsToRaw } from "../research/orchestrator";
 import { assetIdentity, assembleBrief, capabilityData, driveLoop, parseIntentFlow } from "../server/flow";
 import { stockFromRealityTicker } from "../lib/stocks";
 import { deriveDecisionImplication } from "../server/interpretation";
+import { unsupportedEvidenceReason } from "../domain/intent";
 
 const ownerDilemma = "NVIDIA context: It has been drifting lower tonight and I am considering a small entry. Should I wait?";
 
@@ -14,6 +15,75 @@ describe("P20 owner research semantics", () => {
     expect(intent.asset).toBe("NVIDIA");
     expect(intent.action).toBe("wait");
     expect(intent.decisionQuestion).toContain("Should I wait?");
+  });
+
+  it("normalizes bounded entry and exit language even when a model returns an unclear action", async () => {
+    const model = {
+      name: "test-qwen",
+      parseIntent: async () => ({
+        ok: true as const,
+        value: {
+          asset: "NVDA", resolvedSymbol: null, action: "unclear" as const,
+          timeframeContext: "no timeframe stated", decisionQuestion: "Should I buy NVDA now?",
+          clarificationNeeded: true, clarificationQuestion: "Please clarify",
+        },
+      }),
+      polishBrief: async () => ({ ok: false as const, error: "unused" }),
+    };
+    const intent = await parseIntentFlow("Should I buy NVDA now?", model);
+    expect(intent).toMatchObject({ asset: "NVDA", action: "enter-now", clarificationNeeded: false });
+  });
+
+  it("keeps the owner wording in one bounded semantic class", async () => {
+    const cases = [
+      ["NVIDIA (NVDA) context: Should I buy NVDA now?", "enter-now"],
+      ["NVIDIA (NVDA) context: Should I enter now or wait?", "enter-now"],
+      ["NVIDIA (NVDA) context: Is this a reasonable entry?", "enter-now"],
+      ["NVIDIA (NVDA) context: Should I sell NVDA now?", "exit-now"],
+    ] as const;
+    for (const [text, action] of cases) {
+      const intent = await parseIntentFlow(text, null);
+      expect(intent.asset).toBe("NVDA");
+      expect(intent.action).toBe(action);
+      expect(intent.clarificationNeeded).toBe(false);
+    }
+    const ambiguous = await parseIntentFlow("NVIDIA (NVDA) context: What do you think about NVDA?", null);
+    expect(ambiguous.action).toBe("unclear");
+    expect(ambiguous.clarificationNeeded).toBe(true);
+    expect(unsupportedEvidenceReason("NVIDIA (NVDA) context: What happened after the earnings announcement?")).toMatch(/no supported news or catalyst source/i);
+  });
+
+  it("opens direct entry timing on spot capability without requiring a special move", () => {
+    const raw = factsToRaw({
+      action: "enter-now", read: "undecided", asset: "NVDA", context: "",
+      facts: {}, data: { "spot-structure": "fresh", "perp-positioning": "fresh" },
+      resolved: [], known: [],
+    });
+    const compiled = compileSemantics(raw);
+    const output = decide(
+      { id: "direct-entry", action: "enter-now", candidates: compiled.candidates },
+      initialState("undecided", { "spot-structure": "fresh", "perp-positioning": "fresh" }),
+    );
+    expect(compiled.candidates.some((candidate) => candidate.topic === "structure-direction")).toBe(true);
+    expect(output.action).toBe("RESEARCH");
+    expect(output.family).toBe("spot-structure");
+  });
+
+  it("uses perp positioning selectively when it is the only capable family", () => {
+    const raw = factsToRaw({
+      action: "wait", read: "undecided", asset: "NVDA", context: "",
+      facts: { perp: { fundingRate: 0.0001 } },
+      data: { "spot-structure": "missing", "perp-positioning": "fresh" },
+      resolved: [], known: [],
+    });
+    const compiled = compileSemantics(raw);
+    const output = decide(
+      { id: "perp-only-entry", action: "wait", candidates: compiled.candidates },
+      initialState("undecided", { "spot-structure": "missing", "perp-positioning": "fresh" }),
+    );
+    expect(output.action).toBe("RESEARCH");
+    expect(output.family).toBe("perp-positioning");
+    expect(output.hinge).toMatch(/crowd-timing/);
   });
 
   it("maps NVIDIA to normal, Reality, and optional RWA perp identity", () => {
@@ -90,8 +160,8 @@ describe("P20 owner research semantics", () => {
     });
     expect(result.terminal).toBe("unresolved");
     expect(result.terminalReasonCode).toBe("NO_CAPABLE_FAMILY");
-    expect(result.stopReason).toMatch(/supported research paths can answer/);
-    expect(result.stopReason).not.toMatch(/NO-CAPABLE-FAMILY|flippable|compiler|family/i);
+    expect(result.stopReason).toMatch(/No available research family can answer/i);
+    expect(result.stopReason).not.toMatch(/NO-CAPABLE-FAMILY|flippable|compiler/i);
     expect(emitted.find((event) => event.type === "stop")).toMatchObject({
       data: { cannotResolve: true, terminal: "unresolved", reasonCode: "NO_CAPABLE_FAMILY" },
     });
@@ -150,7 +220,8 @@ describe("P20 owner research semantics", () => {
     expect(brief.completed).toEqual([]);
     expect(brief.why).not.toContain("No research completed");
     expect(text).not.toMatch(/NO-CAPABLE-FAMILY|no-capable-family|flippable|compiler|family eligibility/i);
-    expect(brief.changeTriggers[0]).toMatch(/supported finding|remaining decision question/i);
+    expect(brief.changeTriggers[0]).toMatch(/supported market-structure|stabilizing|downside/i);
+    expect(brief.changeTriggers[0]).not.toContain("Should I wait");
     expect(brief.decisionImplication.summary).toMatch(/does not answer/i);
     expect(brief.read).toBe("Cannot resolve");
   });
@@ -222,5 +293,24 @@ describe("P20 owner research semantics", () => {
     expect(implication.cautionEvidence.join(" ")).toMatch(/did not produce/i);
     expect(implication.changeTriggers.join(" ")).toMatch(/stabilizing/i);
     expect(implication.summary).toMatch(/does not answer/i);
+  });
+
+  it("returns a precise unresolved terminal for an unsupported news capability", async () => {
+    const emitted: { type: string; data: unknown }[] = [];
+    const result = await driveLoop("unsupported-news", {
+      asset: "NVDA", spotSymbol: "RNVDAUSDT", perpSymbol: null, action: "unclear",
+      read: "undecided", resolvedTopics: [], facts: {},
+      data: { "spot-structure": "fresh", "perp-positioning": "missing" },
+      context: "", known: [],
+      unsupportedReason: "CLINCH can establish live market context for NVDA, but it has no supported news or catalyst source to answer that question.",
+    }, {
+      store: {} as never,
+      onEvent: (event) => emitted.push(event),
+      persistStep: async () => {},
+    });
+    expect(result.terminal).toBe("unresolved");
+    expect(result.terminalReasonCode).toBe("NO_ANSWERABLE_HINGE");
+    expect(result.stopReason).toMatch(/no supported news or catalyst source/i);
+    expect(emitted.some((event) => event.type === "research")).toBe(false);
   });
 });

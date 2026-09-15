@@ -6,7 +6,7 @@ import { trackRecent, untrackRecent } from "@/lib/recent";
 import { FreshnessBadge, SkipRecord } from "@/components/research";
 import { StockIdentity } from "@/components/stock-identity";
 import { StockDiscovery } from "@/components/stock-discovery";
-import { displayStockFromMention, stockFromRealityTicker, type StockIdentityData } from "@/lib/stocks";
+import { displayStockFromMention, stockFromRealityTicker, stockFromTicker, type StockIdentityData } from "@/lib/stocks";
 import { STALE_RUN_MS } from "@/config/thresholds";
 
 interface StreamEvent { type: string; data: Record<string, unknown>; }
@@ -326,6 +326,7 @@ export default function Page() {
       const terminal = (d as { terminal?: unknown }).terminal;
       if (terminal === "stopped" || terminal === "unresolved") setTerminalStatus(terminal);
       if ((d as { cannotResolve?: boolean }).cannotResolve) setRead("Cannot resolve");
+      setStatusLine(null);
     } else if (e.type === "brief") {
       setBrief((d.brief ?? null) as Record<string, unknown> | null);
       const b = d.brief as { read?: unknown; terminalStatus?: unknown } | null;
@@ -334,6 +335,7 @@ export default function Page() {
       if (status === "stopped" || status === "unresolved") setTerminalStatus(status);
       setPhase("brief");
       setBusy(false);
+      setStatusLine(null);
     } else if (e.type === "clarify") {
       setClarifyQ(String((d as { question?: unknown }).question ?? "What are you deciding?"));
       setPhase("clarify");
@@ -342,6 +344,7 @@ export default function Page() {
       setError(String((d as { message?: unknown }).message ?? (d as { code?: unknown }).code ?? "Research failed."));
       setPhase("error");
       setBusy(false);
+      setStatusLine(null);
     }
   }, []);
 
@@ -631,7 +634,7 @@ export default function Page() {
   const decisionStock = displayStockFromMention(
     String(baseline?.spotSymbol ?? (intent as { resolvedSymbol?: unknown } | null)?.resolvedSymbol ?? (intent as { asset?: unknown } | null)?.asset ?? ""),
     stocks,
-  ) ?? stockFromRealityTicker(spotSymbol);
+  ) ?? stockFromRealityTicker(spotSymbol) ?? stockFromTicker(String((intent as { asset?: unknown } | null)?.asset ?? ""));
   const hasJourney = phase !== "idle" || Boolean(intent || baseline || brief || sessionId);
   const activeHinge = hinges.length ? hinges[hinges.length - 1] : null;
   const previousHinges = hinges.slice(0, -1);
@@ -703,7 +706,7 @@ export default function Page() {
 
             {baseline && <section className="context-section" aria-label="Market context"><div className="section-header-row"><div><p className="eyebrow">LIVE CONTEXT</p><h2 className="section-title">What CLINCH is seeing now</h2>{decisionStock && <StockIdentity stock={decisionStock} size="sm" className="context-identity" />}</div><FreshnessBadge status="live" label="Live baseline" /></div>{Object.keys(spot).length || Object.keys(perp).length ? <details className="trade-details context-details"><summary>View Live Market Context</summary><div className="context-grid"><ContextMetric label="Last price" value={numberText(spot.last)} /><ContextMetric label="24h move" value={percentText(spot.movePct24h)} /><ContextMetric label="Spread" value={numberText(spot.spreadBps, 1)} note={spot.spreadWide === true ? "wide" : spot.spreadWide === false ? "tight" : undefined} /><ContextMetric label="Funding" value={percentText(perp.fundingRate)} note={Object.keys(perp).length ? "stock-perp" : undefined} /></div></details> : <div className="empty-inline"><span className="state-tag state-unavailable">UNAVAILABLE</span><p className="body-text">Live context is unavailable right now. CLINCH will not fill the gap with a guess.</p></div>}<p className="provenance-line">Bitget market data, read by the server. Missing fields stay unavailable.</p></section>}
 
-            {statusLine && <section className="live-status" aria-label="Research progress" aria-live="polite"><span className="status-pulse" aria-hidden="true" /><div><p className="eyebrow">NOW</p><p className="status-copy">{statusLine}</p></div></section>}
+            {statusLine && !terminalStatus && !brief && phase !== "error" && <section className="live-status" aria-label="Research progress" aria-live="polite"><span className="status-pulse" aria-hidden="true" /><div><p className="eyebrow">NOW</p><p className="status-copy">{statusLine}</p></div></section>}
 
             {findings.length > 0 && <section className="findings-section" aria-label="Evidence findings"><div className="section-header-row"><div><p className="eyebrow">WHAT CLINCH CHECKED</p><h2 className="section-title">Evidence that mattered</h2>{decisionStock && <StockIdentity stock={decisionStock} size="sm" className="finding-identity" />}</div><span className="count-label">{findings.length} {findings.length === 1 ? "check" : "checks"}</span></div><div className="finding-list">{findings.map((finding, index) => <article className="finding finding-checked" key={finding.hinge + "-" + index}><div className="finding-marker" aria-hidden="true">{String(index + 1).padStart(2, "0")}</div><div className="finding-body"><p className="finding-family"><span className="state-tag state-checked">CHECKED</span> {familyLabel(finding.family)}</p><p className="finding-summary">{finding.summary}</p><p className="finding-provenance">{safeSource(finding.source, finding.family)}{shortUtc(finding.observedAt) ? ", observed " + shortUtc(finding.observedAt) : ""}.</p>{Object.keys(finding.facts).length > 0 && <details className="trade-details"><summary>View Research Evidence &amp; Sources</summary><dl className="fact-list">{Object.entries(finding.facts).slice(0, 8).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{typeof value === "boolean" ? (value ? "Yes" : "No") : String(value)}</dd></div>)}</dl></details>}</div></article>)}</div></section>}
 

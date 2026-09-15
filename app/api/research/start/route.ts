@@ -7,6 +7,7 @@ import { readOwner, mintOwner, ownsSession, verifierFor } from "@/server/auth";
 import { checkStartLimits, trustedNetworkSource } from "@/server/rate";
 import { sseEncode, sseResponse, sameOrigin } from "@/server/stream";
 import { parseIntentFlow, resolveAsset, assetIdentity, capabilityData, assembleBrief, driveLoop } from "@/server/flow";
+import { unsupportedEvidenceReason } from "@/domain/intent";
 import type { IntentContract } from "@/domain/types";
 import { establishBaseline } from "@/research/orchestrator";
 import { modelConfigured, type ModelProvider } from "@/model/provider";
@@ -114,7 +115,8 @@ export async function POST(req: Request) {
 
         const model = await getModel();
         const intent = await timedStage(timing, "qwen-intent-flow", () => parseIntentFlow(parsed.data.dilemma, model));
-        if (intent.clarificationNeeded || intent.action === "unclear") {
+        const unsupportedReason = unsupportedEvidenceReason(parsed.data.dilemma);
+        if ((intent.clarificationNeeded || intent.action === "unclear") && !unsupportedReason) {
           const st = stateOf(created);
           st.intent = intent;
           const clarified = await store.compareAndSet(sessionId, created.stateVersion, { intent, status: "clarifying", state: st as unknown as Record<string, unknown> });
@@ -170,6 +172,7 @@ export async function POST(req: Request) {
           resolvedTopics: [] as string[], facts: base.facts,
           data: capabilityData(st.spotSymbol, st.perpSymbol),
           context: st.intent.timeframeContext, known: [] as string[],
+          unsupportedReason: unsupportedReason ?? undefined,
         };
         send("progress", { stage: "hinge", label: "Finding the Decision Hinge." });
         let ord = 10;

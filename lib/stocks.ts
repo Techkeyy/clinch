@@ -107,6 +107,21 @@ export function stockFromRealityTicker(realityTicker: string, perpTicker: string
   };
 }
 
+/** Build a truthful display identity from a validated normal ticker. */
+export function stockFromTicker(ticker: string): StockIdentityData | null {
+  const cleaned = clean(ticker);
+  const normal = tickerFromRealitySymbol(cleaned) ?? cleaned.replace(/USDT$/, "");
+  if (!/^[A-Z][A-Z0-9]{0,11}$/.test(normal)) return null;
+  const known = DIRECTORY[normal];
+  const logoKey = known?.logoKey ?? "monogram";
+  return {
+    companyName: known?.companyName ?? "Stock " + normal,
+    ticker: normal,
+    logoKey,
+    markKind: stockMarkKind(logoKey),
+  };
+}
+
 export function researchableRealityStocks(spot: SpotInstrument[], fut: FutInstrument[]): DiscoveredStock[] {
   const perps = new Set(fut.filter((row) => String(row.isRwa).toUpperCase() === "YES").map((row) => row.symbol));
   return spot
@@ -164,5 +179,5 @@ export function stockPrompt(stock: StockIdentityData): string {
 }
 
 export function displayStockFromMention(mention: string | null | undefined, stocks: StockIdentityData[]): StockIdentityData | null {
-  return findStockByMention(mention, stocks) ?? (mention ? stockFromRealityTicker(mention) : null);
+  return findStockByMention(mention, stocks) ?? (mention ? stockFromRealityTicker(mention) ?? stockFromTicker(mention) : null);
 }

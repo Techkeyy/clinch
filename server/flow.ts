@@ -1,6 +1,6 @@
 import { decide, type Candidate, type KernelState } from "../domain/kernel";
 import { compileSemantics, type RawFacts } from "../domain/semantics";
-import { extractIntent, toIntentContract } from "../domain/intent";
+import { extractIntent, normalizeIntent, toIntentContract } from "../domain/intent";
 import type { IntentContract } from "../domain/types";
 import { LOGIC_VERSION, RESEARCH_LOOP_CAP } from "../config/thresholds";
 import { discoverSpot, discoverFutures } from "../research/bitget/index";
@@ -36,6 +36,7 @@ export interface LoopInput {
   uncertainty?: string[];
   hingeHistory?: { hinge: string; topic?: string | null; question?: string | null; verdict: string }[];
   stopReason?: string | null;
+  unsupportedReason?: string;
 }
 export interface AssetIdentity {
   companyName: string | null;
@@ -91,7 +92,7 @@ export async function parseIntentFlow(dilemma: string, model?: ModelProvider | n
   if (model) {
     try {
       const r = await model.parseIntent(dilemma);
-      if (r.ok) return r.value;
+      if (r.ok) return normalizeIntent(dilemma, r.value);
     } catch { /* fall through to deterministic extractor */ }
   }
   return toIntentContract(extractIntent(dilemma));
@@ -155,7 +156,7 @@ export function assembleBrief(state: BriefInput, spotSymbol: string | null): Bri
   const findings = state.hingeHistory.map((h) => clean(h.verdict));
   const lastTopic = state.hingeHistory[state.hingeHistory.length - 1]?.topic ?? null;
   const completed = state.hingeHistory.map((h) => h.question ?? "Supported market evidence check");
-  const unresolvedWhy = userUnresolvedReason(state.terminalReasonCode, asset);
+  const unresolvedWhy = userUnresolvedReason(state.terminalReasonCode, asset, state.intent?.action);
   const why = state.terminal === "unresolved"
     ? unresolvedWhy
     : state.hingeHistory.length ? clean(state.hingeHistory[state.hingeHistory.length - 1].verdict) : userStopReason("", true);
@@ -219,13 +220,24 @@ export async function driveLoop(
       }
     }
   };
+  if (input.unsupportedReason) {
+    acc.terminal = "unresolved";
+    acc.read = "cannot-resolve";
+    acc.terminalReasonCode = "NO_ANSWERABLE_HINGE";
+    acc.terminalInternalReason = "No supported evidence capability covers the requested news or catalyst question.";
+    acc.stopReason = input.unsupportedReason;
+    acc.uncertainty.push(input.unsupportedReason);
+    await deps.persistStep("stop", null, { terminal: acc.terminal, reasonCode: acc.terminalReasonCode, internalReason: acc.terminalInternalReason }, null);
+    emit({ type: "stop", data: { reason: acc.stopReason, cannotResolve: true, terminal: acc.terminal, reasonCode: acc.terminalReasonCode } });
+    return acc;
+  }
   for (;;) {
     if (iters >= maxIterations) {
       acc.terminal = "unresolved";
       acc.read = "cannot-resolve";
       acc.terminalReasonCode = "ITERATION_CAP";
       acc.terminalInternalReason = "Iteration cap reached; stopping explicitly incomplete rather than fabricating completion.";
-      acc.stopReason = userUnresolvedReason("ITERATION_CAP", input.asset);
+      acc.stopReason = userUnresolvedReason("ITERATION_CAP", input.asset, input.action);
       acc.uncertainty.push(acc.stopReason);
       await deps.persistStep("stop", null, { terminal: acc.terminal, reasonCode: acc.terminalReasonCode, internalReason: acc.terminalInternalReason }, null);
       emit({ type: "stop", data: { reason: acc.stopReason, cannotResolve: true, terminal: acc.terminal, reasonCode: acc.terminalReasonCode } });
@@ -260,7 +272,7 @@ export async function driveLoop(
         acc.read = "cannot-resolve";
         acc.terminalReasonCode = "EXECUTOR_UNAVAILABLE";
         acc.terminalInternalReason = internalReason;
-        acc.stopReason = userUnresolvedReason(acc.terminalReasonCode, input.asset);
+        acc.stopReason = userUnresolvedReason(acc.terminalReasonCode, input.asset, input.action);
         acc.uncertainty.push(acc.stopReason);
         await deps.persistStep("stop", null, { terminal: acc.terminal, reasonCode: acc.terminalReasonCode, internalReason }, null);
         emit({ type: "stop", data: { reason: acc.stopReason, cannotResolve: true, terminal: acc.terminal, reasonCode: acc.terminalReasonCode } });
@@ -274,7 +286,7 @@ export async function driveLoop(
         { hinge: q.id, status: research.status, facts: research.facts },
         research.evidence.map((e) => e.provenance));
       if (research.status !== "ok") {
-        acc.uncertainty.push(userUnresolvedReason("RESEARCH_UNAVAILABLE", input.asset));
+        acc.uncertainty.push(userUnresolvedReason("RESEARCH_UNAVAILABLE", input.asset, input.action));
         acc.resolvedTopics.push(q.topic ?? q.id);
         iters++;
         continue;
@@ -312,7 +324,7 @@ export async function driveLoop(
         acc.terminalReasonCode = "NO_ANSWERABLE_HINGE";
         acc.terminalInternalReason = "Stop reached before an answerable finding established a read.";
         acc.read = "cannot-resolve";
-        acc.stopReason = userUnresolvedReason(acc.terminalReasonCode, input.asset);
+        acc.stopReason = userUnresolvedReason(acc.terminalReasonCode, input.asset, input.action);
       } else {
         acc.terminal = "stopped";
         acc.terminalReasonCode = "NO_REMAINING_VALUE";
@@ -330,7 +342,7 @@ export async function driveLoop(
       acc.terminalReasonCode = code;
       acc.terminalInternalReason = out.why;
       acc.read = "cannot-resolve";
-      acc.stopReason = userUnresolvedReason(code, input.asset);
+      acc.stopReason = userUnresolvedReason(code, input.asset, input.action);
       acc.uncertainty.push(acc.stopReason);
       await deps.persistStep("stop", null, { terminal: acc.terminal, reasonCode: code, internalReason: out.why }, null);
       emit({ type: "stop", data: { reason: acc.stopReason, cannotResolve: true, terminal: acc.terminal, reasonCode: code } });
@@ -341,7 +353,7 @@ export async function driveLoop(
       acc.read = "cannot-resolve";
       acc.terminalReasonCode = "NO_ANSWERABLE_HINGE";
       acc.terminalInternalReason = out.why;
-      acc.stopReason = userUnresolvedReason(acc.terminalReasonCode, input.asset);
+      acc.stopReason = userUnresolvedReason(acc.terminalReasonCode, input.asset, input.action);
       emit({ type: "clarify", data: { question: "What are you deciding? Tell me the asset and whether you are considering entering, exiting, or waiting." } });
       break;
     }
@@ -352,7 +364,7 @@ export async function driveLoop(
     acc.read = "cannot-resolve";
     acc.terminalReasonCode = "INCOMPLETE";
     acc.terminalInternalReason = "Research loop ended without a terminal decision.";
-    acc.stopReason = userUnresolvedReason("INCOMPLETE", input.asset);
+    acc.stopReason = userUnresolvedReason("INCOMPLETE", input.asset, input.action);
   }
   return acc;
 }

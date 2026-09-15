@@ -5,6 +5,7 @@ import { sseEncode, sseResponse, sameOrigin } from "@/server/stream";
 import { retryAllowed } from "@/server/retry";
 import { driveLoop, assembleBrief } from "@/server/flow";
 import { buildResumeInput } from "@/server/resume";
+import { unsupportedEvidenceReason } from "@/domain/intent";
 import { RESEARCH_LOOP_CAP, MAX_STEP_RETRIES } from "@/config/thresholds";
 
 export const runtime = "nodejs";
@@ -75,6 +76,9 @@ export async function POST(req: Request) {
           resolvedTopics: st.resolvedTopics, facts: st.facts,
           context: st.context, known: st.known, skips: st.skips,
           uncertainty: st.uncertainty, stopReason: st.stopReason, hingeHistory: st.hingeHistory,
+          unsupportedReason: typeof intent.decisionQuestion === "string"
+            ? unsupportedEvidenceReason(intent.decisionQuestion) ?? undefined
+            : undefined,
         }), {
           store,
           onEvent: (e) => send(e.type, e.data),
