@@ -7,8 +7,6 @@ import { featuredSupportedStocks, stockMatchesQuery, type StockIdentityData } fr
 interface StockDiscoveryProps {
   stocks: StockIdentityData[];
   selectedStock: StockIdentityData | null;
-  verifiedMarkCount: number | null;
-  fallbackMarkCount: number | null;
   loading: boolean;
   error: boolean;
   onSelect: (stock: StockIdentityData) => void;
@@ -21,8 +19,6 @@ const RESULT_PAGE_SIZE = 24;
 export function StockDiscovery({
   stocks,
   selectedStock,
-  verifiedMarkCount,
-  fallbackMarkCount,
   loading,
   error,
   onSelect,
@@ -49,9 +45,8 @@ export function StockDiscovery({
         <div>
           <p className="eyebrow">CHOOSE A STOCK · OPTIONAL</p>
           <h3 id="stock-discovery-title" className="stock-discovery-title">Choose a stock</h3>
-          <p className="stock-discovery-copy">Search the supported Bitget universe, or describe the stock directly in your decision.</p>
+          <p className="stock-discovery-copy">Search supported tokenized stocks on Bitget, or describe the stock directly in your decision.</p>
         </div>
-        {!loading && !error && stocks.length > 0 && <p className="stock-browser-status stock-discovery-count" role="status">{stocks.length} supported Reality instruments · {verifiedMarkCount ?? 0} verified marks · {fallbackMarkCount ?? 0} fallbacks</p>}
       </div>
 
       {selectedStock && <div className="selected-stock-summary" role="status" aria-live="polite">

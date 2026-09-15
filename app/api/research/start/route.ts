@@ -3,7 +3,7 @@ import { newSessionId } from "@/lib/ownership";
 import { DilemmaInput, IdempotencyKey } from "@/domain/types";
 import { LOGIC_VERSION, RESEARCH_LOOP_CAP } from "@/config/thresholds";
 import { getStore } from "@/server/db";
-import { readOwner, mintOwner, ownsSession, verifierFor } from "@/server/auth";
+import { readOwner, mintOwner, verifierFor, currentAccountUserId, canAccessSession } from "@/server/auth";
 import { checkStartLimits, trustedNetworkSource } from "@/server/rate";
 import { sseEncode, sseResponse, sameOrigin } from "@/server/stream";
 import { parseIntentFlow, resolveAsset, assetIdentity, capabilityData, assembleBrief, driveLoop } from "@/server/flow";
@@ -19,7 +19,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 180;
 
-const StartBody = z.object({ dilemma: DilemmaInput.shape.dilemma, idempotencyKey: IdempotencyKey });
+const StartBody = z.object({
+  dilemma: DilemmaInput.shape.dilemma,
+  idempotencyKey: IdempotencyKey,
+  selectedTicker: z.string().trim().min(1).max(20).optional(),
+  selectedRealityTicker: z.string().trim().min(1).max(24).optional(),
+});
 
 function publicSession(row: { id: string; status: string; read: string; stateVersion: number; state: unknown; brief: unknown }) {
   return { id: row.id, status: row.status, read: row.read, stateVersion: row.stateVersion, state: row.state, brief: row.brief };
@@ -48,22 +53,25 @@ export async function POST(req: Request) {
   const store = await getStore();
   const ip = await trustedNetworkSource();
   const owner = await readOwner();
-  const limit = await checkStartLimits(store, owner.secret, ip);
+  const accountUserId = await currentAccountUserId();
+  const limit = await checkStartLimits(store, owner.secret ?? accountUserId, ip);
   if (!limit.ok) return Response.json({ error: limit.code }, { status: 429 });
   // Opportunistic bounded retention cleanup (P15; no worker). Failures never block research.
   store.pruneExpired(Date.now()).catch(() => {});
 
   let secret = owner.secret;
   let setCookie: string | null = null;
-  if (!secret) {
+  if (!secret && !accountUserId) {
     const minted = mintOwner();
     secret = minted.secret;
     setCookie = minted.setCookie;
   }
+  const signingSecret = secret ?? accountUserId;
+  if (!signingSecret) return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
 
   const existing = await store.findByIdempotencyKey(parsed.data.idempotencyKey);
   if (existing) {
-    if (!ownsSession(existing.ownerVerifier, existing.id, secret)) {
+    if (!canAccessSession(existing, secret, accountUserId)) {
       return Response.json({ error: "KEY_CONFLICT" }, { status: 409 });
     }
     const prior = (existing.state as unknown as { dilemma?: string })?.dilemma;
@@ -75,7 +83,7 @@ export async function POST(req: Request) {
   }
 
   const sessionId = newSessionId();
-  const verifier = verifierFor(sessionId, secret);
+  const verifier = verifierFor(sessionId, signingSecret);
   const events: { type: string; data: unknown }[] = [];
   const emit = (e: { type: string; data: unknown }) => events.push(e);
 
@@ -93,7 +101,7 @@ export async function POST(req: Request) {
         let created;
         try {
           created = await store.createSession({
-            id: sessionId, ownerVerifier: verifier, intent: null,
+            id: sessionId, ownerVerifier: verifier, accountUserId, intent: null,
             state: initialFlowState(parsed.data.dilemma), status: "awaiting", read: "undecided",
             logicVersion: LOGIC_VERSION, idempotencyKey: parsed.data.idempotencyKey,
             stateVersion: 0, brief: null,
@@ -101,7 +109,7 @@ export async function POST(req: Request) {
         } catch (e) {
           // Lost a create race on the idempotency key: replay the winner.
           const winner = await store.findByIdempotencyKey(parsed.data.idempotencyKey);
-          if (winner && ownsSession(winner.ownerVerifier, winner.id, secret)) {
+          if (winner && canAccessSession(winner, secret, accountUserId)) {
             const steps = await store.getSteps(winner.id);
             send("session", { session: publicSession(winner), replayed: true });
             for (const s of steps) send("step", { kind: s.kind, family: s.family, summary: s.requestSummary });
@@ -131,7 +139,7 @@ export async function POST(req: Request) {
           return;
         }
         send("progress", { stage: "asset", label: "Resolving supported market context." });
-        const resolved = await timedStage(timing, "asset-resolution", () => resolveAsset(intent.asset, undefined)).catch(() => ({ spot: null, perp: null, ticker: null, companyName: null, universe: 0 }));
+        const resolved = await timedStage(timing, "asset-resolution", () => resolveAsset(intent.asset, undefined, parsed.data.selectedTicker, parsed.data.selectedRealityTicker)).catch(() => ({ spot: null, perp: null, ticker: null, companyName: null, universe: 0 }));
         if (!resolved.spot) {
           await failSession(store, sessionId, "failed", "The requested stock is not currently available from Bitget's Reality market data.");
           send("error", { code: "UNSUPPORTED_ASSET", message: "That stock is not currently available to research from Bitget's Reality market data. Try searching supported stocks or describe another stock." });

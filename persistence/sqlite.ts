@@ -8,7 +8,7 @@ import { SESSION_TTL_MS, RATE_BUCKET_TTL_MS } from "../config/thresholds";
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS research_sessions (
-  id TEXT PRIMARY KEY, owner_verifier TEXT NOT NULL, intent TEXT,
+  id TEXT PRIMARY KEY, owner_verifier TEXT NOT NULL, account_user_id TEXT, intent TEXT,
   state TEXT NOT NULL, status TEXT NOT NULL, read TEXT NOT NULL DEFAULT 'undecided',
   logic_version TEXT NOT NULL, idempotency_key TEXT NOT NULL UNIQUE,
   state_version INTEGER NOT NULL DEFAULT 0, brief TEXT,
@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS rate_counters (
 function row(r: Record<string, unknown>): SessionRow {
   return {
     id: r.id as string, ownerVerifier: r.owner_verifier as string,
+    accountUserId: (r.account_user_id as string | null) ?? null,
     intent: r.intent ? JSON.parse(r.intent as string) : null,
     state: JSON.parse(r.state as string), status: r.status as string, read: r.read as string,
     logicVersion: r.logic_version as string, idempotencyKey: r.idempotency_key as string,
@@ -42,15 +43,17 @@ export function openSQLite(path: string): SessionStore {
   db.exec("PRAGMA foreign_keys = ON;");
   db.exec("PRAGMA busy_timeout = 10000;");
   db.exec(SCHEMA);
+  // Additive parity for local databases created before account ownership.
+  try { db.exec("ALTER TABLE research_sessions ADD COLUMN account_user_id TEXT"); } catch { /* already present */ }
   const now = () => new Date().toISOString();
   return {
     kind: "sqlite",
     async createSession(r) {
       const ts = now();
       db.prepare(`INSERT INTO research_sessions
-        (id, owner_verifier, intent, state, status, read, logic_version, idempotency_key, state_version, brief, created_at, updated_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(
-        r.id, r.ownerVerifier, JSON.stringify(r.intent ?? null), JSON.stringify(r.state),
+        (id, owner_verifier, account_user_id, intent, state, status, read, logic_version, idempotency_key, state_version, brief, created_at, updated_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+        r.id, r.ownerVerifier, r.accountUserId ?? null, JSON.stringify(r.intent ?? null), JSON.stringify(r.state),
         r.status, r.read, r.logicVersion, r.idempotencyKey, r.stateVersion,
         JSON.stringify(r.brief ?? null), ts, ts);
       const got = await this.getSession(r.id);
@@ -67,6 +70,19 @@ export function openSQLite(path: string): SessionStore {
         return null;
       }
       return row(r);
+    },
+    async listByAccountUserId(userId) {
+      const rows = db.prepare("SELECT * FROM research_sessions WHERE account_user_id = ? ORDER BY updated_at DESC LIMIT 50").all(userId) as Record<string, unknown>[];
+      const active: SessionRow[] = [];
+      for (const candidate of rows) {
+        const current = await this.getSession(candidate.id as string);
+        if (current) active.push(current);
+      }
+      return active;
+    },
+    async setAccountUser(id, userId) {
+      const info = db.prepare("UPDATE research_sessions SET account_user_id = ?, state_version = state_version + 1, updated_at = ? WHERE id = ? AND account_user_id IS NULL").run(userId, now(), id);
+      return info.changes === 0 ? null : this.getSession(id);
     },
     async findByIdempotencyKey(key) {
       const r = db.prepare("SELECT * FROM research_sessions WHERE idempotency_key = ?").get(key) as Record<string, unknown> | undefined;

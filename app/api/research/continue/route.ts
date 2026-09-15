@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { getStore } from "@/server/db";
-import { readOwner, ownsSession } from "@/server/auth";
+import { readOwner, currentAccountUserId, canAccessSession } from "@/server/auth";
 import { sseEncode, sseResponse, sameOrigin } from "@/server/stream";
 import { parseIntentFlow, resolveAsset, assetIdentity, capabilityData, driveLoop, assembleBrief } from "@/server/flow";
 import { unsupportedEvidenceReason } from "@/domain/intent";
@@ -32,8 +32,9 @@ export async function POST(req: Request) {
 
   const store = await getStore();
   const owner = await readOwner();
+  const accountUserId = await currentAccountUserId();
   const row = await store.getSession(parsed.data.sessionId);
-  if (!row || !ownsSession(row.ownerVerifier, row.id, owner.secret)) {
+  if (!row || !canAccessSession(row, owner.secret, accountUserId)) {
     return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
   if (row.stateVersion !== parsed.data.expectedVersion) {
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
     }
     return Response.json({ session: snap(clarified), clarify: intent.clarificationQuestion });
   }
-  const resolved = await resolveAsset(intent.asset).catch(() => ({ spot: null, perp: null, ticker: null, companyName: null, universe: 0 }));
+  const resolved = await resolveAsset(intent.asset, undefined, st.assetIdentity?.normalTicker, st.assetIdentity?.realityTicker).catch(() => ({ spot: null, perp: null, ticker: null, companyName: null, universe: 0 }));
   if (!resolved.spot) return Response.json({ error: "UNSUPPORTED_ASSET", session: snap(row) }, { status: 422 });
   const canonicalIntent = { ...intent, asset: resolved.ticker ?? intent.asset, resolvedSymbol: resolved.spot };
   st.intent = canonicalIntent as unknown as typeof st.intent;

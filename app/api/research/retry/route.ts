@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { getStore } from "@/server/db";
-import { readOwner, ownsSession } from "@/server/auth";
+import { readOwner, currentAccountUserId, canAccessSession } from "@/server/auth";
 import { sseEncode, sseResponse, sameOrigin } from "@/server/stream";
 import { retryAllowed } from "@/server/retry";
 import { driveLoop, assembleBrief } from "@/server/flow";
@@ -30,8 +30,9 @@ export async function POST(req: Request) {
   if (!parsed.success) return Response.json({ error: "INVALID_INPUT" }, { status: 400 });
   const store = await getStore();
   const owner = await readOwner();
+  const accountUserId = await currentAccountUserId();
   const row = await store.getSession(parsed.data.sessionId);
-  if (!row || !ownsSession(row.ownerVerifier, row.id, owner.secret)) {
+  if (!row || !canAccessSession(row, owner.secret, accountUserId)) {
     return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
   if (row.stateVersion !== parsed.data.expectedVersion) {

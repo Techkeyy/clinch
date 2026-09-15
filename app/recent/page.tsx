@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { readRecentIds } from "@/lib/recent";
 import { StockIdentity } from "@/components/stock-identity";
 import { displayStockFromMention, type StockIdentityData } from "@/lib/stocks";
+import { AccountControl } from "@/components/account-control";
 
 interface RecentItem { id: string; stock: StockIdentityData | null; decision: string; read: string; status: string; updatedAt: string }
 
@@ -24,10 +25,27 @@ function readLabel(read: string): string {
 export default function RecentPage() {
   const [items, setItems] = useState<RecentItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accountMode, setAccountMode] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      try {
+        const accountRes = await fetch("/api/recent");
+        const accountJson = await accountRes.json() as { authenticated?: boolean; items?: { id: string; stockMention: string | null; decision: string; read: string; status: string; updatedAt: string }[] };
+        if (accountJson.authenticated) {
+          const accountItems = (accountJson.items ?? []).map((item) => ({
+            id: item.id,
+            stock: displayStockFromMention(item.stockMention, []),
+            decision: item.decision,
+            read: readLabel(item.read),
+            status: item.status,
+            updatedAt: item.updatedAt,
+          }));
+          if (!cancelled) { setItems(accountItems); setAccountMode(true); setLoading(false); }
+          return;
+        }
+      } catch { /* fall through to guest browser history */ }
       const ids = readRecentIds();
       const out: RecentItem[] = [];
       for (const id of ids.slice(0, 10)) {
@@ -58,13 +76,14 @@ export default function RecentPage() {
         <a className="wordmark wordmark-button" href="/#dashboard" aria-label="CLINCH dashboard">CLINCH <span>Research desk</span></a>
         <nav className="mode-nav" aria-label="Primary"><a className="mode-link" href="/#dashboard">Dashboard</a><a className="mode-link" href="/#app">App</a></nav>
         <nav className="secondary-nav" aria-label="Learn more"><a className="text-nav-link" href="/#how-it-works">How it Works</a><a className="text-nav-link" href="/#research-method">Research Method</a><a className="text-nav-link" href="/recent" aria-current="page">Recent research</a></nav>
+        <AccountControl />
         <a className="header-cta" href="/#app">Open App <span aria-hidden="true">↗</span></a>
       </header>
       <main className="workspace recent-workspace">
         <section className="recent-intro">
           <p className="eyebrow">RETURNING TO YOUR WORK</p>
           <h1 className="hero-question display">Recent decisions</h1>
-          <p className="hero-support">Research saved by this browser, re-checked against your owner cookie. Clearing site data removes access.</p>
+          <p className="hero-support">{accountMode ? "Research saved to your CLINCH account, available across devices." : "Research saved by this browser, re-checked against your owner cookie. Clearing site data removes access."}</p>
         </section>
         {loading && <section className="state-panel" aria-live="polite"><p className="eyebrow">LOADING</p><p className="body-text">Checking your saved research.</p></section>}
         {!loading && items.length === 0 && (
@@ -91,7 +110,7 @@ export default function RecentPage() {
           </section>
         )}
       </main>
-      <footer className="product-foot"><p>Private by design. No account, no wallet.</p><p>Research support only. CLINCH never places trades.</p></footer>
+      <footer className="product-foot"><p>Private by design. Guest research stays browser-private; account research stays account-scoped.</p><p>Research support only. CLINCH never places trades.</p></footer>
     </div>
   );
 }

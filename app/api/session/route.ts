@@ -1,5 +1,5 @@
 import { getStore } from "@/server/db";
-import { readOwner, ownsSession } from "@/server/auth";
+import { readOwner, currentAccountUserId, canAccessSession } from "@/server/auth";
 import { sameOrigin } from "@/server/stream";
 
 export const runtime = "nodejs";
@@ -15,8 +15,9 @@ export async function GET(req: Request) {
   }
   const store = await getStore();
   const owner = await readOwner();
+  const accountUserId = await currentAccountUserId();
   const row = await store.getSession(id);
-  if (!row || !ownsSession(row.ownerVerifier, row.id, owner.secret)) {
+  if (!row || !canAccessSession(row, owner.secret, accountUserId)) {
     return Response.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
   const steps = await store.getSteps(id);

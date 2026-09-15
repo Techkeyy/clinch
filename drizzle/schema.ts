@@ -1,9 +1,11 @@
-import { pgTable, text, integer, timestamp, jsonb, uuid, bigint } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, jsonb, uuid, bigint, index } from "drizzle-orm/pg-core";
 
-// Minimal two-table model (P6 sec 23). Anonymous sessions only.
+// Minimal two-table model (P6 sec 23). Guest ownership remains verifier-based;
+// account ownership is nullable so existing anonymous sessions are preserved.
 export const researchSessions = pgTable("research_sessions", {
   id: uuid("id").primaryKey(),
   ownerVerifier: text("owner_verifier").notNull(),
+  accountUserId: text("account_user_id"),
   intent: jsonb("intent"),
   state: jsonb("state").notNull(),
   status: text("status").notNull(),
@@ -14,7 +16,7 @@ export const researchSessions = pgTable("research_sessions", {
   brief: jsonb("brief"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [index("research_sessions_account_user_idx").on(table.accountUserId)]);
 
 export const researchSteps = pgTable("research_steps", {
   id: uuid("id").primaryKey().defaultRandom(),

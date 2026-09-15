@@ -5,6 +5,8 @@ export interface StockIdentityData {
   ticker: string;
   logoKey: string;
   markKind: StockMarkKind;
+  realityTicker?: string;
+  perpTicker?: string | null;
 }
 
 export type StockMarkKind = "verified" | "fallback";
@@ -12,7 +14,10 @@ export type StockMarkKind = "verified" | "fallback";
 export interface DiscoveredStock extends StockIdentityData {
   realityTicker: string;
   perpTicker: string | null;
+  researchFamilies: ResearchFamily[];
 }
+
+export type ResearchFamily = "spot-structure" | "perp-positioning";
 
 interface StockDirectoryEntry {
   companyName: string;
@@ -104,6 +109,7 @@ export function stockFromRealityTicker(realityTicker: string, perpTicker: string
     logoKey,
     markKind: stockMarkKind(logoKey),
     perpTicker,
+    researchFamilies: ["spot-structure"],
   };
 }
 
@@ -122,17 +128,46 @@ export function stockFromTicker(ticker: string): StockIdentityData | null {
   };
 }
 
-export function researchableRealityStocks(spot: SpotInstrument[], fut: FutInstrument[]): DiscoveredStock[] {
+/**
+ * The one canonical live capability catalog used by discovery and research.
+ * A row is advertised only when the current Bitget spot instrument is online
+ * and marked as Reality. Optional positioning is attached only when the live
+ * futures listing is also an RWA instrument.
+ */
+export function buildResearchableStockCatalog(spot: SpotInstrument[], fut: FutInstrument[]): DiscoveredStock[] {
   const perps = new Set(fut.filter((row) => String(row.isRwa).toUpperCase() === "YES").map((row) => row.symbol));
   return spot
     .filter((row) => row.isReality === "yes" && row.status === "online")
     .map((row) => {
       const ticker = tickerFromRealitySymbol(row.symbol);
       const perp = ticker && perps.has(`${ticker}USDT`) ? `${ticker}USDT` : null;
-      return stockFromRealityTicker(row.symbol, perp);
+      const stock = stockFromRealityTicker(row.symbol, perp);
+      return stock ? { ...stock, researchFamilies: perp ? ["spot-structure", "perp-positioning"] : ["spot-structure"] } : null;
     })
     .filter((stock): stock is DiscoveredStock => stock !== null)
     .sort((a, b) => a.companyName.localeCompare(b.companyName) || a.ticker.localeCompare(b.ticker));
+}
+
+export function researchableRealityStocks(spot: SpotInstrument[], fut: FutInstrument[]): DiscoveredStock[] {
+  return buildResearchableStockCatalog(spot, fut);
+}
+
+/** Resolve aliases against the same live catalog that powers the stock browser. */
+export function resolveResearchableStock(
+  mention: string | null | undefined,
+  spot: SpotInstrument[],
+  fut: FutInstrument[],
+  requestedTicker?: string | null,
+  requestedRealityTicker?: string | null,
+): DiscoveredStock | null {
+  const catalog = buildResearchableStockCatalog(spot, fut);
+  const requestedReality = requestedRealityTicker ? clean(requestedRealityTicker) : "";
+  const requestedNormal = requestedTicker ? clean(requestedTicker).replace(/^R/, "").replace(/USDT$/, "") : "";
+  const requested = catalog.find((stock) =>
+    (requestedReality && stock.realityTicker === requestedReality) ||
+    (requestedNormal && stock.ticker === requestedNormal),
+  );
+  return requested ?? findStockByMention(mention, catalog);
 }
 
 function identityTerms(stock: StockIdentityData): string[] {

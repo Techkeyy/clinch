@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { newOwnerSecret, ownerVerifier, verifyOwner } from "@/lib/ownership";
+import type { SessionRow } from "@/persistence/store";
 
 export const OWNER_COOKIE = "clinch_owner";
 
@@ -30,4 +31,26 @@ export function ownsSession(sessionOwnerVerifier: string, sessionId: string, sec
 }
 export function verifierFor(sessionId: string, secret: string): string {
   return ownerVerifier(sessionId, secret);
+}
+
+/** Clerk is optional during the guest-first rollout; never invent credentials. */
+export function clerkConfigured(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY);
+}
+
+export async function currentAccountUserId(): Promise<string | null> {
+  if (!clerkConfigured()) return null;
+  try {
+    const { auth } = await import("@clerk/nextjs/server");
+    const result = await auth();
+    return result.userId ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Account rows require Clerk identity; guest rows remain cookie-verifier owned. */
+export function canAccessSession(row: Pick<SessionRow, "accountUserId" | "ownerVerifier" | "id">, guestSecret: string | null, accountUserId: string | null): boolean {
+  if (row.accountUserId) return accountUserId === row.accountUserId;
+  return ownsSession(row.ownerVerifier, row.id, guestSecret);
 }

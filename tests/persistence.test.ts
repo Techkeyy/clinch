@@ -39,6 +39,14 @@ describe("session store contract (sqlite)", () => {
     expect(await store.getSession("s1")).toBeNull();
     expect(await store.getSteps("s1")).toEqual([]);
   });
+  it("claims a guest row once and lists only account-owned rows", async () => {
+    await store.createSession(base("s1", "k1"));
+    expect(await store.listByAccountUserId("account-a")).toEqual([]);
+    expect((await store.setAccountUser("s1", "account-a"))?.accountUserId).toBe("account-a");
+    expect((await store.listByAccountUserId("account-a")).map((row) => row.id)).toEqual(["s1"]);
+    expect(await store.setAccountUser("s1", "account-b")).toBeNull();
+    expect(await store.listByAccountUserId("account-b")).toEqual([]);
+  });
   it("enforces rate buckets with windows", async () => {
     const r1 = await store.rateHit("owner:x", 3_600_000, 10);
     expect(r1).toEqual({ allowed: true, count: 1 });

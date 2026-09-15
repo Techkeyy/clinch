@@ -320,7 +320,20 @@ a:focus-visible, button:focus-visible, textarea:focus-visible, summary:focus-vis
    petrol, amber, slate, and red identity while borrowing the reference's
    information architecture and reactive rhythm. */
 .app-shell { max-width: 1240px; }
-.reference-header { grid-template-columns: 190px auto 1fr auto; min-height: 78px; gap: 20px; }
+.reference-header { grid-template-columns: 190px auto 1fr auto auto; grid-template-areas: "brand modes secondary account action"; min-height: 78px; gap: 20px; }
+.reference-header .wordmark { grid-area: brand; }
+.reference-header .mode-nav { grid-area: modes; }
+.reference-header .secondary-nav { grid-area: secondary; }
+.reference-header .account-control { grid-area: account; }
+.reference-header .header-cta { grid-area: action; }
+.account-control { display: flex; align-items: center; justify-content: flex-end; min-height: 44px; }
+.account-control .text-nav-link { white-space: nowrap; }
+.account-save-prompt { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px 22px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--petrol-wash); margin-top: 24px; padding: 17px 0; }
+.account-save-prompt > div { flex: 1 1 260px; }
+.account-save-prompt .eyebrow, .account-save-prompt .body-text { margin: 0; }
+.account-save-prompt .eyebrow { color: var(--petrol-dark); margin-bottom: 4px; }
+.account-save-prompt .button-secondary { flex: 0 0 auto; }
+.account-save-prompt > .secondary-text { flex-basis: 100%; margin: 0; }
 .wordmark-button { border: 0; background: transparent; color: var(--ink); cursor: pointer; display: inline-flex; align-items: baseline; gap: 10px; padding: 8px 0; text-align: left; }
 .wordmark-button span { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .02em; }
 .mode-nav { display: flex; align-items: center; gap: 4px; }
@@ -500,7 +513,7 @@ a:focus-visible, button:focus-visible, textarea:focus-visible, summary:focus-vis
 
 @media (max-width: 760px) {
   .app-shell { padding: 0 20px; }
-  .reference-header { grid-template-columns: 1fr auto; grid-template-areas: "brand action" "modes modes" "secondary secondary"; align-items: center; gap: 7px 12px; min-height: 139px; padding: 12px 0 14px; }
+  .reference-header { grid-template-columns: 1fr auto auto; grid-template-areas: "brand account action" "modes modes modes" "secondary secondary secondary"; align-items: center; gap: 7px 12px; min-height: 139px; padding: 12px 0 14px; }
   .wordmark-button { grid-area: brand; }
   .header-cta { grid-area: action; }
   .mode-nav { grid-area: modes; justify-self: start; }

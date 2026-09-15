@@ -13,7 +13,7 @@ export function openPostgres(url: string): SessionStore {
   const client = postgres(url, { max: 5, idle_timeout: 20, connect_timeout: 10 });
   const db: PostgresJsDatabase = drizzle(client);
   const toRow = (r: typeof researchSessions.$inferSelect): SessionRow => ({
-    id: r.id, ownerVerifier: r.ownerVerifier, intent: r.intent, state: (r.state ?? {}) as Record<string, unknown>,
+    id: r.id, ownerVerifier: r.ownerVerifier, accountUserId: r.accountUserId ?? null, intent: r.intent, state: (r.state ?? {}) as Record<string, unknown>,
     status: r.status, read: r.read, logicVersion: r.logicVersion, idempotencyKey: r.idempotencyKey,
     stateVersion: r.stateVersion, brief: r.brief, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
   });
@@ -21,7 +21,7 @@ export function openPostgres(url: string): SessionStore {
     kind: "postgres",
     async createSession(r) {
       const [ins] = await db.insert(researchSessions).values({
-        id: r.id, ownerVerifier: r.ownerVerifier, intent: r.intent, state: r.state as Record<string, unknown>,
+        id: r.id, ownerVerifier: r.ownerVerifier, accountUserId: r.accountUserId ?? null, intent: r.intent, state: r.state as Record<string, unknown>,
         status: r.status, read: r.read, logicVersion: r.logicVersion, idempotencyKey: r.idempotencyKey,
         stateVersion: r.stateVersion, brief: r.brief,
       }).returning();
@@ -36,6 +36,22 @@ export function openPostgres(url: string): SessionStore {
         return null;
       }
       return toRow(rows[0]);
+    },
+    async listByAccountUserId(userId) {
+      const rows = await db.select().from(researchSessions).where(eq(researchSessions.accountUserId, userId)).orderBy(sql`${researchSessions.updatedAt} DESC`).limit(50);
+      const active: SessionRow[] = [];
+      for (const candidate of rows) {
+        const current = await this.getSession(candidate.id);
+        if (current) active.push(current);
+      }
+      return active;
+    },
+    async setAccountUser(id, userId) {
+      const rows = await db.update(researchSessions)
+        .set({ accountUserId: userId, updatedAt: new Date(), stateVersion: sql`${researchSessions.stateVersion} + 1` })
+        .where(sql`${researchSessions.id} = ${id} AND ${researchSessions.accountUserId} IS NULL`)
+        .returning();
+      return rows.length ? toRow(rows[0]) : null;
     },
     async findByIdempotencyKey(key) {
       const rows = await db.select().from(researchSessions).where(eq(researchSessions.idempotencyKey, key)).limit(1);

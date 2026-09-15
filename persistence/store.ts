@@ -3,6 +3,7 @@
 export interface SessionRow {
   id: string;
   ownerVerifier: string;
+  accountUserId?: string | null;
   intent: unknown;
   state: Record<string, unknown>;
   status: string;
@@ -30,6 +31,9 @@ export interface SessionStore {
   readonly kind: "sqlite" | "postgres";
   createSession(row: Omit<SessionRow, "createdAt" | "updatedAt">): Promise<SessionRow>;
   getSession(id: string): Promise<SessionRow | null>;
+  listByAccountUserId(userId: string): Promise<SessionRow[]>;
+  /** Claim a guest row exactly once for an authenticated account. */
+  setAccountUser(id: string, userId: string): Promise<SessionRow | null>;
   findByIdempotencyKey(key: string): Promise<SessionRow | null>;
   /** Compare-and-set: applies update only if stateVersion matches. Returns null on conflict. */
   compareAndSet(id: string, expectedVersion: number, patch: Partial<SessionRow>): Promise<SessionRow | null>;

@@ -1,6 +1,6 @@
 import { sameOrigin } from "@/server/stream";
 import { discoverFutures, discoverSpot } from "@/research/bitget/index";
-import { researchableRealityStocks } from "@/lib/stocks";
+import { buildResearchableStockCatalog } from "@/lib/stocks";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,8 +16,8 @@ export async function GET(req: Request) {
       // Spot structure is still a real CLINCH research capability. Positioning
       // stays absent when the optional futures instrument discovery is down.
     }
-    const stocks = researchableRealityStocks(spot, futures);
-    const publicStocks = stocks.map(({ companyName, ticker, logoKey, markKind }) => ({ companyName, ticker, logoKey, markKind }));
+    const stocks = buildResearchableStockCatalog(spot, futures);
+    const publicStocks = stocks.map(({ companyName, ticker, realityTicker, perpTicker, logoKey, markKind, researchFamilies }) => ({ companyName, ticker, realityTicker, perpTicker, researchFamilies, logoKey, markKind }));
     const verifiedMarkCount = publicStocks.filter((stock) => stock.markKind === "verified").length;
     const fallbackMarkCount = publicStocks.length - verifiedMarkCount;
     return Response.json({
