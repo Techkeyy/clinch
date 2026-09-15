@@ -27,6 +27,87 @@ const cleanQuestion = (question: string | null | undefined): string | null => {
 
 const price = (value: number): string => value.toLocaleString("en-US", { maximumFractionDigits: 2 });
 
+export type ResearchFamily = "spot-structure" | "perp-positioning";
+
+export function researchFamilyForTopic(topic: string | null | undefined): ResearchFamily | null {
+  if (topic === "move-reality" || topic === "structure-direction") return "spot-structure";
+  if (topic === "crowd-timing" || topic === "dislocation") return "perp-positioning";
+  return null;
+}
+
+/**
+ * Baseline facts are deliberately not eligible for interpretation. Only facts
+ * belonging to a completed Hinge family may support the current read.
+ */
+export function factsForCompletedResearch(
+  facts: MarketFacts,
+  hingeHistory: { topic?: string | null }[],
+): MarketFacts {
+  const families = new Set(
+    hingeHistory
+      .map((hinge) => researchFamilyForTopic(hinge.topic))
+      .filter((family): family is ResearchFamily => family !== null),
+  );
+  return {
+    ...(families.has("spot-structure") && facts.spot ? { spot: facts.spot } : {}),
+    ...(families.has("perp-positioning") && facts.perp ? { perp: facts.perp } : {}),
+  };
+}
+
+export function groundedEvidenceSummary(
+  topic: string | null | undefined,
+  facts: MarketFacts,
+): string {
+  const family = researchFamilyForTopic(topic);
+  if (family === "spot-structure") {
+    const sp = facts.spot ?? {};
+    const parts: string[] = [];
+    if (typeof sp.windowMovePcnt === "number") {
+      const direction = sp.windowMovePcnt > 0 ? "higher" : sp.windowMovePcnt < 0 ? "lower" : "flat";
+      parts.push("The recent window was " + direction + " by " + Math.abs(sp.windowMovePcnt).toFixed(2) + "%.");
+    }
+    if (typeof sp.last === "number" && typeof sp.supportLevel === "number" && typeof sp.resistanceLevel === "number") {
+      const inStructure = sp.last >= sp.supportLevel && sp.last <= sp.resistanceLevel;
+      parts.push(inStructure
+        ? "Price was within nearby structure from " + price(sp.supportLevel) + " to " + price(sp.resistanceLevel) + "."
+        : "Nearby structure was marked from " + price(sp.supportLevel) + " to " + price(sp.resistanceLevel) + ", while price was " + price(sp.last) + ".");
+    } else if (typeof sp.supportLevel === "number" && typeof sp.resistanceLevel === "number") {
+      parts.push("Nearby structure was marked from " + price(sp.supportLevel) + " to " + price(sp.resistanceLevel) + ".");
+    }
+    if (typeof sp.spreadBps === "number") {
+      parts.push(sp.spreadWide === true
+        ? "The spread was wide at " + sp.spreadBps.toFixed(1) + " basis points."
+        : "The spread was tight at " + sp.spreadBps.toFixed(1) + " basis points.");
+    }
+    return parts.length ? parts.join(" ") : "The completed spot-structure check did not produce a normalized market observation.";
+  }
+  if (family === "perp-positioning") {
+    const pp = facts.perp ?? {};
+    const parts: string[] = [];
+    if (typeof pp.fundingRate === "number") {
+      parts.push(pp.fundingRate >= BANDS.FUNDING_ELEVATED
+        ? "Funding was elevated at " + (pp.fundingRate * 100).toFixed(3) + "%."
+        : "Funding was calm at " + (pp.fundingRate * 100).toFixed(4) + "%.");
+    }
+    if (typeof pp.openInterest === "number") {
+      parts.push("Open interest was " + Math.round(pp.openInterest).toLocaleString("en-US") + " contracts.");
+    }
+    if (typeof pp.markIndexDislocationBps === "number") {
+      parts.push("The perp-index gap was " + Math.abs(pp.markIndexDislocationBps).toFixed(1) + " basis points.");
+    }
+    return parts.length ? parts.join(" ") : "The completed positioning check did not produce a normalized market observation.";
+  }
+  return "The completed market check did not produce a normalized observation for the current read.";
+}
+
+function remainingUncertainty(facts: MarketFacts): string {
+  const support = facts.spot?.supportLevel;
+  if (typeof support === "number") {
+    return "Whether the observed stabilization persists or breaks below nearby support at " + price(support) + ".";
+  }
+  return "Whether the observed market conditions persist or change materially.";
+}
+
 function readSummary(read: string, terminal: "stopped" | "unresolved"): string {
   if (terminal === "unresolved" || read === "cannot-resolve" || read === "undecided") {
     return "The available evidence does not answer the decision-changing question yet.";
@@ -130,15 +211,16 @@ function unresolvedTrigger(input: InterpretationInput): string {
 export function deriveDecisionImplication(input: InterpretationInput): DecisionImplication {
   const last = input.hingeHistory[input.hingeHistory.length - 1];
   const question = cleanQuestion(last?.question) ?? cleanQuestion(input.intent?.decisionQuestion);
+  const completedFacts = factsForCompletedResearch(input.facts, input.hingeHistory);
   const supportiveEvidence: string[] = [];
   const cautionEvidence: string[] = [];
   const changeTriggers: string[] = [];
 
-  if (last?.topic === "structure-direction" || last?.topic === "move-reality" || input.facts.spot) {
-    structureInterpretation(input.facts, supportiveEvidence, cautionEvidence, changeTriggers);
+  if (last?.topic === "structure-direction" || last?.topic === "move-reality" || completedFacts.spot) {
+    structureInterpretation(completedFacts, supportiveEvidence, cautionEvidence, changeTriggers);
   }
-  if (last?.topic === "crowd-timing" || last?.topic === "dislocation" || input.facts.perp) {
-    positioningInterpretation(input.facts, supportiveEvidence, cautionEvidence, changeTriggers);
+  if (last?.topic === "crowd-timing" || last?.topic === "dislocation" || completedFacts.perp) {
+    positioningInterpretation(completedFacts, supportiveEvidence, cautionEvidence, changeTriggers);
   }
 
   if (!supportiveEvidence.length && !cautionEvidence.length && input.uncertainty.length) {
@@ -156,7 +238,7 @@ export function deriveDecisionImplication(input: InterpretationInput): DecisionI
     cautionEvidence,
     unresolvedPoint: input.terminal === "unresolved"
       ? question ?? "The decision-changing question remains unresolved."
-      : question ?? "No further supported question is expected to materially change this read.",
+      : remainingUncertainty(completedFacts),
     changeTriggers: Array.from(new Set(changeTriggers)),
   };
 }

@@ -11,6 +11,7 @@ export interface BriefSections {
   skipped: { check: string; reason: string }[];
   openQuestions: string[];
   changeTriggers: string[];
+  futureRechecks: string[];
   decisionImplication: {
     summary: string;
     supportiveEvidence: string[];
@@ -35,7 +36,8 @@ export function renderStructuredBrief(b: BriefSections): string {
     `Checks completed: ${b.completed.length ? b.completed.join("; ") : "none yet"}`,
     ...b.skipped.map((s) => `Skipped ${s.check}: ${s.reason}`),
     `Open questions: ${b.openQuestions.length ? b.openQuestions.join("; ") : "none"}`,
-    `What would change this read: ${b.decisionImplication.changeTriggers.length ? b.decisionImplication.changeTriggers.join("; ") : "new relevant evidence"}`,
+    `What would change the current read: ${b.decisionImplication.changeTriggers.length ? b.decisionImplication.changeTriggers.join("; ") : "new relevant evidence"}`,
+    ...(b.futureRechecks.length ? [`When to re-check: ${b.futureRechecks.join("; ")}`] : []),
     `Freshness: ${b.freshness}`,
     `Sources: ${b.sources.length ? b.sources.join("; ") : "Bitget market data, see findings"}`,
     b.disclaimer,

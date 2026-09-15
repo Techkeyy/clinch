@@ -48,12 +48,15 @@ export function userUnresolvedReason(code: TerminalReasonCode, assetLabel?: stri
   }
 }
 
-export function userSkipReason(kind: string): string {
+export function userSkipReason(kind: string, detail?: string): string {
   switch (kind) {
-    case "resolved": return "This check was already settled by earlier evidence.";
+    case "resolved":
+      return /no open question needs|already settled/i.test(detail ?? "")
+        ? "The selected Hinge did not require this family to establish the current read."
+        : "This check was already settled by earlier evidence.";
     case "no-data": return "This check was unavailable because its supporting market evidence was missing.";
     case "unsupported": return "This check is not supported for this instrument.";
-    case "cannot-matter": return "This check was not expected to change the current read.";
+    case "cannot-matter": return "The selected Hinge was expected to be sufficient; this family was not expected to materially flip the current read.";
     default: return "This check was not used in the final read.";
   }
 }

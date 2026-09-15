@@ -280,6 +280,77 @@ describe("P20 owner research semantics", () => {
     expect(brief.decisionImplication.summary).toMatch(/does not answer/i);
   });
 
+  it("keeps baseline-only positioning out of a one-family stopped interpretation", () => {
+    const brief = assembleBrief({
+      intent: {
+        asset: "NVDA", resolvedSymbol: "RNVDAUSDT", action: "enter-now",
+        timeframeContext: "now", decisionQuestion: "Should I buy NVDA now?",
+        clarificationNeeded: false, clarificationQuestion: null,
+      },
+      read: "enter-now",
+      hingeHistory: [{
+        hinge: "q-structure", topic: "structure-direction",
+        question: "Is this drift exhausted or a new leg down?",
+        verdict: "exhaustion, support holding [exhaustion] :: read now enter-now",
+      }],
+      skips: [{
+        check: "perp-positioning",
+        reason: "The selected Hinge did not require this family to establish the current read.",
+        kind: "resolved",
+      }],
+      uncertainty: [],
+      terminal: "stopped",
+      terminalReasonCode: "NO_REMAINING_VALUE",
+      facts: {
+        spot: {
+          last: 212.74, movePct24h: 0.0032, windowMovePcnt: 0.17, spreadBps: 4.7, spreadWide: false,
+          supportLevel: 210.29, resistanceLevel: 212.96,
+        },
+        perp: { fundingRate: 0.0001, openInterest: 123456, markIndexDislocationBps: 18 },
+      },
+    }, "RNVDAUSDT");
+    const interpretation = [
+      ...brief.decisionImplication.supportiveEvidence,
+      ...brief.decisionImplication.cautionEvidence,
+      ...brief.decisionImplication.changeTriggers,
+    ].join(" ");
+    expect(interpretation).not.toMatch(/funding|open interest|perp|dislocation|index/i);
+    expect(interpretation).toMatch(/0\.17|tight|structure/i);
+    expect(brief.findings.join(" ")).not.toMatch(/exhaustion|support holding/i);
+    expect(brief.why).toMatch(/0\.17|210\.29|212\.96|4\.7/);
+    expect(brief.why).not.toMatch(/exhaustion|support holding/i);
+    expect(brief.decisionImplication.changeTriggers.join(" ")).toMatch(/support/i);
+    expect(brief.decisionImplication.changeTriggers.join(" ")).not.toMatch(/funding|open interest|perp|dislocation/i);
+    expect(brief.decisionImplication.unresolvedPoint).toMatch(/remaining|stabilization|support/i);
+    expect(brief.decisionImplication.unresolvedPoint).not.toMatch(/Is this drift exhausted/i);
+    expect(brief.skipped.some((skip) => skip.check === "perp-positioning")).toBe(true);
+    expect(brief.futureRechecks.join(" ")).toMatch(/funding|positioning|dislocation/i);
+  });
+
+  it("includes a positioning family only after that family completes", () => {
+    const brief = assembleBrief({
+      intent: {
+        asset: "NVDA", resolvedSymbol: "RNVDAUSDT", action: "enter-now",
+        timeframeContext: "now", decisionQuestion: "Should I buy NVDA now?",
+        clarificationNeeded: false, clarificationQuestion: null,
+      },
+      read: "enter-now",
+      hingeHistory: [
+        { hinge: "q-structure", topic: "structure-direction", question: "Is structure holding?", verdict: "spot branch" },
+        { hinge: "q-crowd", topic: "crowd-timing", question: "Is positioning crowded?", verdict: "perp branch" },
+      ],
+      skips: [], uncertainty: [], terminal: "stopped", terminalReasonCode: "NO_REMAINING_VALUE",
+      facts: {
+        spot: { last: 212.74, windowMovePcnt: 0.17, spreadBps: 4.7, spreadWide: false, supportLevel: 210.29, resistanceLevel: 212.96 },
+        perp: { fundingRate: 0.0012, openInterest: 123456, markIndexDislocationBps: 18 },
+      },
+    }, "RNVDAUSDT");
+    expect(brief.findings.join(" ")).toMatch(/recent window|funding/i);
+    expect(brief.decisionImplication.cautionEvidence.join(" ")).toMatch(/funding|perp/i);
+    expect(brief.decisionImplication.changeTriggers.join(" ")).toMatch(/funding|positioning|gap|dislocation/i);
+    expect(brief.futureRechecks).toEqual([]);
+  });
+
   it("keeps unresolved interpretation honest when no normalized evidence exists", () => {
     const implication = deriveDecisionImplication({
       intent: null,

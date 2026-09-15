@@ -16,7 +16,9 @@ import {
 } from "./ux-text";
 import type { ModelProvider } from "../model/provider";
 import type { SessionStore } from "../persistence/store";
-import { deriveDecisionImplication } from "./interpretation";
+import {
+  deriveDecisionImplication, factsForCompletedResearch, groundedEvidenceSummary, researchFamilyForTopic,
+} from "./interpretation";
 
 export interface FlowEvent { type: string; data: unknown }
 export interface FlowDeps {
@@ -145,7 +147,6 @@ export interface BriefInput {
   facts?: MarketFacts;
 }
 export function assembleBrief(state: BriefInput, spotSymbol: string | null): BriefSections {
-  const clean = (s: string) => s.split("::")[0].replace(/\s*\[[a-z-]+\]/gi, " ").replace(/\s{2,}/g, " ").trim().replace(/[.]+$/, "") + ".";
   const asset = state.intent?.asset ?? spotSymbol ?? "this stock";
   const decision = state.intent?.action === "wait"
     ? `Considering whether to wait before entering ${asset}.`
@@ -153,22 +154,46 @@ export function assembleBrief(state: BriefInput, spotSymbol: string | null): Bri
       : state.intent?.action === "exit-now" ? `Considering whether to exit ${asset}.`
         : state.intent?.action === "stand-aside" ? `Considering whether to stay out of ${asset}.`
           : `Considering a decision about ${asset}.`;
-  const findings = state.hingeHistory.map((h) => clean(h.verdict));
+  const evidenceFacts = factsForCompletedResearch(state.facts ?? {}, state.hingeHistory);
+  const findings = state.hingeHistory.map((h) => groundedEvidenceSummary(h.topic, evidenceFacts));
   const lastTopic = state.hingeHistory[state.hingeHistory.length - 1]?.topic ?? null;
   const completed = state.hingeHistory.map((h) => h.question ?? "Supported market evidence check");
   const unresolvedWhy = userUnresolvedReason(state.terminalReasonCode, asset, state.intent?.action);
+  const readQualification = state.read === "enter-now" || state.read === "leaning-in"
+    ? " This supports a leaning-in read without establishing that the move is exhausted."
+    : state.read === "wait" || state.read === "holding-off"
+      ? " This supports holding off until the timing question is clearer."
+      : state.read === "stand-aside" || state.read === "standing-aside"
+        ? " This keeps the decision cautious without establishing a reversal."
+        : "";
   const why = state.terminal === "unresolved"
     ? unresolvedWhy
-    : state.hingeHistory.length ? clean(state.hingeHistory[state.hingeHistory.length - 1].verdict) : userStopReason("", true);
+    : state.hingeHistory.length ? groundedEvidenceSummary(lastTopic, evidenceFacts) + readQualification : userStopReason("", true);
   const changeTriggers = state.terminal === "unresolved"
     ? (lastTopic && TOPIC_CHANGES[lastTopic] ? [TOPIC_CHANGES[lastTopic]] : ["A supported research path capable of answering the remaining decision question becomes available."])
     : (lastTopic && TOPIC_CHANGES[lastTopic] ? [TOPIC_CHANGES[lastTopic]] : ["No remaining supported check is expected to materially change this read."]);
+  const researchedFamilies = new Set<string>(
+    state.hingeHistory
+      .map((h) => researchFamilyForTopic(h.topic))
+      .filter((family): family is "spot-structure" | "perp-positioning" => family !== null),
+  );
+  const skipped = state.skips
+    .filter((s) => !researchedFamilies.has(s.check))
+    .map((s) => ({ check: s.check, reason: s.reason }));
+  const futureRechecks: string[] = [];
+  if (skipped.some((s) => s.check === "perp-positioning")) {
+    futureRechecks.push("Materially different funding or positioning conditions would warrant a future re-check.");
+    futureRechecks.push("A new spot-perp dislocation would warrant a future re-check.");
+  }
+  if (skipped.some((s) => s.check === "spot-structure")) {
+    futureRechecks.push("Materially different spot structure would warrant a future re-check.");
+  }
   const decisionImplication = deriveDecisionImplication({
     intent: state.intent,
     read: state.read,
     terminal: state.terminal,
     hingeHistory: state.hingeHistory,
-    facts: state.facts ?? {},
+    facts: evidenceFacts,
     uncertainty: state.uncertainty,
   });
   return {
@@ -179,10 +204,11 @@ export function assembleBrief(state: BriefInput, spotSymbol: string | null): Bri
     why,
     findings,
     completed,
-    skipped: state.skips.filter((s) => s.kind !== "resolved").map((s) => ({ check: s.check, reason: s.reason })),
+    skipped,
     openQuestions: state.uncertainty,
     changeTriggers: decisionImplication.changeTriggers.length ? decisionImplication.changeTriggers : changeTriggers,
     decisionImplication,
+    futureRechecks,
     freshness: `Observed during this session; re-check for current data.`,
     sources: ["Bitget Reality market data", "Bitget stock-perp positioning"],
     disclaimer: `${HUMAN_DEC_LINE} Research support only, not financial advice.`,
@@ -258,7 +284,7 @@ export async function driveLoop(
     const scen = { id: "live", action: input.action, candidates: pkg.candidates };
     const out = decide(scen, kstate);
     for (const s of out.skips) {
-      if (!acc.skips.some((x) => x.check === s.family)) acc.skips.push({ check: s.family, reason: userSkipReason(s.kind), kind: s.kind });
+      if (!acc.skips.some((x) => x.check === s.family)) acc.skips.push({ check: s.family, reason: userSkipReason(s.kind, s.reason), kind: s.kind });
     }
     emitSkips(acc.skips.filter((s) => s.kind !== "resolved"));
     if (out.action === "RESEARCH" && out.hinge) {
