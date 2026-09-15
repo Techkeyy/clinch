@@ -11,6 +11,7 @@ import type { IntentContract } from "@/domain/types";
 import { establishBaseline } from "@/research/orchestrator";
 import { modelConfigured, type ModelProvider } from "@/model/provider";
 import { qwenProvider } from "@/model/qwen";
+import { createTimingReporter, timedStage } from "@/server/timing";
 import type { SessionStore } from "@/persistence/store";
 
 export const runtime = "nodejs";
@@ -84,7 +85,9 @@ export async function POST(req: Request) {
         events.push({ type, data });
         controller.enqueue(enc.encode(sseEncode(type, data)));
       };
-      const finish = () => { send("done", { sessionId }); controller.close(); };
+      const timing = createTimingReporter((data) => send("timing", data));
+      timing.mark("post-accepted");
+      const finish = () => { timing.mark("final-stream-event"); send("done", { sessionId }); controller.close(); };
       try {
         let created;
         try {
@@ -107,9 +110,10 @@ export async function POST(req: Request) {
           throw e;
         }
         send("session", { session: publicSession(created) });
+        send("progress", { stage: "intent", label: "Understanding your decision." });
 
         const model = await getModel();
-        const intent = await parseIntentFlow(parsed.data.dilemma, model);
+        const intent = await timedStage(timing, "qwen-intent-flow", () => parseIntentFlow(parsed.data.dilemma, model));
         if (intent.clarificationNeeded || intent.action === "unclear") {
           const st = stateOf(created);
           st.intent = intent;
@@ -124,7 +128,8 @@ export async function POST(req: Request) {
           finish();
           return;
         }
-        const resolved = await resolveAsset(intent.asset, undefined).catch(() => ({ spot: null, perp: null, ticker: null, companyName: null, universe: 0 }));
+        send("progress", { stage: "asset", label: "Resolving supported market context." });
+        const resolved = await timedStage(timing, "asset-resolution", () => resolveAsset(intent.asset, undefined)).catch(() => ({ spot: null, perp: null, ticker: null, companyName: null, universe: 0 }));
         if (!resolved.spot) {
           await failSession(store, sessionId, "failed", "The requested stock is not currently available from Bitget's Reality market data.");
           send("error", { code: "UNSUPPORTED_ASSET", message: "That stock is not currently available to research from Bitget's Reality market data. Try searching supported stocks or describe another stock." });
@@ -145,8 +150,9 @@ export async function POST(req: Request) {
         const intentSaved = await store.compareAndSet(sessionId, (await store.getSession(sessionId))!.stateVersion,
           { intent: st.intent, status: "context", state: st as unknown as Record<string, unknown> });
         send("intent", { intent: st.intent, assetIdentity: st.assetIdentity, spotSymbol: resolved.spot, perpSymbol: resolved.perp, stateVersion: intentSaved?.stateVersion });
+        send("progress", { stage: "baseline", label: "Establishing live context." });
 
-        const base = await establishBaseline(resolved.spot, resolved.perp, undefined);
+        const base = await timedStage(timing, "bitget-baseline", () => establishBaseline(resolved.spot!, resolved.perp, undefined));
         st.facts = base.facts as unknown as Record<string, unknown>;
         for (const p of base.problems) st.uncertainty.push(p);
         await store.appendStep({ sessionId, ord: 0, kind: "baseline", family: null,
@@ -165,45 +171,53 @@ export async function POST(req: Request) {
           data: capabilityData(st.spotSymbol, st.perpSymbol),
           context: st.intent.timeframeContext, known: [] as string[],
         };
+        send("progress", { stage: "hinge", label: "Finding the Decision Hinge." });
         let ord = 10;
-        const finalSt = await driveLoop(sessionId, runState, {
+        let activeResearchStage: string | null = null;
+        const finalSt = await timedStage(timing, "deterministic-research-loop", () => driveLoop(sessionId, runState, {
           store,
-          onEvent: (e) => send(e.type, e.data),
+          onEvent: (e) => {
+            if (e.type === "hinge") timing.mark("hinge-selection");
+            if (e.type === "research") {
+              const family = String((e.data as { family?: unknown }).family ?? "market");
+              activeResearchStage = "research-family-" + family;
+              timing.start(activeResearchStage);
+              send("progress", { stage: "research", label: "Researching the highest-value evidence." });
+            }
+            if (e.type === "finding") {
+              const family = String((e.data as { family?: unknown }).family ?? "market");
+              timing.end("research-family-" + family, "ok");
+              activeResearchStage = null;
+              timing.mark("finding-available");
+              send("progress", { stage: "evaluation", label: "Evaluating whether more research matters." });
+            }
+            if (e.type === "stop" && activeResearchStage) {
+              timing.end(activeResearchStage, "failed");
+              activeResearchStage = null;
+            }
+            send(e.type, e.data);
+          },
           persistStep: async (kind, family, summary, provenance) => {
             ord += 1;
-            await store.appendStep({ sessionId, ord, kind, family, requestSummary: JSON.stringify(summary).slice(0, 500), resultSummary: summary, provenance });
+            await timedStage(timing, "persistence-step-" + kind, () => store.appendStep({ sessionId, ord, kind, family, requestSummary: JSON.stringify(summary).slice(0, 500), resultSummary: summary, provenance }).then(() => undefined));
           },
           maxIterations: RESEARCH_LOOP_CAP,
-        });
+        }));
+        if (activeResearchStage) timing.end(activeResearchStage, "failed");
         Object.assign(st, { read: finalSt.read, resolvedTopics: finalSt.resolvedTopics, facts: finalSt.facts,
           skips: finalSt.skips, uncertainty: [...st.uncertainty, ...finalSt.uncertainty],
           hingeHistory: finalSt.hingeHistory, stopReason: finalSt.stopReason,
           terminal: finalSt.terminal, terminalReasonCode: finalSt.terminalReasonCode });
         const brief = assembleBrief({ ...st, intent: st.intent, terminal: finalSt.terminal!, terminalReasonCode: finalSt.terminalReasonCode! }, st.spotSymbol);
-        let polished: string | null = null;
-        if (model) {
-          const sections: Record<string, string> = {
-            decision: brief.decision, read: brief.read, why: brief.why,
-            findings: brief.findings.join(" | "), skipped: brief.skipped.map((s) => `${s.check}: ${s.reason}`).join(" | "),
-            meaning: brief.decisionImplication.summary,
-            supportive: brief.decisionImplication.supportiveEvidence.join(" | "),
-            caution: brief.decisionImplication.cautionEvidence.join(" | "),
-            unresolved: brief.decisionImplication.unresolvedPoint,
-            uncertainty: brief.openQuestions.join(" | "), triggers: brief.decisionImplication.changeTriggers.join(" | "),
-          };
-          for (let attempt = 0; attempt < 2; attempt++) {
-            const r = await model.polishBrief(sections);
-            if (r.ok) { polished = r.value; break; }
-          }
-        }
+        // The deterministic brief is authoritative; optional prose polish never blocks or changes the result.
         const terminal = finalSt.terminal!;
         const after = await store.getSession(sessionId);
-        await store.compareAndSet(sessionId, after!.stateVersion, {
+        await timedStage(timing, "persistence-final-brief", () => store.compareAndSet(sessionId, after!.stateVersion, {
           status: terminal, read: finalSt.read === "cannot-resolve" ? "cannot-resolve" : mapRead(finalSt.read),
           state: st as unknown as Record<string, unknown>,
-          brief: { ...brief, polishedText: polished, polished: polished !== null },
-        });
-        send("brief", { brief: { ...brief, polishedText: polished, polished: polished !== null }, status: terminal });
+          brief: { ...brief, polishedText: null, polished: false },
+        }).then(() => undefined));
+        send("brief", { brief: { ...brief, polishedText: null, polished: false }, status: terminal });
         finish();
       } catch (e) {
         await failSession(store, sessionId, "failed", "Research could not complete. Your saved state is preserved; try again.");

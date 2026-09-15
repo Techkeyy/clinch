@@ -28,9 +28,19 @@ function client() {
 
 async function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout>;
+  const startedAt = Date.now();
+  console.info("[CLINCH_TIMING]", JSON.stringify({ stage: `qwen-${label}`, phase: "start" }));
   const gate = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error(`${label} timed out`)), ms); });
   try {
-    return await Promise.race([p, gate]);
+    const result = await Promise.race([p, gate]);
+    console.info("[CLINCH_TIMING]", JSON.stringify({ stage: `qwen-${label}`, phase: "end", durationMs: Date.now() - startedAt, outcome: "ok" }));
+    return result;
+  } catch (error) {
+    console.info("[CLINCH_TIMING]", JSON.stringify({
+      stage: `qwen-${label}`, phase: "end", durationMs: Date.now() - startedAt,
+      outcome: error instanceof Error && /timed out/i.test(error.message) ? "timeout" : "failed",
+    }));
+    throw error;
   } finally {
     clearTimeout(timer!);
   }

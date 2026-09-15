@@ -301,6 +301,8 @@ export default function Page() {
       try {
         window.history.replaceState(null, "", `/?s=${encodeURIComponent(s.id)}#app`);
       } catch { /* non-browser render */ }
+    } else if (e.type === "progress" && typeof d.label === "string") {
+      setStatusLine(d.label);
     } else if (e.type === "intent") {
       setIntent((d.intent ?? null) as Record<string, unknown> | null);
       setBaseline((prev) => ({ ...(typeof prev === "object" && prev ? prev : {}), ...(d as object) }));
