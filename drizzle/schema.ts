@@ -80,16 +80,19 @@ export const decisionWatches = pgTable("decision_watches", {
   notificationChannel: text("notification_channel").notNull(),
   plan: jsonb("plan").notNull(),
   snapshot: jsonb("snapshot").notNull(),
-  workflowRunId: text("workflow_run_id"),
   stateVersion: integer("state_version").notNull().default(0),
   nextCheckAt: timestamp("next_check_at", { withTimezone: true }),
   lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
   triggeredAt: timestamp("triggered_at", { withTimezone: true }),
+  leaseOwner: text("lease_owner"),
+  leaseExpiresAt: timestamp("lease_expires_at", { withTimezone: true }),
+  lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index("decision_watches_account_idx").on(table.accountUserId),
   index("decision_watches_status_idx").on(table.status),
+  index("decision_watches_due_idx").on(table.status, table.nextCheckAt, table.leaseExpiresAt),
 ]);
 
 export const watchNotifications = pgTable("watch_notifications", {
@@ -104,3 +107,14 @@ export const watchNotifications = pgTable("watch_notifications", {
   claimedAt: timestamp("claimed_at", { withTimezone: true }).notNull().defaultNow(),
   sentAt: timestamp("sent_at", { withTimezone: true }),
 }, (table) => [index("watch_notifications_watch_idx").on(table.watchId)]);
+
+export const watchWorkerHeartbeats = pgTable("watch_worker_heartbeats", {
+  workerId: text("worker_id").primaryKey(),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+  lastCycleStartedAt: timestamp("last_cycle_started_at", { withTimezone: true }),
+  lastCycleFinishedAt: timestamp("last_cycle_finished_at", { withTimezone: true }),
+  lastCycleClaimed: integer("last_cycle_claimed").notNull().default(0),
+  lastCycleProcessed: integer("last_cycle_processed").notNull().default(0),
+  lastError: text("last_error"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

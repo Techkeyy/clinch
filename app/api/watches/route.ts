@@ -1,10 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { start } from "workflow/api";
 import { getStore } from "@/server/db";
 import { getWatchStore } from "@/server/watch-db";
 import { planFromSession } from "@/server/watch-plan";
-import { decisionWatchWorkflow } from "@/app/workflows/decision-watch";
 import { currentAccountUserId, canAccessSession, ownsSession, readOwner } from "@/server/auth";
 import { sameOrigin } from "@/server/stream";
 import { isFavorableRead } from "@/domain/watch";
@@ -70,7 +68,7 @@ export async function POST(req: Request) {
     return Response.json({ error: "NOTIFICATION_CHANNEL_NOT_CONNECTED", channel: parsed.data.channel }, { status: 412 });
   }
   const state = session.state as { intent?: { asset?: string; decisionQuestion?: string } | null; assetIdentity?: { normalTicker?: string | null; realityTicker?: string | null; perpSymbol?: string | null } | null };
-  const now = new Date().toISOString();
+  const initialCheckAt = new Date(Date.now() + plan.cadenceSeconds * 1000).toISOString();
   const created = await watchStore.createWatch({
     id: randomUUID(),
     accountUserId,
@@ -89,18 +87,13 @@ export async function POST(req: Request) {
     notificationChannel: parsed.data.channel,
     plan,
     snapshot: plan.baseline,
-    workflowRunId: null,
     stateVersion: 0,
-    nextCheckAt: now,
+    nextCheckAt: initialCheckAt,
     lastCheckedAt: null,
     triggeredAt: null,
+    leaseOwner: null,
+    leaseExpiresAt: null,
+    lastAttemptAt: null,
   });
-  try {
-    const run = await start(decisionWatchWorkflow, [created.id]);
-    const bound = await watchStore.updateWatch(created.id, created.stateVersion, { workflowRunId: run.runId });
-    return Response.json({ watch: publicWatch(bound ?? created) }, { status: 201 });
-  } catch {
-    await watchStore.updateWatch(created.id, created.stateVersion, { status: "ERROR" });
-    return Response.json({ error: "WATCH_START_FAILED" }, { status: 503 });
-  }
+  return Response.json({ watch: publicWatch(created) }, { status: 201 });
 }

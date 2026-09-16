@@ -1,0 +1,29 @@
+[Unit]
+Description=CLINCH Decision Watch worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=clinch
+Group=clinch
+WorkingDirectory=/opt/clinch
+EnvironmentFile=/etc/clinch/clinch.env
+Environment=NODE_ENV=production
+Environment=WATCH_WORKER_ID=%H
+ExecStart=/usr/bin/npm run watch:worker
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

@@ -4,17 +4,19 @@ import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { and, eq, gt, isNull, sql } from "drizzle-orm";
-import { decisionWatches, notificationConnections, notificationConnectionTokens, watchNotifications } from "@/drizzle/schema";
+import { and, eq, gt, inArray, isNull, sql } from "drizzle-orm";
+import { decisionWatches, notificationConnections, notificationConnectionTokens, watchNotifications, watchWorkerHeartbeats } from "@/drizzle/schema";
 import type { WatchChannel, WatchEvidenceSnapshot, WatchPlan, WatchStatus } from "@/domain/watch";
 
 export interface WatchRow {
   id: string; accountUserId: string; sourceSessionId: string; assetLabel: string; realityTicker: string; perpTicker: string | null;
   originalQuestion: string; hinge: string | null; humanKeyQuestion: string; researchFamily: string; startingRead: string;
   currentRead: string; targetRead: string; status: WatchStatus; notificationChannel: WatchChannel; plan: WatchPlan;
-  snapshot: WatchEvidenceSnapshot; workflowRunId: string | null; stateVersion: number; nextCheckAt: string | null;
-  lastCheckedAt: string | null; triggeredAt: string | null; createdAt: string; updatedAt: string;
+  snapshot: WatchEvidenceSnapshot; stateVersion: number; nextCheckAt: string | null;
+  lastCheckedAt: string | null; triggeredAt: string | null; leaseOwner: string | null; leaseExpiresAt: string | null;
+  lastAttemptAt: string | null; createdAt: string; updatedAt: string;
 }
+export interface WorkerHeartbeat { workerId: string; startedAt: string; lastCycleStartedAt: string | null; lastCycleFinishedAt: string | null; lastCycleClaimed: number; lastCycleProcessed: number; lastError: string | null; updatedAt: string; }
 export interface ConnectionRow {
   id: string; accountUserId: string; channel: WatchChannel; address: string; status: string; createdAt: string; updatedAt: string;
 }
@@ -30,7 +32,10 @@ export interface WatchStore {
   createWatch(row: Omit<WatchRow, "createdAt" | "updatedAt">): Promise<WatchRow>;
   getWatch(id: string): Promise<WatchRow | null>;
   listWatches(accountUserId: string): Promise<WatchRow[]>;
-  updateWatch(id: string, expectedVersion: number, patch: Partial<Pick<WatchRow, "status" | "currentRead" | "snapshot" | "workflowRunId" | "nextCheckAt" | "lastCheckedAt" | "triggeredAt">>): Promise<WatchRow | null>;
+  updateWatch(id: string, expectedVersion: number, patch: Partial<Pick<WatchRow, "status" | "currentRead" | "snapshot" | "nextCheckAt" | "lastCheckedAt" | "triggeredAt" | "leaseOwner" | "leaseExpiresAt" | "lastAttemptAt">>, leaseOwner?: string): Promise<WatchRow | null>;
+  claimDueWatches(workerId: string, now: Date, leaseMs: number, limit: number): Promise<WatchRow[]>;
+  releaseLease(id: string, workerId: string, expectedVersion: number): Promise<WatchRow | null>;
+  recordWorkerHeartbeat(row: Omit<WorkerHeartbeat, "updatedAt">): Promise<WorkerHeartbeat>;
   getConnection(accountUserId: string, channel: WatchChannel): Promise<ConnectionRow | null>;
   upsertConnection(row: Omit<ConnectionRow, "id" | "createdAt" | "updatedAt">): Promise<ConnectionRow>;
   createConnectionToken(row: Omit<ConnectionTokenRow, "createdAt" | "usedAt">): Promise<ConnectionTokenRow>;
@@ -53,10 +58,14 @@ function toWatch(row: typeof decisionWatches.$inferSelect): WatchRow {
     hinge: row.hinge ?? null, humanKeyQuestion: row.humanKeyQuestion, researchFamily: row.researchFamily,
     startingRead: row.startingRead, currentRead: row.currentRead, targetRead: row.targetRead,
     status: row.status as WatchStatus, notificationChannel: row.notificationChannel as WatchChannel,
-    plan: row.plan as WatchPlan, snapshot: row.snapshot as WatchEvidenceSnapshot, workflowRunId: row.workflowRunId ?? null,
+    plan: row.plan as WatchPlan, snapshot: row.snapshot as WatchEvidenceSnapshot,
     stateVersion: row.stateVersion, nextCheckAt: dateOrNull(row.nextCheckAt), lastCheckedAt: dateOrNull(row.lastCheckedAt),
-    triggeredAt: dateOrNull(row.triggeredAt), createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(),
+    triggeredAt: dateOrNull(row.triggeredAt), leaseOwner: row.leaseOwner ?? null, leaseExpiresAt: dateOrNull(row.leaseExpiresAt),
+    lastAttemptAt: dateOrNull(row.lastAttemptAt), createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString(),
   };
+}
+function toHeartbeat(row: typeof watchWorkerHeartbeats.$inferSelect): WorkerHeartbeat {
+  return { workerId: row.workerId, startedAt: row.startedAt.toISOString(), lastCycleStartedAt: dateOrNull(row.lastCycleStartedAt), lastCycleFinishedAt: dateOrNull(row.lastCycleFinishedAt), lastCycleClaimed: row.lastCycleClaimed, lastCycleProcessed: row.lastCycleProcessed, lastError: row.lastError ?? null, updatedAt: row.updatedAt.toISOString() };
 }
 function toConnection(row: typeof notificationConnections.$inferSelect): ConnectionRow {
   return { id: row.id, accountUserId: row.accountUserId, channel: row.channel as WatchChannel, address: row.address, status: row.status, createdAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
@@ -79,8 +88,9 @@ export function openPostgresWatchStore(url: string): WatchStore {
         realityTicker: row.realityTicker, perpTicker: row.perpTicker, originalQuestion: row.originalQuestion, hinge: row.hinge,
         humanKeyQuestion: row.humanKeyQuestion, researchFamily: row.researchFamily, startingRead: row.startingRead,
         currentRead: row.currentRead, targetRead: row.targetRead, status: row.status, notificationChannel: row.notificationChannel,
-        plan: row.plan, snapshot: row.snapshot, workflowRunId: row.workflowRunId, stateVersion: row.stateVersion,
+        plan: row.plan, snapshot: row.snapshot, stateVersion: row.stateVersion,
         nextCheckAt: parseDate(row.nextCheckAt), lastCheckedAt: parseDate(row.lastCheckedAt), triggeredAt: parseDate(row.triggeredAt),
+        leaseOwner: row.leaseOwner, leaseExpiresAt: parseDate(row.leaseExpiresAt), lastAttemptAt: parseDate(row.lastAttemptAt),
       }).returning();
       return toWatch(created);
     },
@@ -92,17 +102,48 @@ export function openPostgresWatchStore(url: string): WatchStore {
       const rows = await db.select().from(decisionWatches).where(eq(decisionWatches.accountUserId, accountUserId)).orderBy(sql.raw("updated_at DESC")).limit(50);
       return rows.map(toWatch);
     },
-    async updateWatch(id, expectedVersion, patch) {
+    async updateWatch(id, expectedVersion, patch, leaseOwner) {
       const values: Record<string, unknown> = { updatedAt: new Date(), stateVersion: sql.raw("state_version + 1") };
       if (patch.status !== undefined) values.status = patch.status;
       if (patch.currentRead !== undefined) values.currentRead = patch.currentRead;
       if (patch.snapshot !== undefined) values.snapshot = patch.snapshot;
-      if (patch.workflowRunId !== undefined) values.workflowRunId = patch.workflowRunId;
       if (patch.nextCheckAt !== undefined) values.nextCheckAt = parseDate(patch.nextCheckAt);
       if (patch.lastCheckedAt !== undefined) values.lastCheckedAt = parseDate(patch.lastCheckedAt);
       if (patch.triggeredAt !== undefined) values.triggeredAt = parseDate(patch.triggeredAt);
-      const rows = await db.update(decisionWatches).set(values).where(and(eq(decisionWatches.id, id), eq(decisionWatches.stateVersion, expectedVersion))).returning();
+      if (patch.leaseOwner !== undefined) values.leaseOwner = patch.leaseOwner;
+      if (patch.leaseExpiresAt !== undefined) values.leaseExpiresAt = parseDate(patch.leaseExpiresAt);
+      if (patch.lastAttemptAt !== undefined) values.lastAttemptAt = parseDate(patch.lastAttemptAt);
+      const conditions = [eq(decisionWatches.id, id), eq(decisionWatches.stateVersion, expectedVersion)];
+      if (leaseOwner) conditions.push(eq(decisionWatches.leaseOwner, leaseOwner));
+      const rows = await db.update(decisionWatches).set(values).where(and(...conditions)).returning();
       return rows.length ? toWatch(rows[0]) : null;
+    },
+    async claimDueWatches(workerId, now, leaseMs, limit) {
+      const expires = new Date(now.getTime() + leaseMs);
+      const claimed = await client.unsafe<{ id: string }[]>(`WITH due AS (
+        SELECT id FROM decision_watches
+        WHERE status = 'ACTIVE' AND next_check_at <= $1
+          AND (lease_expires_at IS NULL OR lease_expires_at < $1)
+        ORDER BY next_check_at ASC, id ASC
+        LIMIT $2 FOR UPDATE SKIP LOCKED
+      )
+      UPDATE decision_watches AS w
+      SET lease_owner = $3, lease_expires_at = $4, last_attempt_at = $1,
+          state_version = w.state_version + 1, updated_at = $1
+      FROM due WHERE w.id = due.id RETURNING w.id`, [now.toISOString(), limit, workerId, expires.toISOString()]);
+      if (!claimed.length) return [];
+      const rows = await db.select().from(decisionWatches).where(inArray(decisionWatches.id, claimed.map((row) => row.id)));
+      return rows.map(toWatch);
+    },
+    async releaseLease(id, workerId, expectedVersion) {
+      const rows = await db.update(decisionWatches).set({ leaseOwner: null, leaseExpiresAt: null, updatedAt: new Date(), stateVersion: sql.raw("state_version + 1") })
+        .where(and(eq(decisionWatches.id, id), eq(decisionWatches.leaseOwner, workerId), eq(decisionWatches.stateVersion, expectedVersion))).returning();
+      return rows.length ? toWatch(rows[0]) : null;
+    },
+    async recordWorkerHeartbeat(row) {
+      const [saved] = await db.insert(watchWorkerHeartbeats).values({ workerId: row.workerId, startedAt: new Date(row.startedAt), lastCycleStartedAt: parseDate(row.lastCycleStartedAt), lastCycleFinishedAt: parseDate(row.lastCycleFinishedAt), lastCycleClaimed: row.lastCycleClaimed, lastCycleProcessed: row.lastCycleProcessed, lastError: row.lastError, updatedAt: new Date() })
+        .onConflictDoUpdate({ target: watchWorkerHeartbeats.workerId, set: { startedAt: new Date(row.startedAt), lastCycleStartedAt: parseDate(row.lastCycleStartedAt), lastCycleFinishedAt: parseDate(row.lastCycleFinishedAt), lastCycleClaimed: row.lastCycleClaimed, lastCycleProcessed: row.lastCycleProcessed, lastError: row.lastError, updatedAt: new Date() } }).returning();
+      return toHeartbeat(saved);
     },
     async getConnection(accountUserId, channel) {
       const rows = await db.select().from(notificationConnections).where(and(eq(notificationConnections.accountUserId, accountUserId), eq(notificationConnections.channel, channel))).limit(1);
@@ -141,9 +182,9 @@ const SQLITE_SCHEMA = `
 CREATE TABLE IF NOT EXISTS notification_connections (
   id TEXT PRIMARY KEY, account_user_id TEXT NOT NULL, channel TEXT NOT NULL,
   address TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'CONNECTED',
-  UNIQUE(account_user_id, channel),
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  UNIQUE(account_user_id, channel)
 );
 CREATE TABLE IF NOT EXISTS notification_connection_tokens (
   token_hash TEXT PRIMARY KEY, account_user_id TEXT NOT NULL, channel TEXT NOT NULL,
@@ -155,8 +196,9 @@ CREATE TABLE IF NOT EXISTS decision_watches (
   original_question TEXT NOT NULL, hinge TEXT, human_key_question TEXT NOT NULL,
   research_family TEXT NOT NULL, starting_read TEXT NOT NULL, current_read TEXT NOT NULL,
   target_read TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'ACTIVE', notification_channel TEXT NOT NULL,
-  plan TEXT NOT NULL, snapshot TEXT NOT NULL, workflow_run_id TEXT,
+  plan TEXT NOT NULL, snapshot TEXT NOT NULL,
   state_version INTEGER NOT NULL DEFAULT 0, next_check_at TEXT, last_checked_at TEXT, triggered_at TEXT,
+  lease_owner TEXT, lease_expires_at TEXT, last_attempt_at TEXT,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
@@ -165,7 +207,27 @@ CREATE TABLE IF NOT EXISTS watch_notifications (
   channel TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'CLAIMED', attempts INTEGER NOT NULL DEFAULT 0,
   provider_message_id TEXT, last_error TEXT,
   claimed_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')), sent_at TEXT
+);
+CREATE TABLE IF NOT EXISTS watch_worker_heartbeats (
+  worker_id TEXT PRIMARY KEY, started_at TEXT NOT NULL, last_cycle_started_at TEXT,
+  last_cycle_finished_at TEXT, last_cycle_claimed INTEGER NOT NULL DEFAULT 0,
+  last_cycle_processed INTEGER NOT NULL DEFAULT 0, last_error TEXT,
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );`;
+
+function ensureSqliteWatchColumns(db: DatabaseSync): void {
+  for (const statement of [
+    "ALTER TABLE decision_watches ADD COLUMN lease_owner TEXT",
+    "ALTER TABLE decision_watches ADD COLUMN lease_expires_at TEXT",
+    "ALTER TABLE decision_watches ADD COLUMN last_attempt_at TEXT",
+  ]) {
+    try {
+      db.exec(statement);
+    } catch (error) {
+      if (!String(error).toLowerCase().includes("duplicate column name")) throw error;
+    }
+  }
+}
 
 function sqliteWatchRow(row: Record<string, unknown>): WatchRow {
   return {
@@ -175,10 +237,15 @@ function sqliteWatchRow(row: Record<string, unknown>): WatchRow {
     startingRead: String(row.starting_read), currentRead: String(row.current_read), targetRead: String(row.target_read),
     status: String(row.status) as WatchStatus, notificationChannel: String(row.notification_channel) as WatchChannel,
     plan: JSON.parse(String(row.plan)) as WatchPlan, snapshot: JSON.parse(String(row.snapshot)) as WatchEvidenceSnapshot,
-    workflowRunId: row.workflow_run_id ? String(row.workflow_run_id) : null, stateVersion: Number(row.state_version),
+    stateVersion: Number(row.state_version),
     nextCheckAt: row.next_check_at ? String(row.next_check_at) : null, lastCheckedAt: row.last_checked_at ? String(row.last_checked_at) : null,
-    triggeredAt: row.triggered_at ? String(row.triggered_at) : null, createdAt: String(row.created_at), updatedAt: String(row.updated_at),
+    triggeredAt: row.triggered_at ? String(row.triggered_at) : null, leaseOwner: row.lease_owner ? String(row.lease_owner) : null,
+    leaseExpiresAt: row.lease_expires_at ? String(row.lease_expires_at) : null, lastAttemptAt: row.last_attempt_at ? String(row.last_attempt_at) : null,
+    createdAt: String(row.created_at), updatedAt: String(row.updated_at),
   };
+}
+function sqliteHeartbeatRow(row: Record<string, unknown>): WorkerHeartbeat {
+  return { workerId: String(row.worker_id), startedAt: String(row.started_at), lastCycleStartedAt: row.last_cycle_started_at ? String(row.last_cycle_started_at) : null, lastCycleFinishedAt: row.last_cycle_finished_at ? String(row.last_cycle_finished_at) : null, lastCycleClaimed: Number(row.last_cycle_claimed), lastCycleProcessed: Number(row.last_cycle_processed), lastError: row.last_error ? String(row.last_error) : null, updatedAt: String(row.updated_at) };
 }
 function sqliteConnectionRow(row: Record<string, unknown>): ConnectionRow {
   return { id: String(row.id), accountUserId: String(row.account_user_id), channel: String(row.channel) as WatchChannel, address: String(row.address), status: String(row.status), createdAt: String(row.created_at), updatedAt: String(row.updated_at) };
@@ -197,7 +264,7 @@ export function openWatchStore(url?: string): WatchStore {
   const file = process.env.SQLITE_PATH || "data/clinch-dev.db";
   mkdirSync(dirname(file), { recursive: true });
   const db = new DatabaseSync(file);
-  db.exec("PRAGMA journal_mode = WAL;"); db.exec("PRAGMA foreign_keys = ON;"); db.exec("PRAGMA busy_timeout = 10000;"); db.exec(SQLITE_SCHEMA);
+  db.exec("PRAGMA journal_mode = WAL;"); db.exec("PRAGMA foreign_keys = ON;"); db.exec("PRAGMA busy_timeout = 10000;"); db.exec(SQLITE_SCHEMA); ensureSqliteWatchColumns(db);
   const now = () => new Date().toISOString();
   const get = (id: string) => db.prepare("SELECT * FROM decision_watches WHERE id = ?").get(id) as Record<string, unknown> | undefined;
   return {
@@ -206,26 +273,49 @@ export function openWatchStore(url?: string): WatchStore {
       const ts = now();
       db.prepare(`INSERT INTO decision_watches
         (id, account_user_id, source_session_id, asset_label, reality_ticker, perp_ticker, original_question, hinge, human_key_question,
-         research_family, starting_read, current_read, target_read, status, notification_channel, plan, snapshot, workflow_run_id,
-         state_version, next_check_at, last_checked_at, triggered_at, created_at, updated_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+         research_family, starting_read, current_read, target_read, status, notification_channel, plan, snapshot,
+         state_version, next_check_at, last_checked_at, triggered_at, lease_owner, lease_expires_at, last_attempt_at, created_at, updated_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
         row.id, row.accountUserId, row.sourceSessionId, row.assetLabel, row.realityTicker, row.perpTicker, row.originalQuestion, row.hinge, row.humanKeyQuestion,
         row.researchFamily, row.startingRead, row.currentRead, row.targetRead, row.status, row.notificationChannel, JSON.stringify(row.plan), JSON.stringify(row.snapshot),
-        row.workflowRunId, row.stateVersion, row.nextCheckAt, row.lastCheckedAt, row.triggeredAt, ts, ts);
+        row.stateVersion, row.nextCheckAt, row.lastCheckedAt, row.triggeredAt, row.leaseOwner, row.leaseExpiresAt, row.lastAttemptAt, ts, ts);
       return sqliteWatchRow(get(row.id)!);
     },
     async getWatch(id) { const row = get(id); return row ? sqliteWatchRow(row) : null; },
     async listWatches(accountUserId) { return (db.prepare("SELECT * FROM decision_watches WHERE account_user_id = ? ORDER BY updated_at DESC LIMIT 50").all(accountUserId) as Record<string, unknown>[]).map(sqliteWatchRow); },
-    async updateWatch(id, expectedVersion, patch) {
+    async updateWatch(id, expectedVersion, patch, leaseOwner) {
       const sets: string[] = []; const values: (string | number | null)[] = [];
-      const map: Record<string, string> = { status: "status", currentRead: "current_read", snapshot: "snapshot", workflowRunId: "workflow_run_id", nextCheckAt: "next_check_at", lastCheckedAt: "last_checked_at", triggeredAt: "triggered_at" };
+      const map: Record<string, string> = { status: "status", currentRead: "current_read", snapshot: "snapshot", nextCheckAt: "next_check_at", lastCheckedAt: "last_checked_at", triggeredAt: "triggered_at", leaseOwner: "lease_owner", leaseExpiresAt: "lease_expires_at", lastAttemptAt: "last_attempt_at" };
       for (const [key, column] of Object.entries(map)) {
         const value = (patch as Record<string, unknown>)[key];
         if (value !== undefined) { sets.push(column + " = ?"); values.push(key === "snapshot" ? JSON.stringify(value) ?? null : value as string | number | null); }
       }
       sets.push("state_version = state_version + 1", "updated_at = ?"); values.push(now(), id, expectedVersion);
-      const result = db.prepare("UPDATE decision_watches SET " + sets.join(", ") + " WHERE id = ? AND state_version = ?").run(...values);
+      let where = " WHERE id = ? AND state_version = ?";
+      if (leaseOwner) { where += " AND lease_owner = ?"; values.push(leaseOwner); }
+      const result = db.prepare("UPDATE decision_watches SET " + sets.join(", ") + where).run(...values);
       return result.changes ? sqliteWatchRow(get(id)!) : null;
+    },
+    async claimDueWatches(workerId, at, leaseMs, limit) {
+      const expires = new Date(at.getTime() + leaseMs).toISOString();
+      const rows = db.prepare("SELECT * FROM decision_watches WHERE status = 'ACTIVE' AND next_check_at <= ? AND (lease_expires_at IS NULL OR lease_expires_at < ?) ORDER BY next_check_at ASC, id ASC LIMIT ?").all(at.toISOString(), at.toISOString(), limit) as Record<string, unknown>[];
+      const out: WatchRow[] = [];
+      for (const row of rows) {
+        const result = db.prepare("UPDATE decision_watches SET lease_owner = ?, lease_expires_at = ?, last_attempt_at = ?, state_version = state_version + 1, updated_at = ? WHERE id = ? AND status = 'ACTIVE' AND (lease_expires_at IS NULL OR lease_expires_at < ?)").run(workerId, expires, at.toISOString(), now(), String(row.id), at.toISOString());
+        if (result.changes) out.push(sqliteWatchRow(get(String(row.id))!));
+      }
+      return out;
+    },
+    async releaseLease(id, workerId, expectedVersion) {
+      const result = db.prepare("UPDATE decision_watches SET lease_owner = NULL, lease_expires_at = NULL, state_version = state_version + 1, updated_at = ? WHERE id = ? AND lease_owner = ? AND state_version = ?").run(now(), id, workerId, expectedVersion);
+      return result.changes ? sqliteWatchRow(get(id)!) : null;
+    },
+    async recordWorkerHeartbeat(row) {
+      const ts = now();
+      db.prepare(`INSERT INTO watch_worker_heartbeats (worker_id, started_at, last_cycle_started_at, last_cycle_finished_at, last_cycle_claimed, last_cycle_processed, last_error, updated_at)
+        VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(worker_id) DO UPDATE SET started_at=excluded.started_at, last_cycle_started_at=excluded.last_cycle_started_at, last_cycle_finished_at=excluded.last_cycle_finished_at, last_cycle_claimed=excluded.last_cycle_claimed, last_cycle_processed=excluded.last_cycle_processed, last_error=excluded.last_error, updated_at=excluded.updated_at`)
+        .run(row.workerId, row.startedAt, row.lastCycleStartedAt, row.lastCycleFinishedAt, row.lastCycleClaimed, row.lastCycleProcessed, row.lastError, ts);
+      return sqliteHeartbeatRow(db.prepare("SELECT * FROM watch_worker_heartbeats WHERE worker_id = ?").get(row.workerId) as Record<string, unknown>);
     },
     async getConnection(accountUserId, channel) {
       const row = db.prepare("SELECT * FROM notification_connections WHERE account_user_id = ? AND channel = ?").get(accountUserId, channel) as Record<string, unknown> | undefined;

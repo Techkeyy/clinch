@@ -39,6 +39,7 @@ const watches = openPostgresWatchStore(databaseUrl);
 const raw = postgres(databaseUrl, { max: 1, connect_timeout: 10 });
 let checkpoint = "opened";
 const cleanupProofRows = async () => {
+  await raw.unsafe("DELETE FROM watch_worker_heartbeats WHERE worker_id IN ('neon-proof-worker-a', 'neon-proof-worker-b')");
   await raw`DELETE FROM notification_connection_tokens WHERE account_user_id IN (${accountA}, ${accountB})`;
   await raw`DELETE FROM notification_connections WHERE account_user_id IN (${accountA}, ${accountB})`;
   await raw`DELETE FROM research_steps WHERE session_id IN (SELECT id FROM research_sessions WHERE owner_verifier = 'neon-proof-owner')`;
@@ -94,16 +95,42 @@ try {
     notificationChannel: "TELEGRAM",
     plan,
     snapshot: plan.baseline,
-    workflowRunId: null,
     stateVersion: 0,
     nextCheckAt: now.toISOString(),
     lastCheckedAt: null,
     triggeredAt: null,
+    leaseOwner: null,
+    leaseExpiresAt: null,
+    lastAttemptAt: null,
   });
   assert.equal((await watches.getWatch(watchId))?.id, watchId);
   assert.equal((await watches.listWatches(accountB)).length, 0);
   assert.equal((await watches.updateWatch(watchId, 0, { currentRead: "enter-now" }))?.stateVersion, 1);
   assert.equal(await watches.updateWatch(watchId, 0, { currentRead: "wait" }), null);
+
+  checkpoint = "worker-lease-and-heartbeat";
+  const claimAt = new Date();
+  const firstLease = await watches.claimDueWatches("neon-proof-worker-a", claimAt, 60_000, 10);
+  assert.equal(firstLease.length, 1);
+  assert.equal(firstLease[0].id, watchId);
+  assert.equal(firstLease[0].leaseOwner, "neon-proof-worker-a");
+  assert.equal(firstLease[0].lastAttemptAt !== null, true);
+  assert.equal((await watches.claimDueWatches("neon-proof-worker-b", claimAt, 60_000, 10)).length, 0);
+  const heartbeat = await watches.recordWorkerHeartbeat({
+    workerId: "neon-proof-worker-a",
+    startedAt: claimAt.toISOString(),
+    lastCycleStartedAt: claimAt.toISOString(),
+    lastCycleFinishedAt: new Date(claimAt.getTime() + 1_000).toISOString(),
+    lastCycleClaimed: 1,
+    lastCycleProcessed: 1,
+    lastError: null,
+  });
+  assert.equal(heartbeat.workerId, "neon-proof-worker-a");
+  assert.equal(heartbeat.lastCycleProcessed, 1);
+  const reclaimed = await watches.claimDueWatches("neon-proof-worker-b", new Date(claimAt.getTime() + 61_000), 60_000, 10);
+  assert.equal(reclaimed.length, 1);
+  assert.equal(reclaimed[0].leaseOwner, "neon-proof-worker-b");
+  assert.equal(await watches.releaseLease(watchId, "neon-proof-worker-b", reclaimed[0].stateVersion) !== null, true);
 
   checkpoint = "channel-connections";
   const telegram = await watches.upsertConnection({ accountUserId: accountA, channel: "TELEGRAM", address: "proof-telegram-chat", status: "CONNECTED" });
@@ -139,8 +166,9 @@ try {
   assert.equal(await sessions.getSession(sessionId), null);
   assert.equal(await watches.getWatch(watchId), null);
   console.log("NEON_WATCH_PROOF: PASS");
-} catch {
-  console.error("NEON_WATCH_PROOF: FAIL", checkpoint);
+} catch (error) {
+  const detail = error instanceof Error ? error.message : String(error);
+  console.error("NEON_WATCH_PROOF: FAIL", checkpoint, detail.slice(0, 500));
   process.exitCode = 1;
 } finally {
   await cleanupProofRows();
