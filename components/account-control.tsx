@@ -1,15 +1,43 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Show, SignInButton, UserButton, useAuth } from "@clerk/nextjs";
+import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { readRecentIds } from "@/lib/recent";
+import { resolveAccountControlState } from "@/lib/account-control";
 import { resolveResearchSurfaceState, type ResearchOwnership } from "@/lib/research-ownership";
 
 const enabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+const AUTH_LOAD_TIMEOUT_MS = 8_000;
 
 export function AccountControl() {
   if (!enabled) return null;
-  return <div className="account-control" aria-label="Account"><Show when="signed-out"><SignInButton mode="modal"><button type="button" className="text-nav-link">Sign in</button></SignInButton></Show><Show when="signed-in"><UserButton /></Show></div>;
+  return <EnabledAccountControl />;
+}
+
+function EnabledAccountControl() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const [timedOut, setTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (isLoaded) {
+      setTimedOut(false);
+      return;
+    }
+    const timeoutId = window.setTimeout(() => setTimedOut(true), AUTH_LOAD_TIMEOUT_MS);
+    return () => window.clearTimeout(timeoutId);
+  }, [isLoaded]);
+
+  const state = resolveAccountControlState({ enabled, isLoaded, isSignedIn, timedOut });
+  if (state === "loading") {
+    return <div className="account-control" aria-label="Account" aria-busy="true" />;
+  }
+  if (state === "unavailable") {
+    return <div className="account-control" aria-label="Account" role="status"><button type="button" className="text-nav-link" onClick={() => window.location.reload()}>Retry sign in</button></div>;
+  }
+  if (state === "signed-in") {
+    return <div className="account-control" aria-label="Account"><UserButton /></div>;
+  }
+  return <div className="account-control" aria-label="Account"><SignInButton mode="modal"><button type="button" className="text-nav-link">Sign in</button></SignInButton></div>;
 }
 
 export function SaveResearchPrompt({ sessionId }: { sessionId: string | null }) {
