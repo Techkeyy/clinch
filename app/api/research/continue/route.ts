@@ -2,11 +2,12 @@ import { z } from "zod";
 import { getStore } from "@/server/db";
 import { readOwner, currentAccountUserId, canAccessSession } from "@/server/auth";
 import { sseEncode, sseResponse, sameOrigin } from "@/server/stream";
-import { parseIntentFlow, resolveAsset, assetIdentity, capabilityData, driveLoop, assembleBrief } from "@/server/flow";
+import { parseIntentFlow, resolveAsset, assetIdentity, assetResolutionMessage, capabilityData, driveLoop, assembleBrief } from "@/server/flow";
 import { unsupportedEvidenceReason } from "@/domain/intent";
 import { RESEARCH_LOOP_CAP } from "@/config/thresholds";
 import { modelConfigured } from "@/model/provider";
 import { qwenProvider } from "@/model/qwen";
+import { BitgetError } from "@/research/bitget/errors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,8 +71,17 @@ export async function POST(req: Request) {
     }
     return Response.json({ session: snap(clarified), clarify: intent.clarificationQuestion });
   }
-  const resolved = await resolveAsset(intent.asset, undefined, st.assetIdentity?.normalTicker, st.assetIdentity?.realityTicker).catch(() => ({ spot: null, perp: null, ticker: null, companyName: null, universe: 0 }));
-  if (!resolved.spot) return Response.json({ error: "UNSUPPORTED_ASSET", session: snap(row) }, { status: 422 });
+  const resolved = await resolveAsset(intent.asset, undefined, st.assetIdentity?.normalTicker, st.assetIdentity?.realityTicker).catch((error) => ({
+    spot: null, perp: null, ticker: null, companyName: null, universe: 0, stale: false,
+    errorCode: error instanceof BitgetError && error.code === "UPSTREAM_FAILURE"
+      ? "ASSET_TEMPORARILY_UNAVAILABLE" as const
+      : "PROVIDER_ENDPOINT_FAILURE" as const,
+  }));
+  if (!resolved.spot) {
+    const code = resolved.errorCode ?? "UNKNOWN_ASSET";
+    const status = code === "ASSET_TEMPORARILY_UNAVAILABLE" || code === "PROVIDER_ENDPOINT_FAILURE" ? 503 : code === "INTERNAL_RESOLVER_BUG" ? 500 : 422;
+    return Response.json({ error: code, message: assetResolutionMessage(code), session: snap(row) }, { status });
+  }
   const canonicalIntent = { ...intent, asset: resolved.ticker ?? intent.asset, resolvedSymbol: resolved.spot };
   st.intent = canonicalIntent as unknown as typeof st.intent;
   st.assetIdentity = assetIdentity(resolved);

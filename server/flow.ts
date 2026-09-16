@@ -3,9 +3,9 @@ import { compileSemantics, type RawFacts } from "../domain/semantics";
 import { extractIntent, normalizeIntent, toIntentContract } from "../domain/intent";
 import type { IntentContract } from "../domain/types";
 import { LOGIC_VERSION, RESEARCH_LOOP_CAP } from "../config/thresholds";
-import { discoverSpot, discoverFutures } from "../research/bitget/index";
 import type { FetchImpl } from "../research/bitget/client";
-import { buildResearchableStockCatalog, resolveResearchableStock } from "../lib/stocks";
+import { resolveResearchableAsset } from "../research/bitget/catalog";
+import type { CatalogResolutionFailure } from "../lib/stocks";
 import { investigateSpot, investigatePositioning } from "../research/index";
 import { needForTopic, classifyFinding, factsToRaw, type MarketFacts } from "../research/orchestrator";
 import { renderStructuredBrief, HUMAN_DEC_LINE, type BriefSections } from "../brief/index";
@@ -46,6 +46,24 @@ export interface AssetIdentity {
   realityTicker: string | null;
   perpSymbol: string | null;
   universe: number;
+}
+
+export function assetResolutionMessage(code: CatalogResolutionFailure | null | undefined): string {
+  switch (code) {
+    case "UNKNOWN_ASSET":
+      return "That stock is not in Bitget's current Reality market catalog. Choose a listed stock or search the supported universe.";
+    case "UNSUPPORTED_ASSET":
+      return "That stock is outside CLINCH's current supported universe. Choose a listed stock or search the supported universe.";
+    case "ASSET_OFFLINE":
+      return "That stock is currently offline or delisted on Bitget's Reality market. Try again when it is online.";
+    case "ASSET_TEMPORARILY_UNAVAILABLE":
+    case "PROVIDER_ENDPOINT_FAILURE":
+      return "Bitget's live stock catalog is temporarily unavailable. Your decision is preserved; retry when the provider is reachable.";
+    case "INTERNAL_RESOLVER_BUG":
+      return "CLINCH could not safely match that stock to its exact live market symbol. Nothing was researched; please retry.";
+    default:
+      return "That stock is not currently available to research from Bitget's Reality market data.";
+  }
 }
 export interface LoopState {
   read: string; resolvedTopics: string[]; facts: MarketFacts;
@@ -107,24 +125,30 @@ export async function resolveAsset(
   requestedTicker?: string | null,
   requestedRealityTicker?: string | null,
   fallbackMention?: string | null,
-): Promise<{ spot: string | null; perp: string | null; ticker: string | null; companyName: string | null; universe: number }> {
-  if (!mention) return { spot: null, perp: null, ticker: null, companyName: null, universe: 0 };
-  const spot = await discoverSpot(fetchImpl);
-  let fut = [] as Awaited<ReturnType<typeof discoverFutures>>;
-  try {
-    fut = await discoverFutures(fetchImpl);
-  } catch {
-    // The spot research path remains truthful if optional futures discovery is unavailable.
+): Promise<{
+  spot: string | null;
+  perp: string | null;
+  ticker: string | null;
+  companyName: string | null;
+  universe: number;
+  errorCode?: CatalogResolutionFailure | null;
+  stale?: boolean;
+}> {
+  if (!mention) return { spot: null, perp: null, ticker: null, companyName: null, universe: 0, errorCode: "UNKNOWN_ASSET", stale: false };
+  let result = await resolveResearchableAsset(mention, requestedTicker, requestedRealityTicker, fetchImpl);
+  if (!result.resolution.stock && fallbackMention && fallbackMention !== mention && !requestedTicker && !requestedRealityTicker) {
+    result = await resolveResearchableAsset(fallbackMention, undefined, undefined, fetchImpl);
   }
-  const hit = resolveResearchableStock(mention, spot, fut, requestedTicker, requestedRealityTicker)
-    ?? (fallbackMention && fallbackMention !== mention ? resolveResearchableStock(fallbackMention, spot, fut) : null);
-  const universe = buildResearchableStockCatalog(spot, fut).length;
+  const hit = result.resolution.stock;
+  const universe = result.snapshot.stocks.length;
   return {
     spot: hit?.realityTicker ?? null,
     perp: hit?.perpTicker ?? null,
     ticker: hit?.ticker ?? null,
     companyName: hit?.companyName ?? null,
     universe,
+    errorCode: hit ? null : result.resolution.failure,
+    stale: result.snapshot.stale,
   };
 }
 

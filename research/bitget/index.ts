@@ -4,7 +4,7 @@ import { BitgetError } from "./errors";
 import { bitgetGet, type FetchImpl } from "./client";
 import {
   CandleRow, DepthBook, FutInstrument, FutTickerRow, SpotInstrument, SpotTickerRow,
-  candlesUrl, instrumentsUrl, orderbookUrl, tickerUrl, openInterestUrl,
+  RealityStockInfo, candlesUrl, instrumentsUrl, orderbookUrl, stockInfoUrl, tickerUrl, openInterestUrl,
   parseEnvelope, type Category, type Interval,
 } from "./endpoints";
 
@@ -53,8 +53,15 @@ export async function discoverSpot(fetchImpl?: FetchImpl): Promise<SpotInstrumen
   if (!rows.success) throw new BitgetError("MALFORMED_RESPONSE", "v3-instruments", "Instrument rows failed validation");
   return rows.data;
 }
+export async function discoverRealityStockInfo(fetchImpl?: FetchImpl): Promise<RealityStockInfo[]> {
+  const raw = await bitgetGet<unknown>(stockInfoUrl(), "v3-reality-stock-info", 12000, fetchImpl ?? fetch);
+  const env = parseEnvelope({ code: "00000", msg: "ok", data: raw }, "v3-reality-stock-info");
+  const rows = z.array(RealityStockInfo).safeParse(env);
+  if (!rows.success) throw new BitgetError("MALFORMED_RESPONSE", "v3-reality-stock-info", "Stock-info rows failed validation");
+  return rows.data;
+}
 export function realitySymbols(instruments: SpotInstrument[]): string[] {
-  return instruments.filter((r) => r.isReality === "yes" && r.status === "online").map((r) => r.symbol);
+  return instruments.filter((r) => r.isReality?.toLowerCase() === "yes" && r.status.toLowerCase() === "online").map((r) => r.symbol);
 }
 
 export async function discoverFutures(fetchImpl?: FetchImpl): Promise<FutInstrument[]> {
@@ -66,11 +73,15 @@ export async function discoverFutures(fetchImpl?: FetchImpl): Promise<FutInstrum
 }
 /** Map spot Reality symbol to its stock perp ONLY when both instruments exist. Never R-strip blindly. */
 export function mapSpotToPerp(spotSymbol: string, spot: SpotInstrument[], fut: FutInstrument[]): string | null {
-  const s = spot.find((r) => r.symbol === spotSymbol && r.isReality === "yes");
+  const s = spot.find((r) => r.symbol.toUpperCase() === spotSymbol.toUpperCase() && r.isReality?.toLowerCase() === "yes");
   if (!s) return null;
-  const base = s.symbol.replace(/USDT$/, "");
-  const core = base.startsWith("R") ? base.slice(1) : base;
-  const match = fut.find((r) => r.symbol === `${core}USDT` && String(r.isRwa).toUpperCase() === "YES");
+  const base = s.baseCoin?.replace(/^R/i, "").toUpperCase();
+  if (!base) return null;
+  const match = fut.find((r) =>
+    r.baseCoin?.toUpperCase() === base
+    && String(r.isRwa).toUpperCase() === "YES"
+    && (!r.status || r.status.toLowerCase() === "online"),
+  );
   return match ? match.symbol : null;
 }
 

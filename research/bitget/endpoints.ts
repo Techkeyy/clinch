@@ -4,12 +4,16 @@ import { BitgetError } from "./errors";
 // Fixed trusted Bitget surface. No user- or model-supplied hosts, ever.
 export const BITGET_BASE = "https://api.bitget.com";
 const V3 = "/api/v3/market";
+const REALITY_V3 = "/api/v3/reality/market";
 
 export type Category = "SPOT" | "USDT-FUTURES";
 export type Interval = "1m" | "5m" | "15m" | "1H" | "4H" | "1D";
 
 export function instrumentsUrl(category: Category): string {
   return `${BITGET_BASE}${V3}/instruments?category=${category}`;
+}
+export function stockInfoUrl(): string {
+  return `${BITGET_BASE}${REALITY_V3}/stock-info`;
 }
 export function tickerUrl(category: Category, symbol: string): string {
   return `${BITGET_BASE}${V3}/tickers?category=${category}&symbol=${encodeURIComponent(symbol)}`;
@@ -30,15 +34,30 @@ const ApiEnvelope = z.object({ code: z.string(), msg: z.string(), requestTime: z
 export const SpotInstrument = z.object({
   symbol: z.string(), category: z.string(), status: z.string(),
   isReality: z.string().optional(), pricePrecision: z.string().optional(),
-  minOrderQty: z.string().optional(),
+  minOrderQty: z.string().optional(), baseCoin: z.string().optional(),
+  quoteCoin: z.string().optional(), isRwa: z.string().optional(),
+  symbolType: z.string().optional(),
 });
 export type SpotInstrument = z.infer<typeof SpotInstrument>;
 
 export const FutInstrument = z.object({
   symbol: z.string(), category: z.string(), symbolType: z.string().optional(),
   isRwa: z.string().optional(), makerFeeRate: z.string().optional(), takerFeeRate: z.string().optional(),
+  status: z.string().optional(), baseCoin: z.string().optional(), quoteCoin: z.string().optional(),
 });
 export type FutInstrument = z.infer<typeof FutInstrument>;
+
+export const RealityStockInfo = z.object({
+  symbol: z.string(),
+  code: z.string(),
+  // Live stock-info returns name:null for listed Reality symbols (proven
+  // 2026-09-16 for RAAPL/RMETA/RNVDA); company identity falls back to the
+  // CLINCH directory or a neutral ticker label, never to invented support.
+  name: z.string().nullish(),
+  tradingPeriod: z.union([z.array(z.string()), z.string(), z.null()]).optional(),
+  weekendTradable: z.string().nullish(),
+});
+export type RealityStockInfo = z.infer<typeof RealityStockInfo>;
 
 export const SpotTickerRow = z.object({
   category: z.string(), symbol: z.string(), ts: z.string(),

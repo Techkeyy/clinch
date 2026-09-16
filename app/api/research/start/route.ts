@@ -6,7 +6,7 @@ import { getStore } from "@/server/db";
 import { readOwner, mintOwner, verifierFor, currentAccountUserId, canAccessSession } from "@/server/auth";
 import { checkStartLimits, trustedNetworkSource } from "@/server/rate";
 import { sseEncode, sseResponse, sameOrigin } from "@/server/stream";
-import { parseIntentFlow, resolveAsset, assetIdentity, capabilityData, assembleBrief, driveLoop } from "@/server/flow";
+import { parseIntentFlow, resolveAsset, assetIdentity, assetResolutionMessage, capabilityData, assembleBrief, driveLoop } from "@/server/flow";
 import { unsupportedEvidenceReason } from "@/domain/intent";
 import type { IntentContract } from "@/domain/types";
 import { establishBaseline } from "@/research/orchestrator";
@@ -14,6 +14,7 @@ import { modelConfigured, type ModelProvider } from "@/model/provider";
 import { qwenProvider } from "@/model/qwen";
 import { createTimingReporter, timedStage } from "@/server/timing";
 import type { SessionStore } from "@/persistence/store";
+import { BitgetError } from "@/research/bitget/errors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -139,10 +140,16 @@ export async function POST(req: Request) {
           return;
         }
         send("progress", { stage: "asset", label: "Resolving supported market context." });
-        const resolved = await timedStage(timing, "asset-resolution", () => resolveAsset(intent.asset, undefined, parsed.data.selectedTicker, parsed.data.selectedRealityTicker, parsed.data.dilemma)).catch(() => ({ spot: null, perp: null, ticker: null, companyName: null, universe: 0 }));
+        const resolved = await timedStage(timing, "asset-resolution", () => resolveAsset(intent.asset, undefined, parsed.data.selectedTicker, parsed.data.selectedRealityTicker, parsed.data.dilemma)).catch((error) => ({
+          spot: null, perp: null, ticker: null, companyName: null, universe: 0, stale: false,
+          errorCode: error instanceof BitgetError && error.code === "UPSTREAM_FAILURE"
+            ? "ASSET_TEMPORARILY_UNAVAILABLE" as const
+            : "PROVIDER_ENDPOINT_FAILURE" as const,
+        }));
         if (!resolved.spot) {
+          const code = resolved.errorCode ?? "UNKNOWN_ASSET";
           await failSession(store, sessionId, "failed", "The requested stock is not currently available from Bitget's Reality market data.");
-          send("error", { code: "UNSUPPORTED_ASSET", message: "That stock is not currently available to research from Bitget's Reality market data. Try searching supported stocks or describe another stock." });
+          send("error", { code, message: assetResolutionMessage(code) });
           finish();
           return;
         }

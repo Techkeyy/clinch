@@ -43,8 +43,9 @@ const CANDLES = { code: "00000", msg: "ok", data: [
   ["1789149600000", "218.60", "218.70", "218.10", "218.20", "6610618.0", "1451144945.0"],
 ] };
 const DEPTH = { code: "00000", msg: "ok", data: { a: [["218.60", 0.4]], b: [["218.00", 0.5]], ts: "1789167781492" } };
-const SPOT_INSTRUMENTS = { code: "00000", msg: "ok", data: [{ symbol: "RNVDAUSDT", category: "SPOT", status: "online", isReality: "yes" }] };
-const FUT_INSTRUMENTS = { code: "00000", msg: "ok", data: [{ symbol: "NVDAUSDT", category: "USDT-FUTURES", symbolType: "stock", isRwa: "YES" }] };
+const SPOT_INSTRUMENTS = { code: "00000", msg: "ok", data: [{ symbol: "RNVDAUSDT", baseCoin: "rNVDA", category: "SPOT", status: "online", isReality: "yes" }] };
+const FUT_INSTRUMENTS = { code: "00000", msg: "ok", data: [{ symbol: "NVDAUSDT", baseCoin: "NVDA", category: "USDT-FUTURES", symbolType: "stock", isRwa: "YES", status: "online" }] };
+const STOCK_INFO = { code: "00000", msg: "ok", data: [{ symbol: "RNVDAUSDT", code: "NVDA", name: "NVIDIA Corporation" }] };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyMod = any;
@@ -105,6 +106,7 @@ beforeAll(async () => {
   stubFetch({
     "/instruments?category=SPOT": SPOT_INSTRUMENTS,
     "/instruments?category=USDT-FUTURES": FUT_INSTRUMENTS,
+    "/reality/market/stock-info": STOCK_INFO,
     "/tickers?category=SPOT": WIDE_TICKER,
     "/tickers?category=USDT-FUTURES": perp,
     "/candles?": CANDLES,

@@ -91,11 +91,11 @@ describe("adapter wiring with mock transport (no network)", () => {
 
 describe("symbol mapping safety", () => {
   const spot = [
-    { symbol: "RNVDAUSDT", category: "SPOT", status: "online", isReality: "yes" },
+    { symbol: "RNVDAUSDT", baseCoin: "rNVDA", category: "SPOT", status: "online", isReality: "yes" },
     { symbol: "BTCUSDT", category: "SPOT", status: "online", isReality: "no" },
   ].map((r) => SpotInstrument.parse(r));
   const fut = [
-    { symbol: "NVDAUSDT", category: "USDT-FUTURES", symbolType: "stock", isRwa: "YES" },
+    { symbol: "NVDAUSDT", baseCoin: "NVDA", category: "USDT-FUTURES", symbolType: "stock", isRwa: "YES", status: "online" },
   ].map((r) => FutInstrument.parse(r));
   it("maps only when both discovered instruments exist and qualify", () => {
     expect(mapSpotToPerp("RNVDAUSDT", spot, fut)).toBe("NVDAUSDT");

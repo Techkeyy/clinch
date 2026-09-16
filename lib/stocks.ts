@@ -1,4 +1,4 @@
-import type { FutInstrument, SpotInstrument } from "@/research/bitget/endpoints";
+import type { FutInstrument, RealityStockInfo, SpotInstrument } from "@/research/bitget/endpoints";
 
 export interface StockIdentityData {
   companyName: string;
@@ -15,9 +15,30 @@ export interface DiscoveredStock extends StockIdentityData {
   realityTicker: string;
   perpTicker: string | null;
   researchFamilies: ResearchFamily[];
+  capabilities: {
+    "spot-structure": true;
+    "perp-positioning": boolean;
+  };
+  sourceSymbol: string;
+  validatedAt: string;
+  tradingPeriod?: string[];
+  weekendTradable?: boolean;
 }
 
 export type ResearchFamily = "spot-structure" | "perp-positioning";
+
+export type CatalogResolutionFailure =
+  | "UNKNOWN_ASSET"
+  | "UNSUPPORTED_ASSET"
+  | "ASSET_OFFLINE"
+  | "ASSET_TEMPORARILY_UNAVAILABLE"
+  | "PROVIDER_ENDPOINT_FAILURE"
+  | "INTERNAL_RESOLVER_BUG";
+
+export interface CatalogResolution {
+  stock: DiscoveredStock | null;
+  failure: CatalogResolutionFailure | null;
+}
 
 interface StockDirectoryEntry {
   companyName: string;
@@ -110,6 +131,48 @@ export function stockFromRealityTicker(realityTicker: string, perpTicker: string
     markKind: stockMarkKind(logoKey),
     perpTicker,
     researchFamilies: ["spot-structure"],
+    capabilities: { "spot-structure": true, "perp-positioning": Boolean(perpTicker) },
+    sourceSymbol: reality,
+    validatedAt: new Date().toISOString(),
+  };
+}
+
+function normaliseCode(value: string): string {
+  // Stock-info code is already the normal ticker (AAPL, META, RDY). Never
+  // R-strip it: RDY (Dr Reddy's) and DY (Dycom) are distinct issuers, as are
+  // RBA/BA, RGEN/GEN, RS/S. Stripping collapses them into one ticker and
+  // breaks the visible=researchable round-trip.
+  return clean(value);
+}
+
+function stockFromRealityInfo(info: RealityStockInfo, perpTicker: string | null, validatedAt: string): DiscoveredStock | null {
+  const reality = info.symbol.trim();
+  const ticker = normaliseCode(info.code);
+  if (!/^[A-Z][A-Z0-9]{0,11}$/.test(ticker) || !reality || clean(reality) !== clean(info.symbol)) return null;
+  const known = DIRECTORY[ticker];
+  const logoKey = known?.logoKey ?? "monogram";
+  const tradingPeriod = Array.isArray(info.tradingPeriod)
+    ? info.tradingPeriod.filter((value): value is string => typeof value === "string")
+    : typeof info.tradingPeriod === "string" && info.tradingPeriod.trim()
+      ? [info.tradingPeriod]
+      : undefined;
+  return {
+    companyName: (typeof info.name === "string" ? info.name.trim() : "") || known?.companyName || `Stock ${ticker}`,
+    ticker,
+    realityTicker: reality,
+    logoKey,
+    markKind: stockMarkKind(logoKey),
+    perpTicker,
+    researchFamilies: perpTicker ? ["spot-structure", "perp-positioning"] : ["spot-structure"],
+    capabilities: { "spot-structure": true, "perp-positioning": Boolean(perpTicker) },
+    sourceSymbol: reality,
+    validatedAt,
+    tradingPeriod,
+    weekendTradable: info.weekendTradable?.toLowerCase() === "yes"
+      ? true
+      : info.weekendTradable?.toLowerCase() === "no"
+        ? false
+        : undefined,
   };
 }
 
@@ -134,40 +197,118 @@ export function stockFromTicker(ticker: string): StockIdentityData | null {
  * and marked as Reality. Optional positioning is attached only when the live
  * futures listing is also an RWA instrument.
  */
-export function buildResearchableStockCatalog(spot: SpotInstrument[], fut: FutInstrument[]): DiscoveredStock[] {
-  const perps = new Set(fut.filter((row) => String(row.isRwa).toUpperCase() === "YES").map((row) => row.symbol));
+export function buildResearchableStockCatalog(
+  spot: SpotInstrument[],
+  fut: FutInstrument[],
+  stockInfo: RealityStockInfo[] = [],
+  validatedAt = new Date().toISOString(),
+): DiscoveredStock[] {
+  const infoBySymbol = new Map(stockInfo.map((row) => [clean(row.symbol), row]));
   return spot
-    .filter((row) => row.isReality === "yes" && row.status === "online")
+    .filter((row) => row.isReality?.toLowerCase() === "yes" && row.status.toLowerCase() === "online")
     .map((row) => {
-      const ticker = tickerFromRealitySymbol(row.symbol);
-      const perp = ticker && perps.has(`${ticker}USDT`) ? `${ticker}USDT` : null;
-      const stock = stockFromRealityTicker(row.symbol, perp);
+      const info = infoBySymbol.get(clean(row.symbol));
+      if (!info || clean(info.symbol) !== clean(row.symbol)) return null;
+      const code = normaliseCode(info.code);
+      const perp = fut.find((candidate) =>
+        candidate.baseCoin?.toUpperCase() === code
+        && String(candidate.isRwa).toUpperCase() === "YES"
+        && (!candidate.status || candidate.status.toLowerCase() === "online"),
+      )?.symbol ?? null;
+      const stock = stockFromRealityInfo({ ...info, symbol: row.symbol }, perp, validatedAt);
       return stock ? { ...stock, researchFamilies: perp ? ["spot-structure", "perp-positioning"] : ["spot-structure"] } : null;
     })
     .filter((stock): stock is DiscoveredStock => stock !== null)
     .sort((a, b) => a.companyName.localeCompare(b.companyName) || a.ticker.localeCompare(b.ticker));
 }
 
-export function researchableRealityStocks(spot: SpotInstrument[], fut: FutInstrument[]): DiscoveredStock[] {
-  return buildResearchableStockCatalog(spot, fut);
+export function researchableRealityStocks(spot: SpotInstrument[], fut: FutInstrument[], stockInfo: RealityStockInfo[] = []): DiscoveredStock[] {
+  return buildResearchableStockCatalog(spot, fut, stockInfo);
 }
 
 /** Resolve aliases against the same live catalog that powers the stock browser. */
+export function resolveStockFromCatalog(
+  mention: string | null | undefined,
+  catalog: DiscoveredStock[],
+  requestedTicker?: string | null,
+  requestedRealityTicker?: string | null,
+): DiscoveredStock | null {
+  const requestedReality = requestedRealityTicker ? clean(requestedRealityTicker) : "";
+  const requestedNormal = requestedTicker ? clean(requestedTicker).replace(/USDT$/, "") : "";
+  const requested = catalog.find((stock) =>
+    (requestedReality && clean(stock.realityTicker) === requestedReality) ||
+    (requestedNormal && stock.ticker === requestedNormal),
+  );
+  return requested ?? findStockByMention(mention, catalog);
+}
+
+export function resolveResearchableStockResult(
+  mention: string | null | undefined,
+  spot: SpotInstrument[],
+  fut: FutInstrument[],
+  stockInfo: RealityStockInfo[],
+  requestedTicker?: string | null,
+  requestedRealityTicker?: string | null,
+): CatalogResolution {
+  const validatedAt = new Date().toISOString();
+  const catalog = buildResearchableStockCatalog(spot, fut, stockInfo, validatedAt);
+  const hit = resolveStockFromCatalog(mention, catalog, requestedTicker, requestedRealityTicker);
+  if (hit) return { stock: hit, failure: null };
+
+  const known = stockInfo
+    .map((info) => stockFromRealityInfo(info, null, validatedAt))
+    .filter((stock): stock is DiscoveredStock => stock !== null);
+  const requestedReality = requestedRealityTicker ? clean(requestedRealityTicker) : "";
+  const requestedNormal = requestedTicker ? normaliseCode(requestedTicker).replace(/USDT$/, "") : "";
+  const knownCandidate = known.find((stock) =>
+    (requestedReality && clean(stock.realityTicker) === requestedReality)
+    || (requestedNormal && stock.ticker === requestedNormal),
+  ) ?? findStockByMention(mention, known);
+  if (!knownCandidate) return { stock: null, failure: "UNKNOWN_ASSET" };
+
+  const liveRow = spot.find((row) => clean(row.symbol) === clean(knownCandidate.realityTicker));
+  if (!liveRow || liveRow.status.toLowerCase() !== "online") return { stock: null, failure: "ASSET_OFFLINE" };
+  if (liveRow.isReality?.toLowerCase() !== "yes") return { stock: null, failure: "UNSUPPORTED_ASSET" };
+  return { stock: null, failure: "INTERNAL_RESOLVER_BUG" };
+}
+
 export function resolveResearchableStock(
   mention: string | null | undefined,
   spot: SpotInstrument[],
   fut: FutInstrument[],
   requestedTicker?: string | null,
   requestedRealityTicker?: string | null,
+  stockInfo: RealityStockInfo[] = [],
 ): DiscoveredStock | null {
-  const catalog = buildResearchableStockCatalog(spot, fut);
-  const requestedReality = requestedRealityTicker ? clean(requestedRealityTicker) : "";
-  const requestedNormal = requestedTicker ? clean(requestedTicker).replace(/^R/, "").replace(/USDT$/, "") : "";
-  const requested = catalog.find((stock) =>
-    (requestedReality && stock.realityTicker === requestedReality) ||
-    (requestedNormal && stock.ticker === requestedNormal),
-  );
-  return requested ?? findStockByMention(mention, catalog);
+  return resolveResearchableStockResult(mention, spot, fut, stockInfo, requestedTicker, requestedRealityTicker).stock;
+}
+
+export interface StockCatalogVerification {
+  visibleAssets: string[];
+  researchableAssets: string[];
+  broken: number;
+  failures: { ticker: string; reason: string }[];
+}
+
+/** Machine-readable invariant: every visible asset must round-trip to research. */
+export function verifyResearchableStockCatalog(catalog: DiscoveredStock[]): StockCatalogVerification {
+  const failures: StockCatalogVerification["failures"] = [];
+  for (const stock of catalog) {
+    if (!stock.realityTicker || stock.sourceSymbol !== stock.realityTicker) failures.push({ ticker: stock.ticker, reason: "MISSING_EXACT_REALITY_SYMBOL" });
+    if (!stock.capabilities["spot-structure"] || !stock.researchFamilies.includes("spot-structure")) failures.push({ ticker: stock.ticker, reason: "MISSING_SPOT_CAPABILITY" });
+    if (resolveStockFromCatalog(stock.realityTicker, catalog, stock.ticker, stock.realityTicker)?.realityTicker !== stock.realityTicker) {
+      failures.push({ ticker: stock.ticker, reason: "RESOLVER_ROUND_TRIP_FAILED" });
+    }
+  }
+  const visibleAssets = catalog.map((stock) => stock.realityTicker).sort();
+  const researchableAssets = catalog
+    .filter((stock) => stock.capabilities["spot-structure"] && stock.researchFamilies.includes("spot-structure"))
+    .map((stock) => stock.realityTicker)
+    .sort();
+  if (visibleAssets.join("\n") !== researchableAssets.join("\n")) {
+    failures.push({ ticker: "*", reason: "VISIBLE_ASSETS_NOT_EQUAL_RESEARCHABLE_ASSETS" });
+  }
+  return { visibleAssets, researchableAssets, broken: failures.length, failures };
 }
 
 function identityTerms(stock: StockIdentityData): string[] {

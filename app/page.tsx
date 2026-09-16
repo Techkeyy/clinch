@@ -6,7 +6,7 @@ import { trackRecent, untrackRecent } from "@/lib/recent";
 import { FreshnessBadge, SkipRecord } from "@/components/research";
 import { StockIdentity } from "@/components/stock-identity";
 import { StockDiscovery } from "@/components/stock-discovery";
-import { displayStockFromMention, stockFromRealityTicker, stockFromTicker, type StockIdentityData } from "@/lib/stocks";
+import { displayStockFromMention, type StockIdentityData } from "@/lib/stocks";
 import { STALE_RUN_MS } from "@/config/thresholds";
 import { decisionWatchEligibility } from "@/lib/watch-ui";
 import { AccountControl, SaveResearchPrompt } from "@/components/account-control";
@@ -22,6 +22,13 @@ function familyLabel(family: string): string {
   if (family === "spot-structure") return "Spot market structure";
   if (family === "perp-positioning") return "Positioning context";
   return family;
+}
+function errorHint(code: string | null): string {
+  if (code === "UNKNOWN_ASSET" || code === "UNSUPPORTED_ASSET") return "Your decision is preserved above. Choose a listed stock or search the supported universe.";
+  if (code === "ASSET_OFFLINE") return "Your decision is preserved above. That stock is currently offline on Bitget; try again when it is online.";
+  if (code === "ASSET_TEMPORARILY_UNAVAILABLE" || code === "PROVIDER_ENDPOINT_FAILURE" || code === "FAILED") return "Your decision is preserved above. Live market data is temporarily unavailable; retry when the provider is reachable.";
+  if (code === "INTERNAL_RESOLVER_BUG") return "Your decision is preserved above. CLINCH hit an internal catalog mismatch; nothing was researched. Please retry.";
+  return "Your decision is preserved above. Retry when the connection or provider is ready.";
 }
 function shortUtc(iso: string | null): string | null {
   if (!iso) return null;
@@ -441,6 +448,7 @@ export default function Page() {
   const [brief, setBrief] = useState<Record<string, unknown> | null>(null);
   const [clarifyQ, setClarifyQ] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [statusLine, setStatusLine] = useState<string | null>(null);
   const [interrupted, setInterrupted] = useState<string | null>(null);
   const [recoveryStatus, setRecoveryStatus] = useState<"active" | "interrupted" | null>(null);
@@ -544,6 +552,7 @@ export default function Page() {
       setBusy(false);
     } else if (e.type === "error") {
       setError(String((d as { message?: unknown }).message ?? (d as { code?: unknown }).code ?? "Research failed."));
+      setErrorCode(typeof (d as { code?: unknown }).code === "string" ? String((d as { code?: unknown }).code) : null);
       setPhase("error");
       setBusy(false);
       setStatusLine(null);
@@ -564,6 +573,7 @@ export default function Page() {
         ? "This research changed in another tab. The latest saved state is now authoritative."
         : typeof j.error === "string" ? j.error : `Request failed (${res.status}).`;
       setError(message);
+      setErrorCode(typeof j.error === "string" ? j.error : null);
       setPhase("error");
       setBusy(false);
       return;
@@ -578,6 +588,7 @@ export default function Page() {
         return;
       }
       setError(typeof j.error === "string" ? j.error : `Request failed (${res.status}).`);
+      setErrorCode(typeof j.error === "string" ? j.error : null);
       setPhase("error");
       setBusy(false);
       return;
@@ -603,6 +614,7 @@ export default function Page() {
     setBusy(true);
     setPhase("streaming");
     setError(null);
+    setErrorCode(null);
     setDeletePending(false);
     setRecoveryStatus(null);
     setInterrupted(null);
@@ -658,6 +670,7 @@ export default function Page() {
     setBrief(null);
     setClarifyQ(null);
     setError(null);
+    setErrorCode(null);
     setStatusLine(null);
     setInterrupted(null);
     setRecoveryStatus(null);
@@ -672,6 +685,7 @@ export default function Page() {
     const deletingId = sessionId;
     setDeleting(true);
     setError(null);
+    setErrorCode(null);
     try {
       const res = await fetch("/api/session/delete", {
         method: "POST",
@@ -703,6 +717,7 @@ export default function Page() {
       await runStream("/api/research/continue", { sessionId, expectedVersion: stateVersion, text });
     } catch {
       setError("Could not reach CLINCH. Check your connection and retry.");
+      setErrorCode("PROVIDER_ENDPOINT_FAILURE");
       setPhase("error");
       setBusy(false);
     }
@@ -865,7 +880,7 @@ export default function Page() {
   const decisionStock = displayStockFromMention(
     String(baseline?.spotSymbol ?? (intent as { resolvedSymbol?: unknown } | null)?.resolvedSymbol ?? (intent as { asset?: unknown } | null)?.asset ?? ""),
     stocks,
-  ) ?? stockFromRealityTicker(spotSymbol) ?? stockFromTicker(String((intent as { asset?: unknown } | null)?.asset ?? ""));
+  ) ?? stocks.find((stock) => stock.realityTicker === spotSymbol) ?? null;
   const hasJourney = phase !== "idle" || Boolean(intent || baseline || brief || sessionId);
   const activeHinge = hinges.length ? hinges[hinges.length - 1] : null;
   const previousHinges = hinges.slice(0, -1);
@@ -934,7 +949,7 @@ export default function Page() {
               </ol>
             </section>
 
-            {error && phase === "error" && <section className="state-panel state-error" aria-label="Error" role="alert"><p className="eyebrow"><span className="state-tag state-failed">FAILED</span> NEEDS ATTENTION</p><h2 className="section-title">Unable to complete the research</h2><p className="body-text">{error}</p><p className="secondary-text">Your decision is preserved above. Retry when the connection or provider is ready.</p><button type="button" className="button-secondary" onClick={start} disabled={busy}>Try Again</button></section>}
+            {error && phase === "error" && <section className="state-panel state-error" aria-label="Error" role="alert"><p className="eyebrow"><span className="state-tag state-failed">FAILED</span> NEEDS ATTENTION</p><h2 className="section-title">Unable to complete the research</h2><p className="body-text">{error}</p><p className="secondary-text">{errorHint(errorCode)}</p><button type="button" className="button-secondary" onClick={start} disabled={busy}>Try Again</button></section>}
 
             {interrupted && <section className="state-panel state-recovery" aria-label="Interrupted research" role="status"><p className="eyebrow">SAVED STATE RESTORED</p><h2 className="section-title">{recoveryStatus === "active" ? "Research is still running" : "Research paused safely"}</h2><p className="body-text">{interrupted}</p><button type="button" className="button-secondary" disabled={busy} onClick={resumeRun}>{COPY.recheck}</button>{resumeNote && <p className="secondary-text">{resumeNote}</p>}</section>}
 

@@ -1,6 +1,7 @@
 import { sameOrigin } from "@/server/stream";
-import { discoverFutures, discoverSpot } from "@/research/bitget/index";
-import { buildResearchableStockCatalog } from "@/lib/stocks";
+import { BitgetError } from "@/research/bitget/errors";
+import { getResearchableStockCatalog } from "@/research/bitget/catalog";
+import { verifyResearchableStockCatalog } from "@/lib/stocks";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,16 +9,13 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   if (!sameOrigin(req)) return Response.json({ error: "FORBIDDEN_ORIGIN" }, { status: 403 });
   try {
-    const spot = await discoverSpot();
-    let futures = [] as Awaited<ReturnType<typeof discoverFutures>>;
-    try {
-      futures = await discoverFutures();
-    } catch {
-      // Spot structure is still a real CLINCH research capability. Positioning
-      // stays absent when the optional futures instrument discovery is down.
-    }
-    const stocks = buildResearchableStockCatalog(spot, futures);
-    const publicStocks = stocks.map(({ companyName, ticker, realityTicker, perpTicker, logoKey, markKind, researchFamilies }) => ({ companyName, ticker, realityTicker, perpTicker, researchFamilies, logoKey, markKind }));
+    const snapshot = await getResearchableStockCatalog();
+    const stocks = snapshot.stocks;
+    const validation = verifyResearchableStockCatalog(stocks);
+    const publicStocks = stocks.map(({ companyName, ticker, realityTicker, perpTicker, logoKey, markKind, researchFamilies, capabilities, sourceSymbol, validatedAt, tradingPeriod, weekendTradable }) => ({
+      companyName, ticker, realityTicker, perpTicker, researchFamilies, capabilities,
+      sourceSymbol, validatedAt, tradingPeriod, weekendTradable, logoKey, markKind,
+    }));
     const cataloguedMarkCount = publicStocks.filter((stock) => stock.markKind === "catalogued").length;
     const fallbackMarkCount = publicStocks.length - cataloguedMarkCount;
     return Response.json({
@@ -25,12 +23,15 @@ export async function GET(req: Request) {
       count: publicStocks.length,
       cataloguedMarkCount,
       fallbackMarkCount,
-      source: "Bitget Reality instruments plus CLINCH spot research capability",
-      generatedAt: new Date().toISOString(),
+      catalogValidation: validation,
+      stale: snapshot.stale,
+      source: "Bitget SPOT instruments joined to Reality stock-info; CLINCH spot research capability",
+      generatedAt: snapshot.generatedAt,
     }, {
-      headers: { "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300" },
+      headers: { "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300", "X-CLINCH-Catalog": snapshot.stale ? "stale" : "fresh" },
     });
-  } catch {
-    return Response.json({ stocks: [], count: 0, error: "STOCK_DISCOVERY_UNAVAILABLE" }, { status: 503 });
+  } catch (error) {
+    const reason = error instanceof BitgetError ? error.code : "PROVIDER_ENDPOINT_FAILURE";
+    return Response.json({ stocks: [], count: 0, error: "STOCK_DISCOVERY_UNAVAILABLE", reason }, { status: 503 });
   }
 }
