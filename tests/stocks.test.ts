@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildResearchableStockCatalog, FEATURED_STOCK_TICKERS, featuredSupportedStocks, findStockByMention, researchableRealityStocks, resolveResearchableStock, stockFromRealityTicker, stockMatchesQuery } from "@/lib/stocks";
+import { buildResearchableStockCatalog, CATALOGUED_LOGO_KEYS, FEATURED_STOCK_TICKERS, featuredSupportedStocks, findStockByMention, researchableRealityStocks, resolveResearchableStock, stockFromRealityTicker, stockMatchesQuery } from "@/lib/stocks";
+import { resolveCataloguedMark } from "@/components/stock-identity";
 import { FutInstrument, SpotInstrument } from "@/research/bitget/endpoints";
 
 const spot = [
@@ -33,9 +34,14 @@ describe("CLINCH stock identity and dynamic universe", () => {
     expect(stock).toMatchObject({ ticker: "ZZZ", companyName: "Stock ZZZ", logoKey: "monogram", markKind: "fallback", perpTicker: null });
   });
 
-  it("keeps featured issuer marks conservative and separates catalogued marks from the fallback", () => {
-    expect(stockFromRealityTicker("RNVDAUSDT")).toMatchObject({ logoKey: "nvidia", markKind: "fallback" });
-    expect(stockFromRealityTicker("RAMZNUSDT")).toMatchObject({ logoKey: "amazon", markKind: "fallback" });
+  it("gives every featured issuer a local recognizable package-backed mark", () => {
+    for (const ticker of FEATURED_STOCK_TICKERS) {
+      const stock = stockFromRealityTicker("R" + ticker + "USDT");
+      expect(stock).toMatchObject({ ticker, markKind: "catalogued" });
+      expect(resolveCataloguedMark(stock!.logoKey)?.path.length).toBeGreaterThan(0);
+    }
+    expect(CATALOGUED_LOGO_KEYS.has("nvidia")).toBe(true);
+    expect(CATALOGUED_LOGO_KEYS.has("amazon")).toBe(true);
     expect(stockFromRealityTicker("RAVGOUSDT")).toMatchObject({ logoKey: "broadcom", markKind: "catalogued" });
     expect(stockFromRealityTicker("RORCLUSDT")).toMatchObject({ logoKey: "monogram", markKind: "fallback" });
   });
@@ -67,6 +73,12 @@ describe("CLINCH stock identity and dynamic universe", () => {
     const catalog = buildResearchableStockCatalog(featuredSpot, []);
     expect(featuredSupportedStocks(catalog).map((stock) => stock.ticker)).toEqual([...FEATURED_STOCK_TICKERS]);
     expect(catalog.every((stock) => stock.researchFamilies.includes("spot-structure"))).toBe(true);
+  });
+
+  it("keeps selected-stock identity on the same canonical mark resolver", () => {
+    const selected = stockFromRealityTicker("RNVDAUSDT");
+    const sameLogoKey = selected && resolveCataloguedMark(selected.logoKey);
+    expect(sameLogoKey?.path).toBe(resolveCataloguedMark("nvidia")?.path);
   });
 
   it("rejects malformed non-Reality symbols instead of inventing support", () => {

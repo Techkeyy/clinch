@@ -1,14 +1,20 @@
 import {
+  siAmd,
+  siApple,
   siBroadcom,
   siCoinbase,
+  siGoogle,
   siIntel,
+  siMeta,
   siNetflix,
+  siNvidia,
   siPalantir,
   siQualcomm,
   siShopify,
+  siTesla,
   siVisa,
 } from "simple-icons";
-import { OFFICIAL_ASSET_FALLBACK_KEYS } from "@/lib/brand-assets";
+import { faAmazon, faMicrosoft } from "@fortawesome/free-brands-svg-icons";
 import type { StockIdentityData } from "@/lib/stocks";
 import { realityTickerLabel } from "@/lib/stocks";
 
@@ -37,7 +43,26 @@ function simpleMark(icon: typeof siBroadcom): BrandMark {
   };
 }
 
+function fontAwesomeMark(icon: typeof faAmazon): BrandMark {
+  const [width, height, , , pathData] = icon.icon;
+  return {
+    title: icon.iconName,
+    source: "Font Awesome Free Brands package",
+    viewBox: "0 0 " + width + " " + height,
+    path: Array.isArray(pathData) ? pathData.join(" ") : pathData,
+    color: "currentColor",
+  };
+}
+
 const CATALOGUED_MARKS: Record<string, BrandMark> = {
+  nvidia: simpleMark(siNvidia),
+  apple: simpleMark(siApple),
+  tesla: simpleMark(siTesla),
+  amazon: fontAwesomeMark(faAmazon),
+  microsoft: fontAwesomeMark(faMicrosoft),
+  google: simpleMark(siGoogle),
+  meta: simpleMark(siMeta),
+  amd: simpleMark(siAmd),
   broadcom: simpleMark(siBroadcom),
   coinbase: simpleMark(siCoinbase),
   intel: simpleMark(siIntel),
@@ -48,12 +73,14 @@ const CATALOGUED_MARKS: Record<string, BrandMark> = {
   visa: simpleMark(siVisa),
 };
 
-function Mark({ stock, catalogued }: { stock: StockIdentityData; catalogued: boolean }) {
-  if (!catalogued) {
+export function resolveCataloguedMark(logoKey: string): BrandMark | undefined {
+  return CATALOGUED_MARKS[logoKey];
+}
+
+function Mark({ stock, mark }: { stock: StockIdentityData; mark: BrandMark | undefined }) {
+  if (!mark) {
     return <span className="stock-logo-monogram" aria-hidden="true">{stock.ticker.slice(0, 2)}</span>;
   }
-  const mark = CATALOGUED_MARKS[stock.logoKey];
-  if (!mark) return null;
   return (
     <svg className="stock-logo-mark" viewBox={mark.viewBox} style={{ color: mark.color }} aria-hidden="true" focusable="false">
       <path fill="currentColor" d={mark.path} />
@@ -63,12 +90,10 @@ function Mark({ stock, catalogued }: { stock: StockIdentityData; catalogued: boo
 
 export function StockIdentity({ stock, size = "md", showToken = true, className = "" }: StockIdentityProps) {
   if (!stock) return null;
-  const mark = stock.markKind === "catalogued" ? CATALOGUED_MARKS[stock.logoKey] : undefined;
+  const mark = stock.markKind === "catalogued" ? resolveCataloguedMark(stock.logoKey) : undefined;
   const catalogued = mark !== undefined;
   const tokenLabel = "Bitget rToken · " + realityTickerLabel(stock);
-  const fallbackReason = OFFICIAL_ASSET_FALLBACK_KEYS.has(stock.logoKey)
-    ? "No company mark is bundled for this issuer; official use permission is not established for this reference UI."
-    : "No catalogued package-backed mark is available for this issuer.";
+  const fallbackReason = "No catalogued package-backed mark is available for this issuer.";
   const markLabel = mark
     ? stock.companyName + " catalogued package-backed brand mark"
     : stock.companyName + " " + stock.ticker + " neutral ticker fallback";
@@ -78,7 +103,7 @@ export function StockIdentity({ stock, size = "md", showToken = true, className 
   return (
     <span className={["stock-identity", "stock-identity-" + size, className].filter(Boolean).join(" ")}>
       <span className={"stock-logo " + (catalogued ? "is-catalogued" : "is-fallback")} role="img" aria-label={markLabel} title={markTitle}>
-        <Mark stock={stock} catalogued={catalogued} />
+        <Mark stock={stock} mark={mark} />
       </span>
       <span className="stock-identity-copy">
         <span className="stock-company">{stock.companyName}</span>

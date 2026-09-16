@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FEATURED_BRAND_ASSET_DECISIONS, OFFICIAL_ASSET_FALLBACK_KEYS } from "@/lib/brand-assets";
+import { FEATURED_BRAND_ASSET_DECISIONS, FEATURED_BRAND_MARK_KEYS } from "@/lib/brand-assets";
 
 describe("featured company asset provenance", () => {
   it("records every requested featured issuer exactly once", () => {
@@ -9,13 +9,17 @@ describe("featured company asset provenance", () => {
     expect(new Set(FEATURED_BRAND_ASSET_DECISIONS.map((decision) => decision.logoKey)).size).toBe(8);
   });
 
-  it("uses neutral fallbacks when official permission is not established", () => {
-    expect(OFFICIAL_ASSET_FALLBACK_KEYS.size).toBe(8);
+  it("records package-backed marks and honest attribution for every featured issuer", () => {
+    expect(FEATURED_BRAND_MARK_KEYS.size).toBe(8);
     for (const decision of FEATURED_BRAND_ASSET_DECISIONS) {
-      expect(decision.localOutcome).toBe("neutral-fallback");
-      expect(decision.officialSourceUrl).toMatch(/^https:\/\/.+/);
-      expect(decision.assetFilename).not.toMatch(/bundled|local file/i);
-      expect(decision.redistributionReferenceUse).toMatch(/not|do not/i);
+      expect(decision.localOutcome).toBe("package-backed");
+      expect(["Simple Icons", "Font Awesome Free Brands"]).toContain(decision.packageName);
+      expect(decision.packageSourceUrl).toMatch(/^https:\/\/.+/);
+      expect(decision.assetFilename).toMatch(/si[A-Z]|fa[A-Z]/);
+      expect(decision.upstreamBrandOwner.length).toBeGreaterThan(0);
+      expect(decision.packageLicense.length).toBeGreaterThan(0);
+      expect(decision.redistributionReferenceUse).toMatch(/package|license|trademark/i);
+      expect(decision.usageCondition).toMatch(/reference|affiliation|endorsement/i);
     }
   });
 });

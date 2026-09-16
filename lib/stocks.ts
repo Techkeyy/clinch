@@ -26,6 +26,14 @@ interface StockDirectoryEntry {
 }
 
 export const CATALOGUED_LOGO_KEYS = new Set([
+  "nvidia",
+  "apple",
+  "tesla",
+  "amazon",
+  "microsoft",
+  "google",
+  "meta",
+  "amd",
   "broadcom",
   "coinbase",
   "intel",
@@ -50,7 +58,7 @@ export function featuredSupportedStocks<T extends StockIdentityData>(stocks: T[]
 // Bitget's instruments endpoint gives CLINCH the live symbol universe, while
 // this small directory supplies human names and stable local marks for the
 // most recognizable U.S. issuers. Unknown issuers remain truthful with a
-// monogram instead of an invented logo or a broken remote image.
+// neutral monogram instead of an invented logo or a broken remote image.
 const DIRECTORY: Record<string, StockDirectoryEntry> = {
   AAPL: { companyName: "Apple", logoKey: "apple", aliases: ["apple inc", "apple"] },
   AMD: { companyName: "AMD", logoKey: "amd", aliases: ["advanced micro devices", "advanced micro device"] },
