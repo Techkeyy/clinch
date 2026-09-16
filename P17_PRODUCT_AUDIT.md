@@ -49,7 +49,7 @@ Remediation: added `turbopack.root: process.cwd()` to `next.config.ts`. Next's c
 ## Claim-versus-reality review
 
 - The shipped research registry contains exactly `spot-structure` and `perp-positioning`; unsupported families are rejected or marked unsupported.
-- Visible copy states that CLINCH is research-only, requires no wallet or exchange account, and never places trades. No order or wallet executor exists in the application routes.
+- Visible copy states that CLINCH researches the decision, requires no wallet or exchange account for guest research, and never places the trade. No order or wallet executor exists in the application routes.
 - Bitget access is direct and read-only through the fixed `api.bitget.com` surface. No user Bitget credential is requested by the core flow.
 - Qwen is optional. If the model provider is unavailable, deterministic intent extraction remains available; model polish is not treated as required evidence.
 - Anonymous session ownership is cookie-bound through an HMAC verifier using `SESSION_PEPPER`; session reads, retries, and deletes verify ownership and same-origin requests.

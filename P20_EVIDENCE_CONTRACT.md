@@ -10,4 +10,4 @@ CLINCH keeps baseline context and researched evidence separate.
 - Optional conditions from skipped families are shown separately under When to re-check. They are future monitoring conditions, not evidence for the present read.
 - A stopped brief uses Remaining uncertainty for residual uncertainty after the Hinge is answered. An unresolved brief keeps the unanswered decision question open.
 
-This contract is intentionally conservative. It does not prevent a supported instrument from being researched when a long-tail issuer has no verified brand mark, and it does not infer a positioning or dislocation conclusion from a baseline snapshot alone.
+This contract is intentionally conservative. It does not prevent a supported instrument from being researched when a long-tail issuer has no catalogued package-backed reference mark, and it does not infer a positioning or dislocation conclusion from a baseline snapshot alone.

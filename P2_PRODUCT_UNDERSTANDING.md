@@ -174,7 +174,7 @@ displayed as structure, not as apologetic vagueness.
 
 Entry: Maya opens the deployed CLINCH link on her phone. First screen: one line on
 what CLINCH does, one input box, three example dilemmas (rNVDA weekend dip first).
-No signup, no wallet button, no API key field, no settings maze. Value is visible in
+No wallet button, no API key field, no settings maze. Value is visible before sign-in in
 seconds: the examples teach the shape of a good question.
 
 Input: Maya types or taps: "rNVDA fell about 4% this weekend. I'm considering buying

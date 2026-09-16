@@ -266,7 +266,7 @@ nullable, created/updated timestamps. `research_steps`: id, session fk, ord,
 kind (hinge/research/skip/stop/note), family nullable, request summary, result
 summary, provenance JSON, started/finished timestamps. Ordered history, skips,
 provenance, freshness, and brief reconstruction all served. No portfolio/account
-schema. Anonymous UUID in httpOnly cookie maps browser to session; no signup, no
+schema. Anonymous UUID in httpOnly cookie maps browser to session; no trading account, no
 personal data; retention minimal per P7.
 
 ## 24. API/actions

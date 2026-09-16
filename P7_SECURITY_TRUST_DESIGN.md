@@ -88,7 +88,7 @@ the session-specific HMAC; compare fixed-length bytes timing-safe; only then may
 content/state be returned or mutated. Unauthorized and nonexistent sessions share
 identical generic external behavior. Same browser (second tab included) shares
 cookies and works; different browser without the cookie cannot read, continue,
-retry, modify, or delete. No signup, no accounts, no wallet, no recovery-by-design
+retry, modify, or delete. No trading account, no wallet, no recovery-by-design
 (sec 33).
 
 First use: no valid `clinch_owner` cookie → server generates 32 random bytes via
@@ -255,7 +255,7 @@ touched.
 
 ## 25. Rate limits
 
-Two layers, no signup, no Redis, no extra service. OWNER layer: 10 new research
+Two layers, optional CLINCH account, no Redis, no extra service. OWNER layer: 10 new research
 starts per rolling hour per anonymous owner, keyed server-side by
 `HMAC-SHA256(SESSION_PEPPER, "owner-rate:v1:" + owner_secret)`; this key is not
 authorization, never returned to the browser, never in normal logs, used only

@@ -8,6 +8,7 @@ import { StockIdentity } from "@/components/stock-identity";
 import { StockDiscovery } from "@/components/stock-discovery";
 import { displayStockFromMention, stockFromRealityTicker, stockFromTicker, type StockIdentityData } from "@/lib/stocks";
 import { STALE_RUN_MS } from "@/config/thresholds";
+import { decisionWatchEligibility } from "@/lib/watch-ui";
 import { AccountControl, SaveResearchPrompt } from "@/components/account-control";
 import { MonitorSetup } from "@/components/monitor-setup";
 
@@ -355,8 +356,8 @@ function SiteHeader({ surface, onNavigate }: { surface: Surface; onNavigate: (su
 function ProductFooter() {
   return (
     <footer className="product-foot reference-footer">
-      <p>Private by design. Guest research stays browser-private; account research stays account-scoped.</p>
-      <p>Research support only. CLINCH never places trades.</p>
+      <p>Private by design. Your research stays with the browser or CLINCH account that owns it.</p>
+      <p>CLINCH researches the decision. It never places the trade.</p>
     </footer>
   );
 }
@@ -917,7 +918,7 @@ export default function Page() {
           <textarea id="dilemma" className="input-box" value={dilemma} onChange={(e) => setDilemma(e.target.value)} placeholder={selectedStock ? COPY.selectedStockPlaceholder : COPY.inputPlaceholder} maxLength={2000} disabled={busy} />
           <div className="input-meta"><span>{dilemma.length > 1700 ? String(dilemma.length) + " / 2000" : "Use your own words. CLINCH will infer the asset and timing."}</span></div>
           <button type="button" className="cta-primary" disabled={busy || dilemma.trim().length < 4} onClick={start}>{busy ? "Researching your decision..." : "Find the Decision Hinge"} <span aria-hidden="true">↗</span></button>
-          <p className="trust-line">CLINCH researches the decision. It does not place trades. <span>No signup.</span></p>
+          <p className="trust-line">CLINCH researches the decision. It never places the trade.</p>
         </section>
 
         {hasJourney && (
@@ -938,7 +939,7 @@ export default function Page() {
             {interrupted && <section className="state-panel state-recovery" aria-label="Interrupted research" role="status"><p className="eyebrow">SAVED STATE RESTORED</p><h2 className="section-title">{recoveryStatus === "active" ? "Research is still running" : "Research paused safely"}</h2><p className="body-text">{interrupted}</p><button type="button" className="button-secondary" disabled={busy} onClick={resumeRun}>{COPY.recheck}</button>{resumeNote && <p className="secondary-text">{resumeNote}</p>}</section>}
 
             {brief && <DecisionAnswer brief={brief} dilemma={dilemma} activeHinge={activeHinge} findings={findings} skips={skips} historyList={historyList} stopReason={stopReason} terminalStatus={terminalStatus} spotSymbol={spotSymbol} spot={spot} perp={perp} assetName={decisionStock?.companyName ?? String((intent as { asset?: unknown } | null)?.asset ?? "This stock")} />}
-            {brief && sessionId && readLabel(brief.read ?? read, terminalStatus) !== "Slightly favorable" && process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && <MonitorSetup sessionId={sessionId} assetLabel={decisionStock?.companyName ?? spotSymbol} currentRead={readLabel(brief.read ?? read, terminalStatus)} />}
+            {brief && sessionId && process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && <MonitorSetup sessionId={sessionId} assetLabel={decisionStock?.companyName ?? spotSymbol} currentRead={readLabel(brief.read ?? read, terminalStatus)} targetReached={decisionWatchEligibility(readLabel(brief.read ?? read, terminalStatus)) === "target-reached"} />}
 
             {(intent || read || activeHinge) && !brief && <section className="result-overview" aria-label="Research result"><div className="result-overview-heading"><div><p className="eyebrow">{brief ? "RESEARCH RESULT" : "RESULT IN VIEW"}</p><h2 className="section-title">{brief ? "A concise read, with the path behind it" : "The research path is visible as it forms"}</h2></div>{brief && <span className="brief-complete"><span aria-hidden="true">✓</span> Saved</span>}</div><div className="result-grid"><article className="result-block"><p className="eyebrow">YOUR DECISION</p>{decisionStock ? <StockIdentity stock={decisionStock} size="lg" /> : <strong className="result-value display">Reading</strong>}<p className="result-note">{intent ? decisionSummary(intent, decisionStock?.ticker ?? (intent as { asset?: string }).asset ?? null) : "Understanding the language of the decision."}</p></article><article className="result-block result-read-block"><p className="eyebrow">CURRENT READ</p><strong className="result-value display">{brief && typeof (brief as { read?: unknown }).read === "string" ? String((brief as { read: string }).read) : read ? readLabel(read, terminalStatus) : "Still evaluating"}</strong><p className="result-note">Not a prediction. The human decides.</p></article><article className="result-block result-hinge-block"><p className="eyebrow">DECISION HINGE</p>{decisionStock && <StockIdentity stock={decisionStock} size="sm" showToken={false} />}<strong className="result-hinge-question display">{resultHinge}</strong>{activeHinge ? <><p className="result-note"><strong>Why it matters.</strong> {activeHinge.why}</p><p className="result-note result-note-muted"><strong>What would change the read.</strong> {activeHinge.changes}</p></> : unresolved && <p className="result-note"><strong>Why it matters.</strong> {String((brief as { why?: unknown } | null)?.why ?? stopReason ?? "An answerable research question was not established.")}</p>}</article></div></section>}
 

@@ -72,7 +72,7 @@ test.describe("P20 canonical stock selection", () => {
     await openApp(page);
 
     await expect(page.getByText("CHOOSE A STOCK · OPTIONAL")).toBeVisible();
-    await expect(page.getByText("Search the supported Bitget universe, or describe the stock directly in your decision.")).toBeVisible();
+    await expect(page.getByText("Search supported tokenized stocks on Bitget, or describe the stock directly in your decision.")).toBeVisible();
     const orderIsCorrect = await page.locator(".workspace").evaluate((workspace) => {
       const discovery = workspace.querySelector(".stock-discovery");
       const composer = workspace.querySelector(".decision-composer");

@@ -46,4 +46,4 @@ export function renderStructuredBrief(b: BriefSections): string {
   ];
   return lines.join("\n");
 }
-export const HUMAN_DEC_LINE = "Research finished. The trading decision is yours. CLINCH never places trades.";
+export const HUMAN_DEC_LINE = "Research finished. The trading decision is yours. CLINCH researches the decision. It never places the trade.";

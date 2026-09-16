@@ -7,6 +7,7 @@ type MonitorSetupProps = {
   sessionId: string;
   assetLabel: string;
   currentRead: string;
+  targetReached?: boolean;
 };
 
 type ConnectResponse = { deepLink?: string; expiresInSeconds?: number; error?: string };
@@ -20,7 +21,7 @@ function errorCopy(error: string | undefined): string {
   return "We could not start monitoring yet. Please try again.";
 }
 
-export function MonitorSetup({ sessionId, assetLabel, currentRead }: MonitorSetupProps) {
+export function MonitorSetup({ sessionId, assetLabel, currentRead, targetReached = false }: MonitorSetupProps) {
   const { isLoaded, isSignedIn } = useAuth();
   const [claiming, setClaiming] = useState(false);
   const [claimMessage, setClaimMessage] = useState<string | null>(null);
@@ -106,9 +107,14 @@ export function MonitorSetup({ sessionId, assetLabel, currentRead }: MonitorSetu
         <div><dt>Current read</dt><dd>{currentRead}</dd></div>
         <div><dt>Target</dt><dd>Slightly favorable</dd></div>
         <div><dt>Watching</dt><dd>{assetLabel}</dd></div>
-        <div><dt>Notification</dt><dd>Telegram</dd></div>
+        <div><dt>Notification</dt><dd>{targetReached ? "Not needed for this result" : "Telegram"}</dd></div>
       </dl>
-      {!isSignedIn ? (
+      {targetReached ? (
+        <div className="monitor-target-note" role="status">
+          <p className="eyebrow">TARGET ALREADY REACHED</p>
+          <p className="body-text">This decision is already slightly favorable, so Decision Watch has no later favorable change to wait for.</p>
+        </div>
+      ) : !isSignedIn ? (
         <div className="monitor-actions">
           <SignInButton mode="modal"><button type="button" className="cta-primary">Sign in to monitor <span aria-hidden="true">↗</span></button></SignInButton>
           <p className="secondary-text">Your guest research will be claimed safely after sign-in.</p>

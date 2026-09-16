@@ -75,7 +75,7 @@ Fresh public desktop browser verification passed against the HTTPS alias:
 ## Production P19 clean-user E2E
 
 - Fresh desktop context: passed.
-- No signup, wallet, exchange account, or user API key: passed.
+- No wallet, exchange account, or user API key required for guest research: passed.
 - Supported RNVDA dilemma: passed.
 - Real Qwen intent: passed through the production adapter path.
 - Real Bitget baseline and targeted research: passed.

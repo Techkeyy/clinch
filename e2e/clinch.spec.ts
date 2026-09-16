@@ -8,7 +8,7 @@ test.describe("CLINCH core loop", () => {
     await expect(page.getByRole("heading", { name: "Research a Decision" })).toBeVisible();
     await expect(page.getByLabel("Describe the trade you are considering")).toBeVisible();
     await expect(page.getByRole("button", { name: "Find the Decision Hinge" })).toBeVisible();
-    await expect(page.getByText("CLINCH researches the decision. It does not place trades.")).toBeVisible();
+    await expect(page.getByText("CLINCH researches the decision. It never places the trade.")).toBeVisible();
   });
 
   test("full dilemma-to-brief run with real Bitget evidence", async ({ page }) => {

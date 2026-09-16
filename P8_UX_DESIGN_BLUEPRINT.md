@@ -371,7 +371,7 @@ opportunity or wait?" CTA: "Check this trade". Restatement: "Your decision",
 about RNVDA?" Hinge why: "Why this matters". Skip: "Skipped", "Why skipped".
 Stop: "CLINCH is stopping here." Unresolved: "Cannot resolve with current
 evidence". Final notice: "Research finished. The trading decision is yours.
-CLINCH never places trades." Freshness: "Observed 23:04 UTC", "14 min old",
+CLINCH researches the decision. It never places the trade." Freshness: "Observed 23:04 UTC", "14 min old",
 "Unavailable". Resume: "Re-check now". Delete: "Delete this research". Tone
 throughout: calm, specific, plain, confident about process, humble about
 markets. No hype verbs, no bro slang, no jargon, no long dashes.

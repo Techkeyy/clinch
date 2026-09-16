@@ -10,7 +10,7 @@ export const COPY = {
     "It has been drifting lower tonight and I'm considering a small entry. Should I wait?",
   inputLabel: "Describe the trade you are considering",
   ctaCheck: "Find the Decision Hinge",
-  trustLine: "CLINCH researches the decision. It does not place trades.",
+  trustLine: "CLINCH researches the decision. It never places the trade.",
   restatementTitle: "Your decision",
   confirmHint: "Is that right?",
   clarifierQuestion: "What are you deciding about this asset?",
@@ -28,9 +28,9 @@ export const COPY = {
   stopStatement:
     "CLINCH is stopping here. The checks still available are unlikely to change this read.",
   unresolvedTitle: "Cannot resolve with current evidence",
-  finalNotice: "Research finished. The trading decision is yours. CLINCH never places trades.",
+  finalNotice: "Research finished. The trading decision is yours. CLINCH researches the decision. It never places the trade.",
   privacyNote:
-    "Private by design: no account, no wallet. Research lives in this browser session for 30 days; clearing site data removes access.",
+    "Private by design: guest research stays in this browser; account research is saved to the signed-in CLINCH account. Clearing site data removes guest access.",
   recheck: "Re-check now",
   reviewBrief: "Review saved brief",
   deleteResearch: "Delete this research",

@@ -51,10 +51,10 @@ test.describe("P20 targeted corrections", () => {
       });
     });
     await page.goto(`/?s=${oldId}#app`);
-    await expect(page.getByText("FINAL DECISION BRIEF")).toBeVisible();
+    await expect(page.getByRole("region", { name: "CLINCH answer" })).toBeVisible();
     await page.getByRole("button", { name: "Start another decision" }).click();
     await expect(page).not.toHaveURL(new RegExp(`s=${oldId}`));
-    await expect(page.getByText("FINAL DECISION BRIEF")).toBeHidden();
+    await expect(page.getByRole("region", { name: "CLINCH answer" })).toBeHidden();
     await page.getByLabel("Describe the trade you are considering").fill("NVIDIA is drifting lower. Should I wait?");
     await page.getByRole("button", { name: "Find the Decision Hinge" }).click();
     await expect(page).toHaveURL(new RegExp(`s=${newId}`));

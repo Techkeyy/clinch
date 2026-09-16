@@ -92,11 +92,11 @@ export function StockIdentity({ stock, size = "md", showToken = true, className 
   const verified = Boolean(mark);
   const tokenLabel = `Bitget rToken · ${realityTickerLabel(stock)}`;
   const markLabel = verified
-    ? `${stock.companyName} verified brand mark`
-    : `${stock.ticker} ticker monogram fallback; no verified brand mark is available`;
+    ? `${stock.companyName} catalogued package-backed brand mark`
+    : `${stock.ticker} ticker monogram fallback; no package-backed brand mark is available`;
   const markTitle = verified
-    ? `${mark?.title} verified brand mark · ${mark?.source}`
-    : "Fallback ticker monogram. No verified brand mark is available for this issuer.";
+    ? `${mark?.title} catalogued package mark · ${mark?.source}`
+    : "Fallback ticker monogram. No package-backed brand mark is available for this issuer.";
   return (
     <span className={`stock-identity stock-identity-${size} ${className}`.trim()}>
       <span className={`stock-logo ${verified ? "is-verified" : "is-fallback"}`} role="img" aria-label={markLabel} title={markTitle}>

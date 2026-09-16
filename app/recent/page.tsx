@@ -153,7 +153,7 @@ export default function RecentPage() {
           </section>
         )}
       </main>
-      <footer className="product-foot"><p>Private by design. Guest research stays browser-private; account research stays account-scoped.</p><p>Research support only. CLINCH never places trades.</p></footer>
+      <footer className="product-foot"><p>{accountMode ? "Saved privately to your CLINCH account." : "Stored privately in this browser."}</p><p>CLINCH researches the decision. It never places the trade.</p></footer>
     </div>
   );
 }
