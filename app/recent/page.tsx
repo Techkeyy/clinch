@@ -7,6 +7,7 @@ import { displayStockFromMention, type StockIdentityData } from "@/lib/stocks";
 import { AccountControl } from "@/components/account-control";
 
 interface RecentItem { id: string; stock: StockIdentityData | null; decision: string; read: string; status: string; updatedAt: string }
+interface WatchItem { id: string; sourceSessionId: string; assetLabel: string; currentRead: string; targetRead: string; status: string; notificationChannel: string; humanKeyQuestion: string; stateVersion: number; lastCheckedAt: string | null; nextCheckAt: string | null }
 
 function shortDate(iso: string): string {
   const d = new Date(iso);
@@ -24,10 +25,36 @@ function readLabel(read: string): string {
   return labels[read] ?? (read || "Not enough evidence yet");
 }
 
+function WatchList({ watches, onChange }: { watches: WatchItem[]; onChange: (watch: WatchItem) => void }) {
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  if (!watches.length) return null;
+  const action = async (watch: WatchItem, next: "pause" | "resume" | "cancel") => {
+    setBusyId(watch.id);
+    setMessage(null);
+    try {
+      const response = await fetch("/api/watches/" + encodeURIComponent(watch.id), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: next, expectedVersion: watch.stateVersion }),
+      });
+      const data = await response.json() as { error?: string; watch?: Partial<WatchItem> };
+      if (!response.ok || !data.watch) {
+        setMessage(data.error === "VERSION_CONFLICT" ? "This watch changed in another tab. Refresh to get the latest state." : "That watch action did not complete.");
+        return;
+      }
+      onChange({ ...watch, ...data.watch } as WatchItem);
+    } catch { setMessage("That watch action did not complete."); }
+    finally { setBusyId(null); }
+  };
+  return <section className="watch-list" aria-label="Decision Watches"><div className="section-header-row"><div><p className="eyebrow">DECISION WATCH</p><h2 className="section-title">Watching your decisions</h2></div><span className="count-label">{watches.length} {watches.length === 1 ? "watch" : "watches"}</span></div><div className="watch-list-items">{watches.map((watch) => <article className="watch-row" key={watch.id}><div className="watch-row-main"><p className="eyebrow">{watch.status === "TRIGGERED" ? "TARGET REACHED" : watch.status === "PAUSED" ? "PAUSED" : watch.status === "CANCELLED" ? "STOPPED" : "ACTIVE"}</p><h3 className="watch-asset display">{watch.assetLabel}</h3><p className="recent-decision">{watch.humanKeyQuestion}</p></div><div className="watch-row-read"><span className="secondary-text">Current read</span><strong>{readLabel(watch.currentRead)}</strong><span className="secondary-text">Target: {readLabel(watch.targetRead)}</span><span className="secondary-text">Telegram</span></div><div className="watch-row-actions"><a className="button-secondary" href={"/?s=" + encodeURIComponent(watch.sourceSessionId) + "#app"}>Open research</a>{watch.status === "ACTIVE" && <button type="button" className="button-plain" disabled={busyId === watch.id} onClick={() => action(watch, "pause")}>Pause</button>}{watch.status === "PAUSED" && <button type="button" className="button-secondary" disabled={busyId === watch.id} onClick={() => action(watch, "resume")}>Resume</button>}{watch.status !== "TRIGGERED" && watch.status !== "CANCELLED" && <button type="button" className="quiet-danger" disabled={busyId === watch.id} onClick={() => action(watch, "cancel")}>Stop</button>}</div></article>)}</div>{message && <p className="secondary-text" role="status">{message}</p>}</section>;
+}
+
 export default function RecentPage() {
   const [items, setItems] = useState<RecentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [accountMode, setAccountMode] = useState(false);
+  const [watches, setWatches] = useState<WatchItem[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,6 +99,19 @@ export default function RecentPage() {
     return () => { cancelled = true; };
   }, []);
 
+  useEffect(() => {
+    if (!accountMode) return;
+    let cancelled = false;
+    fetch("/api/watches")
+      .then(async (res) => {
+        if (!res.ok) return;
+        const data = await res.json() as { items?: WatchItem[] };
+        if (!cancelled) setWatches(Array.isArray(data.items) ? data.items : []);
+      })
+      .catch(() => { /* research history remains available if watches are unavailable */ });
+    return () => { cancelled = true; };
+  }, [accountMode]);
+
   return (
     <div className="app-shell">
       <header className="site-header reference-header">
@@ -96,6 +136,7 @@ export default function RecentPage() {
             <a className="cta-primary" href="/#app">Start a decision <span aria-hidden="true">↗</span></a>
           </section>
         )}
+        {accountMode && <WatchList watches={watches} onChange={(next) => setWatches((current) => current.map((watch) => watch.id === next.id ? next : watch))} />}
         {!loading && items.length > 0 && (
           <section className="recent-list" aria-label="Saved research sessions">
             {items.map((item) => (

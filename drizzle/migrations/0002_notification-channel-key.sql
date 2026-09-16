@@ -1,0 +1,2 @@
+ALTER TABLE "notification_connections" DROP CONSTRAINT "notification_connections_account_user_id_unique";--> statement-breakpoint
+ALTER TABLE "notification_connections" ADD CONSTRAINT "notification_connections_account_channel_unique" UNIQUE("account_user_id","channel");

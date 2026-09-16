@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, jsonb, uuid, bigint, index } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, jsonb, uuid, bigint, index, unique } from "drizzle-orm/pg-core";
 
 // Minimal two-table model (P6 sec 23). Guest ownership remains verifier-based;
 // account ownership is nullable so existing anonymous sessions are preserved.
@@ -39,3 +39,68 @@ export const rateCounters = pgTable("rate_counters", {
   windowStartMs: bigint("window_start_ms", { mode: "number" }).notNull(),
   count: integer("count").notNull(),
 });
+
+export const notificationConnections = pgTable("notification_connections", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountUserId: text("account_user_id").notNull(),
+  channel: text("channel").notNull(),
+  address: text("address").notNull(),
+  status: text("status").notNull().default("CONNECTED"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("notification_connections_account_channel_unique").on(table.accountUserId, table.channel),
+  index("notification_connections_account_idx").on(table.accountUserId),
+]);
+
+export const notificationConnectionTokens = pgTable("notification_connection_tokens", {
+  tokenHash: text("token_hash").primaryKey(),
+  accountUserId: text("account_user_id").notNull(),
+  channel: text("channel").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index("notification_tokens_account_idx").on(table.accountUserId)]);
+
+export const decisionWatches = pgTable("decision_watches", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  accountUserId: text("account_user_id").notNull(),
+  sourceSessionId: uuid("source_session_id").notNull().references(() => researchSessions.id, { onDelete: "cascade" }),
+  assetLabel: text("asset_label").notNull(),
+  realityTicker: text("reality_ticker").notNull(),
+  perpTicker: text("perp_ticker"),
+  originalQuestion: text("original_question").notNull(),
+  hinge: text("hinge"),
+  humanKeyQuestion: text("human_key_question").notNull(),
+  researchFamily: text("research_family").notNull(),
+  startingRead: text("starting_read").notNull(),
+  currentRead: text("current_read").notNull(),
+  targetRead: text("target_read").notNull(),
+  status: text("status").notNull().default("ACTIVE"),
+  notificationChannel: text("notification_channel").notNull(),
+  plan: jsonb("plan").notNull(),
+  snapshot: jsonb("snapshot").notNull(),
+  workflowRunId: text("workflow_run_id"),
+  stateVersion: integer("state_version").notNull().default(0),
+  nextCheckAt: timestamp("next_check_at", { withTimezone: true }),
+  lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
+  triggeredAt: timestamp("triggered_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("decision_watches_account_idx").on(table.accountUserId),
+  index("decision_watches_status_idx").on(table.status),
+]);
+
+export const watchNotifications = pgTable("watch_notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  watchId: uuid("watch_id").notNull().references(() => decisionWatches.id, { onDelete: "cascade" }),
+  transitionKey: text("transition_key").notNull().unique(),
+  channel: text("channel").notNull(),
+  status: text("status").notNull().default("CLAIMED"),
+  attempts: integer("attempts").notNull().default(0),
+  providerMessageId: text("provider_message_id"),
+  lastError: text("last_error"),
+  claimedAt: timestamp("claimed_at", { withTimezone: true }).notNull().defaultNow(),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+}, (table) => [index("watch_notifications_watch_idx").on(table.watchId)]);
