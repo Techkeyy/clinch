@@ -18,12 +18,12 @@ export async function GET(req: Request) {
     }
     const stocks = buildResearchableStockCatalog(spot, futures);
     const publicStocks = stocks.map(({ companyName, ticker, realityTicker, perpTicker, logoKey, markKind, researchFamilies }) => ({ companyName, ticker, realityTicker, perpTicker, researchFamilies, logoKey, markKind }));
-    const verifiedMarkCount = publicStocks.filter((stock) => stock.markKind === "verified").length;
-    const fallbackMarkCount = publicStocks.length - verifiedMarkCount;
+    const cataloguedMarkCount = publicStocks.filter((stock) => stock.markKind === "catalogued").length;
+    const fallbackMarkCount = publicStocks.length - cataloguedMarkCount;
     return Response.json({
       stocks: publicStocks,
       count: publicStocks.length,
-      verifiedMarkCount,
+      cataloguedMarkCount,
       fallbackMarkCount,
       source: "Bitget Reality instruments plus CLINCH spot research capability",
       generatedAt: new Date().toISOString(),

@@ -9,7 +9,7 @@ export interface StockIdentityData {
   perpTicker?: string | null;
 }
 
-export type StockMarkKind = "verified" | "fallback";
+export type StockMarkKind = "catalogued" | "fallback";
 
 export interface DiscoveredStock extends StockIdentityData {
   realityTicker: string;
@@ -25,27 +25,19 @@ interface StockDirectoryEntry {
   aliases?: string[];
 }
 
-export const VERIFIED_LOGO_KEYS = new Set([
-  "apple",
-  "amd",
-  "amazon",
+export const CATALOGUED_LOGO_KEYS = new Set([
   "broadcom",
   "coinbase",
-  "google",
   "intel",
-  "meta",
-  "microsoft",
   "netflix",
-  "nvidia",
   "palantir",
   "qualcomm",
   "shopify",
-  "tesla",
   "visa",
 ]);
 
 export function stockMarkKind(logoKey: string): StockMarkKind {
-  return VERIFIED_LOGO_KEYS.has(logoKey) ? "verified" : "fallback";
+  return CATALOGUED_LOGO_KEYS.has(logoKey) ? "catalogued" : "fallback";
 }
 
 export const FEATURED_STOCK_TICKERS = ["NVDA", "AAPL", "TSLA", "AMZN", "MSFT", "GOOGL", "META", "AMD"] as const;

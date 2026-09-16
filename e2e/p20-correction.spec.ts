@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 const STOCKS = [
-  { companyName: "NVIDIA", ticker: "NVDA", realityTicker: "RNVDAUSDT", logoKey: "nvidia", markKind: "verified", perpTicker: "NVDAUSDT" },
-  { companyName: "Apple", ticker: "AAPL", realityTicker: "RAAPLUSDT", logoKey: "apple", markKind: "verified", perpTicker: null },
+  { companyName: "NVIDIA", ticker: "NVDA", realityTicker: "RNVDAUSDT", logoKey: "nvidia", markKind: "fallback", perpTicker: "NVDAUSDT" },
+  { companyName: "Apple", ticker: "AAPL", realityTicker: "RAAPLUSDT", logoKey: "apple", markKind: "fallback", perpTicker: null },
   { companyName: "Stock ZZZ", ticker: "ZZZ", realityTicker: "RZZZUSDT", logoKey: "monogram", markKind: "fallback", perpTicker: null },
 ];
 
@@ -11,7 +11,7 @@ test.describe("P20 targeted corrections", () => {
     await page.route("**/api/stocks", async (route) => route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ stocks: STOCKS, count: STOCKS.length, verifiedMarkCount: 2, fallbackMarkCount: 1, source: "Bitget Reality instruments plus CLINCH spot research capability" }),
+      body: JSON.stringify({ stocks: STOCKS, count: STOCKS.length, cataloguedMarkCount: 0, fallbackMarkCount: 3, source: "Bitget Reality instruments plus CLINCH spot research capability" }),
     }));
     await page.goto("/#app");
     await expect(page.getByRole("heading", { name: "Choose a stock" })).toBeVisible();

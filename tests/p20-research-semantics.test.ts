@@ -94,7 +94,7 @@ describe("P20 owner research semantics", () => {
       realityTicker: "RNVDAUSDT",
       perpTicker: "NVDAUSDT",
     });
-    expect(stock?.markKind).toBe("verified");
+    expect(stock?.markKind).toBe("fallback");
   });
 
   it("selects a capable spot hinge for the owner wait scenario", () => {

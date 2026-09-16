@@ -1,14 +1,14 @@
 import { expect, Page, test } from "@playwright/test";
 
 const STOCKS = [
-  { companyName: "NVIDIA", ticker: "NVDA", logoKey: "nvidia", markKind: "verified" },
-  { companyName: "Apple", ticker: "AAPL", logoKey: "apple", markKind: "verified" },
-  { companyName: "Tesla", ticker: "TSLA", logoKey: "tesla", markKind: "verified" },
-  { companyName: "Amazon", ticker: "AMZN", logoKey: "amazon", markKind: "verified" },
-  { companyName: "Microsoft", ticker: "MSFT", logoKey: "microsoft", markKind: "verified" },
-  { companyName: "Alphabet", ticker: "GOOGL", logoKey: "google", markKind: "verified" },
-  { companyName: "Meta Platforms", ticker: "META", logoKey: "meta", markKind: "verified" },
-  { companyName: "AMD", ticker: "AMD", logoKey: "amd", markKind: "verified" },
+  { companyName: "NVIDIA", ticker: "NVDA", logoKey: "nvidia", markKind: "fallback" },
+  { companyName: "Apple", ticker: "AAPL", logoKey: "apple", markKind: "fallback" },
+  { companyName: "Tesla", ticker: "TSLA", logoKey: "tesla", markKind: "fallback" },
+  { companyName: "Amazon", ticker: "AMZN", logoKey: "amazon", markKind: "fallback" },
+  { companyName: "Microsoft", ticker: "MSFT", logoKey: "microsoft", markKind: "fallback" },
+  { companyName: "Alphabet", ticker: "GOOGL", logoKey: "google", markKind: "fallback" },
+  { companyName: "Meta Platforms", ticker: "META", logoKey: "meta", markKind: "fallback" },
+  { companyName: "AMD", ticker: "AMD", logoKey: "amd", markKind: "fallback" },
   { companyName: "Stock ZZZ", ticker: "ZZZ", logoKey: "monogram", markKind: "fallback" },
 ].map((stock) => ({ ...stock, realityTicker: `R${stock.ticker}USDT`, perpTicker: null }));
 
@@ -19,7 +19,7 @@ async function mockStocks(page: Page, stocks = STOCKS) {
     body: JSON.stringify({
       stocks,
       count: stocks.length,
-      verifiedMarkCount: stocks.filter((stock) => stock.markKind === "verified").length,
+      cataloguedMarkCount: stocks.filter((stock) => stock.markKind === "catalogued").length,
       fallbackMarkCount: stocks.filter((stock) => stock.markKind === "fallback").length,
       source: "Bitget Reality instruments plus CLINCH spot research capability",
     }),

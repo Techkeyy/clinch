@@ -33,9 +33,10 @@ describe("CLINCH stock identity and dynamic universe", () => {
     expect(stock).toMatchObject({ ticker: "ZZZ", companyName: "Stock ZZZ", logoKey: "monogram", markKind: "fallback", perpTicker: null });
   });
 
-  it("classifies package-backed marks separately from the fallback", () => {
-    expect(stockFromRealityTicker("RNVDAUSDT")).toMatchObject({ logoKey: "nvidia", markKind: "verified" });
-    expect(stockFromRealityTicker("RAMZNUSDT")).toMatchObject({ logoKey: "amazon", markKind: "verified" });
+  it("keeps featured issuer marks conservative and separates catalogued marks from the fallback", () => {
+    expect(stockFromRealityTicker("RNVDAUSDT")).toMatchObject({ logoKey: "nvidia", markKind: "fallback" });
+    expect(stockFromRealityTicker("RAMZNUSDT")).toMatchObject({ logoKey: "amazon", markKind: "fallback" });
+    expect(stockFromRealityTicker("RAVGOUSDT")).toMatchObject({ logoKey: "broadcom", markKind: "catalogued" });
     expect(stockFromRealityTicker("RORCLUSDT")).toMatchObject({ logoKey: "monogram", markKind: "fallback" });
   });
 

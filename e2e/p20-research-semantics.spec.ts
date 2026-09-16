@@ -56,7 +56,7 @@ test.describe("P20 research semantics presentation", () => {
     await page.route("**/api/stocks", async (route) => route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ stocks: [], count: 0, verifiedMarkCount: 0, fallbackMarkCount: 0 }),
+      body: JSON.stringify({ stocks: [], count: 0, cataloguedMarkCount: 0, fallbackMarkCount: 0 }),
     }));
     await page.route("**/api/research/start", async (route) => route.fulfill({
       status: 200,
@@ -153,7 +153,7 @@ test.describe("P20 research semantics presentation", () => {
     await page.route("**/api/stocks", async (route) => route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ stocks: [], count: 0, verifiedMarkCount: 0, fallbackMarkCount: 0 }),
+      body: JSON.stringify({ stocks: [], count: 0, cataloguedMarkCount: 0, fallbackMarkCount: 0 }),
     }));
     await page.route("**/api/research/start", async (route) => route.fulfill({
       status: 200,
