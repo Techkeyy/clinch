@@ -101,7 +101,7 @@ export default function RecentPage() {
             {items.map((item) => (
               <article className="recent-row" key={item.id}>
                 <div className="recent-row-main">
-                  <p className="eyebrow">{item.status === "stopped" ? "COMPLETED RESEARCH" : "SAVED RESEARCH"}</p>
+                    <p className="eyebrow">{item.status === "stopped" ? "COMPLETED RESEARCH" : item.status === "unresolved" ? "UNRESOLVED RESEARCH" : "SAVED RESEARCH"}</p>
                   {item.stock ? <StockIdentity stock={item.stock} size="lg" /> : <h2 className="recent-asset display">Decision</h2>}
                   <p className="recent-decision">{item.decision}</p>
                 </div>

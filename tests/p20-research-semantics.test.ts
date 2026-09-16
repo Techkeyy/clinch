@@ -168,6 +168,74 @@ describe("P20 owner research semantics", () => {
     expect(persisted.length).toBeGreaterThan(0);
   });
 
+  it("distinguishes an answerable Hinge with inconclusive completed research", async () => {
+    const emitted: { type: string; data: unknown }[] = [];
+    const persisted: { kind: string; family: string | null; summary: unknown }[] = [];
+    const ticker = {
+      code: "00000", msg: "ok",
+      data: [{
+        category: "SPOT", symbol: "RNVDAUSDT", ts: "1789167738062",
+        lastPrice: "219.50", openPrice24h: "218.439", highPrice24h: "220.01",
+        lowPrice24h: "218.05", ask1Price: "219.50", bid1Price: "219.48",
+        bid1Size: "481", ask1Size: "50", price24hPcnt: "-0.00091",
+        volume24h: "50132984.0882", turnover24h: "10970250216.8368",
+      }],
+    };
+    const candles = {
+      code: "00000", msg: "success",
+      data: [
+        ["1789135200000", "221.62", "222", "219.3", "219.47", "17293322.898607", "3819018733.558667538"],
+        ["1789138800000", "219.4299", "220.575", "219.3616", "219.685", "9599350.251405", "2111323326.7473678796"],
+        ["1789142400000", "219.68", "219.9699", "218.65", "219.105", "7384733.661676", "1619322972.0067763984"],
+      ],
+    };
+    const fetchImpl = (async (url: string) => {
+      if (url.includes("/tickers?")) return { status: 200, json: async () => ticker };
+      if (url.includes("/candles?")) return { status: 200, json: async () => candles };
+      return { status: 200, json: async () => ({ code: "40404", msg: "Request URL NOT FOUND" }) };
+    }) as unknown as typeof fetch;
+    const result = await driveLoop("inconclusive", {
+      asset: "NVDA", spotSymbol: "RNVDAUSDT", perpSymbol: "NVDAUSDT",
+      action: "wait", read: "undecided", resolvedTopics: [],
+      facts: {
+        spot: { last: 355.85, windowMovePcnt: -1.04, spreadBps: 2.81, spreadWide: false, supportLevel: 354.05, resistanceLevel: 362.39 },
+      },
+      data: { "spot-structure": "fresh", "perp-positioning": "fresh" },
+      context: "overnight", known: [],
+    }, {
+      store: {} as never,
+      fetchImpl,
+      onEvent: (event) => emitted.push(event),
+      persistStep: async (kind, family, summary) => { persisted.push({ kind, family, summary }); },
+    });
+    expect(result.terminal).toBe("unresolved");
+    expect(result.terminalReasonCode).toBe("INCONCLUSIVE_EVIDENCE");
+    expect(result.hingeHistory).toHaveLength(1);
+    expect(result.hingeHistory[0]?.topic).toBe("structure-direction");
+    expect(persisted.some((step) => step.kind === "research" && step.family === "spot-structure")).toBe(true);
+    expect(emitted.some((event) => event.type === "research")).toBe(true);
+    expect(result.skips.find((skip) => skip.check === "perp-positioning")?.reason).toMatch(/unlikely to answer whether the recent price drop had stabilized/i);
+    expect(result.stopReason).toMatch(/not provide enough directional evidence/i);
+    const brief = assembleBrief({
+      intent: {
+        asset: "NVDA", resolvedSymbol: "RNVDAUSDT", action: "wait",
+        timeframeContext: "overnight", decisionQuestion: "Should I wait before entering NVDA?",
+        clarificationNeeded: false, clarificationQuestion: null,
+      },
+      read: result.read,
+      hingeHistory: result.hingeHistory,
+      skips: result.skips,
+      uncertainty: result.uncertainty,
+      terminal: result.terminal!,
+      terminalReasonCode: result.terminalReasonCode!,
+      facts: result.facts,
+    }, "RNVDAUSDT");
+    expect(brief.terminalReasonCode).toBe("INCONCLUSIVE_EVIDENCE");
+    expect(brief.completed).toHaveLength(1);
+    expect(brief.skipped[0]?.reason).toMatch(/unlikely to answer whether the recent price drop had stabilized/i);
+    expect(brief.why).toMatch(/not provide enough directional evidence/i);
+  });
+
   it("keeps deliberate STOP distinct from unresolved", async () => {
     const result = await driveLoop("stopped", {
       asset: "NVDA",

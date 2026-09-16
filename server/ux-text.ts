@@ -4,6 +4,7 @@ export type TerminalKind = "stopped" | "unresolved";
 export type TerminalReasonCode =
   | "NO_CAPABLE_FAMILY"
   | "NO_ANSWERABLE_HINGE"
+  | "INCONCLUSIVE_EVIDENCE"
   | "EXECUTOR_UNAVAILABLE"
   | "RESEARCH_UNAVAILABLE"
   | "ITERATION_CAP"
@@ -18,6 +19,7 @@ export function terminalReasonCode(internalReason: string): TerminalReasonCode {
   if (reason.includes("DATA MISSING") || reason.includes("RETURNED NO-DATA") || reason.includes("EVIDENCE WAS UNAVAILABLE")) return "RESEARCH_UNAVAILABLE";
   if (reason.includes("ITERATION CAP")) return "ITERATION_CAP";
   if (reason.includes("NO UNRESOLVED FLIPPABLE HINGE")) return "NO_REMAINING_VALUE";
+  if (reason.includes("INCONCLUSIVE") || reason.includes("INSUFFICIENT DIRECTIONAL")) return "INCONCLUSIVE_EVIDENCE";
   if (reason.includes("NOT ESTABLISHED") || reason.includes("NO ANSWERABLE")) return "NO_ANSWERABLE_HINGE";
   return "INCOMPLETE";
 }
@@ -41,11 +43,33 @@ export function userUnresolvedReason(code: TerminalReasonCode, assetLabel?: stri
       return `CLINCH identified a decision question${asset}, but the supporting market evidence was unavailable. No unavailable result was treated as evidence.`;
     case "ITERATION_CAP":
       return `CLINCH could not complete the remaining research${asset} within this run. The decision remains unresolved.`;
+    case "INCONCLUSIVE_EVIDENCE":
+      return "CLINCH checked the most relevant supported market evidence" + asset + ", but it did not provide enough directional evidence for a clear read. The decision remains unresolved.";
     case "INCOMPLETE":
       return `CLINCH could not establish an answerable research path${asset}. The decision remains unresolved.`;
     case "NO_REMAINING_VALUE":
       return "CLINCH answered the relevant research question. The checks still available are unlikely to materially change this read.";
   }
+}
+
+function unresolvedQuestion(topic?: string | null): string {
+  switch (topic) {
+    case "move-reality": return "whether the move was genuine or a thin-liquidity print";
+    case "structure-direction": return "whether the recent price drop had stabilized";
+    case "crowd-timing": return "whether leveraged trader behavior changed the timing";
+    case "dislocation": return "whether the gap between stock and futures prices was real and tradeable";
+    default: return "the unanswered key question";
+  }
+}
+
+/** Explain why a remaining family was not expected to resolve an unanswered Hinge. */
+export function userUnresolvedSkipReason(check: string, topic?: string | null): string {
+  const family = check === "perp-positioning"
+    ? "Futures trader positioning"
+    : check === "spot-structure"
+      ? "Recent price behavior"
+      : "This remaining check";
+  return family + " was unlikely to answer " + unresolvedQuestion(topic) + ".";
 }
 
 export function userSkipReason(kind: string, detail?: string): string {

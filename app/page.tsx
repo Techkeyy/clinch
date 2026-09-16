@@ -119,7 +119,7 @@ function plainMarketLanguage(value: string, assetName = "This stock"): string {
     .replace(/\b(?:\d+(?:\.\d+)?\s+)?basis points?\b/gi, "a small price gap")
     .replace(/\bmarket structure\b/gi, "recent price behavior")
     .replace(/\bdislocation\b/gi, "price gap")
-    .replace(/\bpositioning\b/gi, "trader behavior")
+    .replace(/(?<!futures trader )\bpositioning\b/gi, "trader behavior")
     .replace(/\bperp\b/gi, "futures")
     .replace(/\bdrift\b/gi, "recent move")
     .replace(/normalized market observation/gi, "clear market signal")
@@ -260,7 +260,13 @@ function DecisionAnswer({
   const found = uniqueStrings(findingSource.flatMap((item) => plainMarketLanguage(item, assetName).replace(/([.!?])\s+/g, "$1|").split("|")));
   const qualifyingSkip = skipped.find((item) => /did not require|not expected|unlikely|cannot matter|mooted|settled/i.test(item.reason));
   const checkedLabel = checked[0]?.label ?? "Completed research";
-  const stopSentence = unresolved
+  const pathResearchCompleted = findings.length > 0 || historyList.length > 0 || stringList(brief.completed).length > 0;
+  const researchedUnresolved = unresolved && (String(brief.terminalReasonCode ?? "") === "INCONCLUSIVE_EVIDENCE" || pathResearchCompleted);
+  const inconclusiveStopSentence = "CLINCH checked " + checkedLabel.toLowerCase() + ", but it did not provide enough directional evidence for a clear read. " +
+    (qualifyingSkip
+      ? plainMarketLanguage(qualifyingSkip.reason, assetName).replace(/[.]+$/, "") + ". CLINCH stopped."
+      : "The remaining supported checks were not expected to resolve the key question, so CLINCH stopped.");
+  const stopSentence = researchedUnresolved ? inconclusiveStopSentence : unresolved
     ? qualifyingSkip
       ? `CLINCH stopped because the available supported evidence did not answer the key question. ${humanResearchFamily(qualifyingSkip.check)} was not used as directional evidence in this path.`
       : "CLINCH stopped because the available supported evidence did not answer the key question."
@@ -862,7 +868,12 @@ export default function Page() {
   const activeHinge = hinges.length ? hinges[hinges.length - 1] : null;
   const previousHinges = hinges.slice(0, -1);
   const unresolved = terminalStatus === "unresolved" || read === "Cannot resolve" || read === "Not enough evidence yet";
-  const incompleteResearch = unresolved && ["RESEARCH_UNAVAILABLE", "ITERATION_CAP", "INCOMPLETE"].includes(String((brief as { terminalReasonCode?: unknown } | null)?.terminalReasonCode ?? ""));
+  const terminalReasonCode = String((brief as { terminalReasonCode?: unknown } | null)?.terminalReasonCode ?? "");
+  const completedBriefQuestions = stringList((brief as { completed?: unknown[] } | null)?.completed);
+  const researchCompleted = findings.length > 0 || historyList.length > 0 || completedBriefQuestions.length > 0;
+  const hingeEstablished = Boolean(activeHinge || historyList.length > 0 || completedBriefQuestions.length > 0);
+  const inconclusiveResearch = unresolved && terminalReasonCode === "INCONCLUSIVE_EVIDENCE";
+  const incompleteResearch = unresolved && ["RESEARCH_UNAVAILABLE", "ITERATION_CAP", "INCOMPLETE"].includes(terminalReasonCode);
   const resultHinge = activeHinge?.question
     ?? (unresolved ? "Not established" : Array.isArray((brief as { completed?: unknown[] } | null)?.completed)
       ? String((brief as { completed: unknown[] }).completed.slice(-1)[0] ?? "Awaiting an answerable question")
@@ -915,8 +926,8 @@ export default function Page() {
               <ol className="progress-steps progress-steps-five">
                 <li className={intent ? "is-done" : busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{intent ? "✓" : ""}</span><span>Understand the decision</span></li>
                 <li className={baseline ? "is-done" : intent && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{baseline ? "✓" : ""}</span><span>Read live context</span></li>
-                <li className={activeHinge ? "is-done" : unresolved ? "is-unavailable" : baseline && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{activeHinge ? "✓" : unresolved ? "!" : ""}</span><span>{unresolved ? "Could not establish an answerable Hinge" : "Find the Decision Hinge"}</span></li>
-                <li className={findings.length > 0 ? "is-done" : unresolved ? "is-unavailable" : terminalStatus === "stopped" && brief ? "is-skipped" : activeHinge && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{findings.length > 0 ? "✓" : unresolved ? "!" : terminalStatus === "stopped" && brief ? "–" : ""}</span><span>{unresolved ? (incompleteResearch ? "Research incomplete" : "Research not run") : "Check the highest-value evidence"}</span></li>
+                <li className={hingeEstablished ? "is-done" : unresolved ? "is-unavailable" : baseline && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{hingeEstablished ? "✓" : unresolved ? "!" : ""}</span><span>{hingeEstablished ? "Find the key question" : unresolved ? "Could not establish an answerable Hinge" : "Find the Decision Hinge"}</span></li>
+                <li className={researchCompleted ? "is-done" : unresolved ? "is-unavailable" : terminalStatus === "stopped" && brief ? "is-skipped" : activeHinge && busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{researchCompleted ? "✓" : unresolved ? "!" : terminalStatus === "stopped" && brief ? "–" : ""}</span><span>{unresolved ? (inconclusiveResearch ? "Evidence was not decisive" : researchCompleted ? "Research completed" : incompleteResearch ? "Research incomplete" : "Research not run") : "Check the highest-value evidence"}</span></li>
                 <li className={brief ? "is-done" : busy ? "is-active" : ""}><span className="step-marker" aria-hidden="true">{brief ? "✓" : ""}</span><span>{unresolved ? "Return an unresolved brief" : "Stop with a brief"}</span></li>
               </ol>
             </section>

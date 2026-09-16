@@ -11,7 +11,7 @@ import { needForTopic, classifyFinding, factsToRaw, type MarketFacts } from "../
 import { renderStructuredBrief, HUMAN_DEC_LINE, type BriefSections } from "../brief/index";
 import {
   TOPIC_WHY, TOPIC_CHANGES, summarizeSpotFinding, summarizePerpFinding,
-  terminalReasonCode, userSkipReason, userStopReason, userUnresolvedReason,
+  terminalReasonCode, userSkipReason, userStopReason, userUnresolvedReason, userUnresolvedSkipReason,
   type TerminalKind, type TerminalReasonCode,
 } from "./ux-text";
 import type { ModelProvider } from "../model/provider";
@@ -354,8 +354,11 @@ export async function driveLoop(
     if (out.action === "STOP") {
       if (acc.read === "undecided") {
         acc.terminal = "unresolved";
-        acc.terminalReasonCode = "NO_ANSWERABLE_HINGE";
-        acc.terminalInternalReason = "Stop reached before an answerable finding established a read.";
+        const researched = acc.hingeHistory.length > 0;
+        acc.terminalReasonCode = researched ? "INCONCLUSIVE_EVIDENCE" : "NO_ANSWERABLE_HINGE";
+        acc.terminalInternalReason = researched
+          ? "Supported research completed, but the evidence did not establish enough directional support for a read."
+          : "Stop reached before an answerable finding established a read.";
         acc.read = "cannot-resolve";
         acc.stopReason = userUnresolvedReason(acc.terminalReasonCode, input.asset, input.action);
       } else {
@@ -398,6 +401,14 @@ export async function driveLoop(
     acc.terminalReasonCode = "INCOMPLETE";
     acc.terminalInternalReason = "Research loop ended without a terminal decision.";
     acc.stopReason = userUnresolvedReason("INCOMPLETE", input.asset, input.action);
+  }
+  if (acc.terminal === "unresolved" && acc.terminalReasonCode === "INCONCLUSIVE_EVIDENCE") {
+    const topic = acc.hingeHistory[acc.hingeHistory.length - 1]?.topic;
+    acc.skips = acc.skips.map((skip) =>
+      (skip.kind === "resolved" || skip.kind === "cannot-matter")
+        ? { ...skip, reason: userUnresolvedSkipReason(skip.check, topic) }
+        : skip,
+    );
   }
   return acc;
 }

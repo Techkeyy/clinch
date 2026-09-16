@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TOPIC_WHY, TOPIC_CHANGES, summarizeSpotFinding, summarizePerpFinding, cleanVerdict, userStopReason } from "../server/ux-text";
+import { TOPIC_WHY, TOPIC_CHANGES, summarizeSpotFinding, summarizePerpFinding, cleanVerdict, userStopReason, userUnresolvedReason, userUnresolvedSkipReason } from "../server/ux-text";
 
 const LONG_DASH = /[\u2013\u2014]/;
 const JARGON = /flippable|answerable by|Hinge #|Agent Step|relevance score|Low relevance/;
@@ -10,7 +10,9 @@ describe("user-facing presentation text", () => {
       summarizeSpotFinding("RNVDAUSDT", { last: 218.24, change24hPcnt: -0.00086, spreadBps: 1.37, spreadWide: false }),
       summarizePerpFinding("NVDAUSDT", { fundingRate: 0.0012, openInterest: 70316, markIndexDislocationBps: 2.1 }),
       cleanVerdict("exhaustion, support holding [exhaustion] :: read now enter-now"),
-      userStopReason("anything", true)];
+      userStopReason("anything", true),
+      userUnresolvedReason("INCONCLUSIVE_EVIDENCE", "NVDA", "wait"),
+      userUnresolvedSkipReason("perp-positioning", "structure-direction")];
     for (const t of texts) {
       expect(t, t).not.toMatch(LONG_DASH);
       expect(t, t).not.toMatch(JARGON);
@@ -24,5 +26,11 @@ describe("user-facing presentation text", () => {
     expect(s).toMatch(/RNVDAUSDT trades 218\.24/);
     const p = summarizePerpFinding("NVDAUSDT", { fundingRate: 0.0012, openInterest: 70316, markIndexDislocationBps: 2.1 });
     expect(p).toMatch(/elevated/);
+  });
+  it("describes inconclusive research and the capability-specific remaining gap", () => {
+    expect(userUnresolvedReason("INCONCLUSIVE_EVIDENCE", "NVDA", "wait")).toMatch(/not provide enough directional evidence/i);
+    expect(userUnresolvedSkipReason("perp-positioning", "structure-direction")).toBe(
+      "Futures trader positioning was unlikely to answer whether the recent price drop had stabilized.",
+    );
   });
 });
