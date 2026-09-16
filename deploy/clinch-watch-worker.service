@@ -7,11 +7,12 @@ Wants=network-online.target
 Type=simple
 User=clinch
 Group=clinch
-WorkingDirectory=/opt/clinch
-EnvironmentFile=/etc/clinch/clinch.env
+WorkingDirectory=/opt/clinch/current
+EnvironmentFile=/etc/clinch/watch-worker.env
 Environment=NODE_ENV=production
 Environment=WATCH_WORKER_ID=%H
-ExecStart=/usr/bin/npm run watch:worker
+Environment=WATCH_WORKER_BATCH_SIZE=1
+ExecStart=/opt/clinch/runtime/node-v24.14.0-linux-x64/bin/node /opt/clinch/current/dist/watch-worker.mjs
 Restart=always
 RestartSec=5
 KillSignal=SIGTERM
