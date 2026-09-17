@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-17
 Current branch: master
-Current HEAD: d22d2bc
+Current HEAD: 1f6f91b
 Production URL: https://clinch-nine.vercel.app
 
 ## 1. Product
@@ -137,11 +137,21 @@ Hypotheses (NOT facts):
 - H2: Browser/session mismatch edge (e.g. session bound to a different Clerk instance than the secret).
 - H3: Proxy-side token rejection for another non-obvious reason.
 
-Next datum that splits it: `X-Clerk-Auth-Reason` / `X-Clerk-Auth-Message` response headers on the failed claim POST (readable in browser DevTools → Network, no code change).
+CORRECTION 2026-09-17 — root cause proven (see below); H1–H3 retired.
+
+ROOT CAUSE (proven, no longer a hypothesis):
+
+- `session-token-and-uat-missing` fires only when middleware cookie selection finds neither session token nor client UAT (`@clerk/backend` `authenticateRequestWithTokenInCookie`).
+- Production probes with synthetic cookies proved proxy transport, parsing, selection, and verification all work (each cookie combination returns its textbook-distinct reason; fakes rejected as `token-invalid`).
+- The suffixed-only probe (`__session_OG0DflVz` + `__client_uat_OG0DflVz`) returned `session-token-and-uat-missing`, possible only when the server-derived cookie suffix differs from the browser's `OG0DflVz`. The suffix is `base64url(SHA-1(publishableKey))` verbatim while key parsing tolerates pasted trailing whitespace — so the server key string differed invisibly from the browser key (same Frontend API, desynced suffix).
+- Fix: `proxy.ts` passes an explicitly trimmed `publishableKey` to `clerkMiddleware` (no-op for clean values). Post-deploy probe flipped suffixed-only to `token-invalid` (selection hits, fake correctly rejected) — mechanism fix verified in production without owner action.
+- Secret rotation alone could not fix this; the failure was pre-verification (cookie selection), never a verification rejection.
+
+Pending: one owner Save-to-account click to confirm end-to-end claim success (real cookies must now select; verification with the rotated secret happens for the first time).
 
 ## 7. Exact Next Action
 
-Owner: open DevTools → Network, click Save to account once, report the exact `X-Clerk-Auth-Reason` and `X-Clerk-Auth-Message` response header values of the failed claim POST (no code/config changes until then).
+Owner: click Save to account once on the signed-in production browser, then report whether the research shows "Saved privately to your CLINCH account." Builder verifies via the `clinch-claim` log line (expect `authPresent = true`, `claimed = 1`).
 
 ## 8. Production UAT Ledger
 
@@ -150,7 +160,7 @@ Owner: open DevTools → Network, click Save to account once, report the exact `
 - Non-featured spot checks (incl. `RDY`/`DY` distinctness): PASS
 - `/api/stocks` zero-broken-catalog: PASS (1653/1653/0)
 - Authenticated research ownership: NOT RUN (needs working server auth)
-- Guest → account claim: FAIL (`401 CLAIM_AUTH_REQUIRED`, server-auth blocker)
+- Guest → account claim: FIX DEPLOYED, awaiting owner verification click (was FAIL `401 CLAIM_AUTH_REQUIRED`)
 - Persistence across sign-out/in: NOT RUN (blocked on claim)
 - Decision Watch creation: NOT RUN (paused behind claim)
 - Telegram account linking: NOT RUN (paused)
@@ -159,6 +169,7 @@ Owner: open DevTools → Network, click Save to account once, report the exact `
 
 ## 9. Important Commits
 
+- `1f6f91b` — fix: trim Clerk publishable key to sync server cookie suffix with browser — suffix-desync root cause + probe proof + 4 tests
 - `d22d2bc` — fix: harden guest research claim contract with stable codes and idempotency — claim rewrite + diagnostics + 9 tests
 - `92d3d5e` — fix: enforce single researchable stock catalog contract (META integrity) — canonical catalog, taxonomy, verifier
 - `4ccf30c` — feat: restore featured stock brand marks — recognizable marks
@@ -175,6 +186,7 @@ Owner: open DevTools → Network, click Save to account once, report the exact `
 - 2026-09-17 ~07:33 UTC — claim-contract hardening + catalog fixes — result: claim codes live, catalog 1653/0.
 - 2026-09-17 07:45:44 UTC (`dpl_63UrzkTVfharqoZ9ZUtTaVbKu9aV`) — owner redeploy after secret rotation — result: claim still 401, timing race ruled out by later deploy.
 - Post-07:56 UTC — owner redeploy started strictly after env save — result: identical 401, timing theory eliminated.
+- 2026-09-17 ~09:35 UTC (Ab28PtHouxmWZosLrg9Qpfx7Hs1Q) — trim publishable key in proxy options + suffix regression tests — result: suffixed-only probe flipped `session-token-and-uat-missing` → `token-invalid`, proving server/browser suffix sync restored.
 
 ## 11. Infrastructure Safety Constraints
 
@@ -208,6 +220,7 @@ Owner: open DevTools → Network, click Save to account once, report the exact `
 - 2026-09-17 — Live `stock-info` returns `name: null` for major symbols; identity falls back to directory/neutral label.
 - 2026-09-17 — Claim failures must carry stable machine codes; transient/provider faults must never read as `UNSUPPORTED_ASSET`-style user blame.
 - 2026-09-17 — Diagnosis before fix: the claim 401 was proven at `currentAccountUserId()`, not in claim logic; instrumentation first, auth surgery never without evidence.
+- 2026-09-17 — Clerk cookie suffix is `SHA-1(publishableKey)` verbatim while key parsing tolerates whitespace: always trim keys server-side; desync is silent (no errors, just `signed-out`).
 
 ## 15. Takeover Checklist
 
