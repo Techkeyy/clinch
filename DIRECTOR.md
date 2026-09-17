@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-17
 Current branch: master
-Current HEAD (code): 1f6f91b
+Current HEAD (code): df21d67
 Production URL: https://clinch-nine.vercel.app
 
 ## 1. Product
@@ -71,11 +71,13 @@ Deterministic kernel compiles evidence into reads (`leaning-in` / `holding-off` 
 - Auth client-side: WORKING (email OTP sign-in verified by owner)
 - Auth server-side: WORKING (owner claim 09:38 UTC: `proxyAuthStatus = signed-in`, `authPresent = true`)
 - Guest → account claim: WORKING (`claimed = 8` on owner UAT; 2 foreign recent IDs correctly rejected)
-- Recent Research: WORKING for guests; account history owner to confirm visibility
-- Decision Watch: PAUSED (worker proven; creation/linking gated on server auth)
-- VPS worker: WORKING (deployed, heartbeat/lease/reclaim/restart proven; DO NOT TOUCH)
-- Telegram linking: PAUSED (bot + webhook configured, E2E intentionally paused)
-- Telegram outbound notification: PAUSED
+- Recent Research: WORKING (owner-confirmed: claimed research visible in account history)
+- Authenticated research ownership: WORKING (owner-confirmed: fresh signed-in research account-owned immediately, no Save CTA)
+- Persistence across sign-out/in: WORKING (owner-confirmed: sign-out hides, sign-in restores)
+- Decision Watch: PARTIALLY WORKING (creation + linking live 2026-09-17; worker transition pending genuine market movement)
+- VPS worker: WORKING (deployed, heartbeat/lease/reclaim/restart proven; bundle proven functionally current on all worker paths; DO NOT TOUCH)
+- Telegram linking: WORKING (owner linked 2026-09-17, CONNECTED persisted)
+- Telegram outbound notification: PARTIALLY WORKING (connection confirmation received; decision-flow message pending a real transition)
 - Production deployment: WORKING
 
 ## 5. Completed and Proven Work
@@ -111,9 +113,9 @@ Deterministic kernel compiles evidence into reads (`leaning-in` / `holding-off` 
 
 ## 6. Current Blocking Issue
 
-RESOLVED 2026-09-17 ~09:38 UTC: owner Save-to-account click returned success (`authPresent = true`, `proxyAuthStatus = signed-in`, `claimed = 8`, `alreadyOwned = 0`). Root cause was the server/browser publishable-key string divergence (cookie suffix desync), fixed by explicit trim in `proxy.ts` (`1f6f91b`), mechanism verified by probe flip before the owner click. Prior 401 history retained below for context.
+IN PROGRESS 2026-09-17: Decision Watch + Telegram production E2E. Owner Phase 1+2 DONE (Tesla watch created 10:18 UTC; Telegram linked 10:17 UTC with confirmation received). Worker bundle proven functionally current on all worker paths (source-path analysis; checked-in bundle predates catalog work but none of the touched modules execute in the worker path). Next: heartbeat observation + genuine market transition (never fabricated).
 
-### Clerk server-side authentication (historical record)
+### Clerk server-side authentication (RESOLVED history — do not regress)
 
 Observed (production logs + probes, no guessing):
 
@@ -149,11 +151,11 @@ ROOT CAUSE (proven, no longer a hypothesis):
 - Fix: `proxy.ts` passes an explicitly trimmed `publishableKey` to `clerkMiddleware` (no-op for clean values). Post-deploy probe flipped suffixed-only to `token-invalid` (selection hits, fake correctly rejected) — mechanism fix verified in production without owner action.
 - Secret rotation alone could not fix this; the failure was pre-verification (cookie selection), never a verification rejection.
 
-Pending: one owner Save-to-account click to confirm end-to-end claim success (real cookies must now select; verification with the rotated secret happens for the first time).
+Owner verification completed 09:38 UTC (`claimed = 8`); auth rows above are PASS per owner confirmation.
 
 ## 7. Exact Next Action
 
-Owner UAT (no code changes): (1) confirm the claimed research shows "Saved privately to your CLINCH account" and appears in Recent Research; (2) while signed in, start ONE fresh research and confirm it is account-owned immediately with no Save CTA; (3) sign out (research inaccessible) → sign back in (visible again). Decision Watch / Telegram stay paused until (1)–(3) pass.
+Decision Watch live observation: owner watches the Tesla card in Recent → Decision Watches. "Last checked" advances each worker cycle (~10 min cadence) = lease/due/heartbeat proof with zero fabrication. A genuine market move may flip it to TARGET REACHED + real Telegram message; report either outcome verbatim. Never fabricate a transition, never send test alerts as watch notifications.
 
 ## 8. Production UAT Ledger
 
@@ -161,16 +163,20 @@ Owner UAT (no code changes): (1) confirm the claimed research shows "Saved priva
 - Featured-8 deterministic preflight (ticker + 1H candles + resolver): PASS
 - Non-featured spot checks (incl. `RDY`/`DY` distinctness): PASS
 - `/api/stocks` zero-broken-catalog: PASS (1653/1653/0)
-- Authenticated research ownership: NOT RUN (owner UAT pending; code + test B prove the path)
+- Authenticated research ownership: PASS (owner-confirmed 2026-09-17: fresh signed-in research account-owned immediately, no Save CTA)
 - Guest → account claim: PASS (09:38 UTC owner click: `claimed = 8`, `alreadyOwned = 0`; 2 stale foreign recent IDs correctly rejected as `CLAIM_ALREADY_OWNED_BY_OTHER_ACCOUNT`, no cross-account write)
-- Persistence across sign-out/in: NOT RUN (owner UAT pending)
-- Decision Watch creation: NOT RUN (paused behind claim)
-- Telegram account linking: NOT RUN (paused)
-- Watch transition: NOT RUN (paused)
-- Telegram notification: NOT RUN (paused)
+- Persistence across sign-out/in: PASS (owner-confirmed 2026-09-17)
+- Decision Watch creation: PASS (owner 2026-09-17: Tesla, Better to wait → Slightly favorable, Telegram, ACTIVE; `POST /api/watches → 201` 10:18 UTC; pre-link 412 correctly enforced)
+- Telegram account linking: PASS (owner 2026-09-17: connect 200 → webhook 200 → CONNECTED; wrong/missing secret correctly 401)
+- Telegram connection-confirmation transport: PASS (owner received "CLINCH notifications are connected for this account via TELEGRAM.")
+- Watch transition (deterministic harness): PASS (`watch-transition` tests: heartbeat, lease-once, real-code transition → TRIGGERED, dedupe, no-channel PAUSED)
+- Live worker heartbeat/process: PENDING (watch due ~10:28 server time; "Last checked" line deployed for owner-visible proof)
+- Real market transition: PENDING (requires genuine movement; never fabricated)
+- Decision Watch Telegram notification: PENDING (only on a real transition)
 
 ## 9. Important Commits
 
+- `df21d67` — feat: prove watch transition dispatch and telegram linking with regression tests — 8 permanent tests + WatchList last-checked line
 - `1f6f91b` — fix: trim Clerk publishable key to sync server cookie suffix with browser — suffix-desync root cause + probe proof + 4 tests
 - `d22d2bc` — fix: harden guest research claim contract with stable codes and idempotency — claim rewrite + diagnostics + 9 tests
 - `92d3d5e` — fix: enforce single researchable stock catalog contract (META integrity) — canonical catalog, taxonomy, verifier
@@ -190,6 +196,7 @@ Owner UAT (no code changes): (1) confirm the claimed research shows "Saved priva
 - Post-07:56 UTC — owner redeploy started strictly after env save — result: identical 401, timing theory eliminated.
 - 2026-09-17 ~09:35 UTC (Ab28PtHouxmWZosLrg9Qpfx7Hs1Q) — trim publishable key in proxy options + suffix regression tests — result: suffixed-only probe flipped `session-token-and-uat-missing` → `token-invalid`, proving server/browser suffix sync restored.
 - 2026-09-17 09:38 UTC — owner Save-to-account UAT on Ab28PtHouxmWZosLrg9Qpfx7Hs1Q — result: `authPresent = true`, `proxyAuthStatus = signed-in`, `claimed = 8`; blocker resolved.
+- 2026-09-17 ~10:25 UTC (CaHAsHYUi4BZZxSEhE2w2J6A3Cna) — watch transition/linking tests + WatchList last-checked line — result: deployed clean; catalog 1653/0 re-verified.
 
 ## 11. Infrastructure Safety Constraints
 
@@ -223,6 +230,7 @@ Owner UAT (no code changes): (1) confirm the claimed research shows "Saved priva
 - 2026-09-17 — Live `stock-info` returns `name: null` for major symbols; identity falls back to directory/neutral label.
 - 2026-09-17 — Claim failures must carry stable machine codes; transient/provider faults must never read as `UNSUPPORTED_ASSET`-style user blame.
 - 2026-09-17 — Diagnosis before fix: the claim 401 was proven at `currentAccountUserId()`, not in claim logic; instrumentation first, auth surgery never without evidence.
+- 2026-09-17 — Watch E2E honesty rule: heartbeat/transition/notification each proven separately; never fabricate market movement or test alerts in production data.
 - 2026-09-17 — Clerk cookie suffix is `SHA-1(publishableKey)` verbatim while key parsing tolerates whitespace: always trim keys server-side; desync is silent (no errors, just `signed-out`).
 
 ## 15. Takeover Checklist
