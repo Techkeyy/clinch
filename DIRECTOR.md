@@ -155,7 +155,7 @@ Owner verification completed 09:38 UTC (`claimed = 8`); auth rows above are PASS
 
 ## 7. Exact Next Action
 
-Decision Watch live observation: owner watches the Tesla card in Recent → Decision Watches. "Last checked" advances each worker cycle (~10 min cadence) = lease/due/heartbeat proof with zero fabrication. A genuine market move may flip it to TARGET REACHED + real Telegram message; report either outcome verbatim. Never fabricate a transition, never send test alerts as watch notifications.
+Live observation continues: owner watches the Tesla card. A genuine market move may flip it to TARGET REACHED + real Telegram message; report either outcome verbatim. If the card stays ACTIVE with advancing "Last checked", the worker is healthy and the market simply hasn't moved. Never fabricate a transition, never send test alerts as watch notifications.
 
 ## 8. Production UAT Ledger
 
@@ -170,7 +170,7 @@ Decision Watch live observation: owner watches the Tesla card in Recent → Deci
 - Telegram account linking: PASS (owner 2026-09-17: connect 200 → webhook 200 → CONNECTED; wrong/missing secret correctly 401)
 - Telegram connection-confirmation transport: PASS (owner received "CLINCH notifications are connected for this account via TELEGRAM.")
 - Watch transition (deterministic harness): PASS (`watch-transition` tests: heartbeat, lease-once, real-code transition → TRIGGERED, dedupe, no-channel PAUSED)
-- Live worker heartbeat/process: PENDING (watch due ~10:28 server time; "Last checked" line deployed for owner-visible proof)
+- Live worker heartbeat/process: PASS (owner 2026-09-17: Tesla card shows Last checked Sep 17, 10:38 AM, screenshot ~10:39; status ACTIVE, no decision message — correct no-op cycle)
 - Real market transition: PENDING (requires genuine movement; never fabricated)
 - Decision Watch Telegram notification: PENDING (only on a real transition)
 
