@@ -40,8 +40,8 @@ export function MonitorSetup({ sessionId, assetLabel, currentRead, targetReached
       body: JSON.stringify({ sessionIds: [sessionId] }),
     })
       .then(async (response) => {
-        const data = await response.json() as { claimed?: number };
-        if (!cancelled && response.ok && (data.claimed ?? 0) > 0) {
+        const data = await response.json().catch(() => ({})) as { claimed?: number; alreadyOwned?: number };
+        if (!cancelled && response.ok && ((data.claimed ?? 0) + (data.alreadyOwned ?? 0)) > 0) {
           setClaimMessage("This research is now attached to your account.");
         }
       })

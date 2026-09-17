@@ -39,13 +39,18 @@ export function clerkConfigured(): boolean {
 }
 
 export async function currentAccountUserId(): Promise<string | null> {
-  if (!clerkConfigured()) return null;
+  return (await readAccountContext()).userId;
+}
+
+/** Same identity read with a safe diagnostic (never a secret, never a token). */
+export async function readAccountContext(): Promise<{ userId: string | null; clerkError: string | null }> {
+  if (!clerkConfigured()) return { userId: null, clerkError: "clerk-not-configured" };
   try {
     const { auth } = await import("@clerk/nextjs/server");
     const result = await auth();
-    return result.userId ?? null;
-  } catch {
-    return null;
+    return { userId: result.userId ?? null, clerkError: null };
+  } catch (error) {
+    return { userId: null, clerkError: error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200) };
   }
 }
 

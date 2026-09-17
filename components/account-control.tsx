@@ -74,14 +74,14 @@ export function SaveResearchPrompt({ sessionId }: { sessionId: string | null }) 
     try {
       const sessionIds = Array.from(new Set([sessionId, ...readRecentIds()].filter((id): id is string => Boolean(id)))).slice(0, 10);
       const res = await fetch("/api/account/claim", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionIds }) });
-      const data = await res.json() as { claimed?: number };
-      if (res.ok && (data.claimed ?? 0) > 0) {
+      const data = await res.json().catch(() => ({})) as { claimed?: number; alreadyOwned?: number; message?: unknown; error?: unknown };
+      if (res.ok && ((data.claimed ?? 0) + (data.alreadyOwned ?? 0)) > 0) {
         setOwnership("account");
         setMessage("Saved privately to your CLINCH account.");
       } else if (res.ok) {
         await refreshOwnership();
       } else {
-        setMessage("We could not save this research yet.");
+        setMessage(typeof data.message === "string" && data.message ? data.message : "We could not save this research yet.");
       }
     } catch {
       setMessage("We could not save this research yet.");
