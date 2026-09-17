@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-17
 Current branch: master
-Current HEAD: 1f6f91b
+Current HEAD (code): 1f6f91b
 Production URL: https://clinch-nine.vercel.app
 
 ## 1. Product
@@ -69,9 +69,9 @@ Deterministic kernel compiles evidence into reads (`leaning-in` / `holding-off` 
 - Stock catalog: WORKING (1653 visible = 1653 researchable, broken 0)
 - Research: WORKING (META end-to-end proven in production)
 - Auth client-side: WORKING (email OTP sign-in verified by owner)
-- Auth server-side: BLOCKED (proxy annotates `signed-out`; `auth()` null; all authed endpoints 401)
-- Guest → account claim: BLOCKED (behind server auth; contract hardened, awaiting first successful verification)
-- Recent Research: WORKING for guests; account history BLOCKED behind server auth
+- Auth server-side: WORKING (owner claim 09:38 UTC: `proxyAuthStatus = signed-in`, `authPresent = true`)
+- Guest → account claim: WORKING (`claimed = 8` on owner UAT; 2 foreign recent IDs correctly rejected)
+- Recent Research: WORKING for guests; account history owner to confirm visibility
 - Decision Watch: PAUSED (worker proven; creation/linking gated on server auth)
 - VPS worker: WORKING (deployed, heartbeat/lease/reclaim/restart proven; DO NOT TOUCH)
 - Telegram linking: PAUSED (bot + webhook configured, E2E intentionally paused)
@@ -111,7 +111,9 @@ Deterministic kernel compiles evidence into reads (`leaning-in` / `holding-off` 
 
 ## 6. Current Blocking Issue
 
-### Clerk server-side authentication
+RESOLVED 2026-09-17 ~09:38 UTC: owner Save-to-account click returned success (`authPresent = true`, `proxyAuthStatus = signed-in`, `claimed = 8`, `alreadyOwned = 0`). Root cause was the server/browser publishable-key string divergence (cookie suffix desync), fixed by explicit trim in `proxy.ts` (`1f6f91b`), mechanism verified by probe flip before the owner click. Prior 401 history retained below for context.
+
+### Clerk server-side authentication (historical record)
 
 Observed (production logs + probes, no guessing):
 
@@ -151,7 +153,7 @@ Pending: one owner Save-to-account click to confirm end-to-end claim success (re
 
 ## 7. Exact Next Action
 
-Owner: click Save to account once on the signed-in production browser, then report whether the research shows "Saved privately to your CLINCH account." Builder verifies via the `clinch-claim` log line (expect `authPresent = true`, `claimed = 1`).
+Owner UAT (no code changes): (1) confirm the claimed research shows "Saved privately to your CLINCH account" and appears in Recent Research; (2) while signed in, start ONE fresh research and confirm it is account-owned immediately with no Save CTA; (3) sign out (research inaccessible) → sign back in (visible again). Decision Watch / Telegram stay paused until (1)–(3) pass.
 
 ## 8. Production UAT Ledger
 
@@ -159,9 +161,9 @@ Owner: click Save to account once on the signed-in production browser, then repo
 - Featured-8 deterministic preflight (ticker + 1H candles + resolver): PASS
 - Non-featured spot checks (incl. `RDY`/`DY` distinctness): PASS
 - `/api/stocks` zero-broken-catalog: PASS (1653/1653/0)
-- Authenticated research ownership: NOT RUN (needs working server auth)
-- Guest → account claim: FIX DEPLOYED, awaiting owner verification click (was FAIL `401 CLAIM_AUTH_REQUIRED`)
-- Persistence across sign-out/in: NOT RUN (blocked on claim)
+- Authenticated research ownership: NOT RUN (owner UAT pending; code + test B prove the path)
+- Guest → account claim: PASS (09:38 UTC owner click: `claimed = 8`, `alreadyOwned = 0`; 2 stale foreign recent IDs correctly rejected as `CLAIM_ALREADY_OWNED_BY_OTHER_ACCOUNT`, no cross-account write)
+- Persistence across sign-out/in: NOT RUN (owner UAT pending)
 - Decision Watch creation: NOT RUN (paused behind claim)
 - Telegram account linking: NOT RUN (paused)
 - Watch transition: NOT RUN (paused)
@@ -187,6 +189,7 @@ Owner: click Save to account once on the signed-in production browser, then repo
 - 2026-09-17 07:45:44 UTC (`dpl_63UrzkTVfharqoZ9ZUtTaVbKu9aV`) — owner redeploy after secret rotation — result: claim still 401, timing race ruled out by later deploy.
 - Post-07:56 UTC — owner redeploy started strictly after env save — result: identical 401, timing theory eliminated.
 - 2026-09-17 ~09:35 UTC (Ab28PtHouxmWZosLrg9Qpfx7Hs1Q) — trim publishable key in proxy options + suffix regression tests — result: suffixed-only probe flipped `session-token-and-uat-missing` → `token-invalid`, proving server/browser suffix sync restored.
+- 2026-09-17 09:38 UTC — owner Save-to-account UAT on Ab28PtHouxmWZosLrg9Qpfx7Hs1Q — result: `authPresent = true`, `proxyAuthStatus = signed-in`, `claimed = 8`; blocker resolved.
 
 ## 11. Infrastructure Safety Constraints
 
