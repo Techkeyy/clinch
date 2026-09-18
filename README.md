@@ -4,10 +4,6 @@ Research the decision, not the entire market.
 
 **[Live Demo](https://clinch-nine.vercel.app)** · **[GitHub](https://github.com/Techkeyy/clinch)**
 
-*Demo video: recording script in `DEMO_SCRIPT.md`; link will be added after recording.*
-
-*Bitget AI Genesis Season 2 · Track: AI Trading Desk · Sub-theme: Open Theme*
-
 > *"I'm considering TSLA, but what is the one thing I still need to know before I decide?"*
 
 Most AI trading tools answer that question with more information: more signals, more charts, more noise. CLINCH does the opposite. It finds the single unanswered question most capable of changing your decision, researches only that with live market evidence, and stops when further research is unlikely to matter. The human always decides. CLINCH never places a trade.
