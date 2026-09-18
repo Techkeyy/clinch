@@ -22,7 +22,7 @@ Open Theme
 
 4. Progress. Built and deployed: deterministic research kernel (hinge, selective families, stop rule), live Bitget Reality discovery plus ticker/candles/depth plus RWA-perp positioning, Qwen language understanding, Clerk OTP auth with guest-to-account claim, Neon persistence, durable VPS Decision Watch worker with exclusive leases and deduped Telegram dispatch, Telegram companion (home, watches with pause/resume/stop, recent research, deep links). Fixed in production: catalog integrity (META end-to-end), Clerk cookie-namespace desync, claim idempotency. Not built: trade execution (never planned), a duplicated research engine inside Telegram (companion only), WhatsApp adapter (dispatcher is channel-neutral). Next: demo video recording, then distribution.
 
-5. Deliverables. Live demo: https://clinch-nine.vercel.app. Code: GitHub link added by owner before submitting. README with architecture, quickstart, adversarial table, and known limits. Demo video link added after recording. This file plus FINAL_HACKATHON_COMPLIANCE.md as process evidence.
+5. Deliverables. Live demo: https://clinch-nine.vercel.app. Code: https://github.com/Techkeyy/clinch. README with architecture, quickstart, adversarial table, and known limits. Demo video link added after recording. This file plus FINAL_HACKATHON_COMPLIANCE.md as process evidence.
 
 6. Take on AI Trading (optional). The scarce resource in AI trading is not signal volume but attention triage: most agent demos celebrate autonomy while quietly moving the diligence burden onto the user. CLINCH bets the winning shape is a skeptical assistant with a stop rule, judged on what it refused to research as much as what it found.
 
@@ -33,7 +33,7 @@ Qwen (`qwen3.8-max` via the sponsored Chat Completions-compatible gateway) inter
 ## F. Submission Materials
 
 - Live app: https://clinch-nine.vercel.app
-- GitHub: owner adds public repo URL before submitting
+- GitHub: https://github.com/Techkeyy/clinch
 - README.md in repo root (architecture, quickstart, proof tables)
 - Demo video: link added after recording (script: DEMO_SCRIPT.md)
 

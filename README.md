@@ -2,7 +2,7 @@
 
 Research the decision, not the entire market.
 
-**[Live Demo](https://clinch-nine.vercel.app)**
+**[Live Demo](https://clinch-nine.vercel.app)** · **[GitHub](https://github.com/Techkeyy/clinch)**
 
 *Demo video: recording script in `DEMO_SCRIPT.md`; link will be added after recording.*
 
@@ -96,8 +96,8 @@ The named AI Trading Desk sub-themes cover extraction, review, stress testing, p
 Prerequisites: Node 20 or later, npm, Git.
 
 ```bash
-git clone <owner-adds-repo-url>
-cd CLINCH
+git clone https://github.com/Techkeyy/clinch.git
+cd clinch
 npm install
 ```
 
