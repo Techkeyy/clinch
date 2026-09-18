@@ -156,7 +156,7 @@ Owner verification completed 09:38 UTC (`claimed = 8`); auth rows above are PASS
 
 ## 7. Exact Next Action
 
-Owner, in order: (1) Security rotations from the credential checklist (dev Neon password, dev Clerk test keys, dev peppers plus dedupe, sponsored-key scope check, BotFather token only if local matches prod). (2) Record demo video (DEMO_SCRIPT.md), create public repo + push, add LICENSE, submit form by the 9/21 operational deadline with X post quoting the official status.
+Owner, in order: (1) Security rotations from the credential checklist (dev Neon password, dev Clerk test keys, dev peppers plus dedupe, sponsored-key scope check, BotFather token only if local matches prod). (2) Telegram UAT C–G if not yet done (pause → web PAUSED; resume → web ACTIVE; Open Research; Recent Research; Open CLINCH). (3) Record demo video (DEMO_SCRIPT.md), add LICENSE decision, post X, submit form by the 9/21 operational deadline.
 
 ## 8. Production UAT Ledger
 
@@ -213,6 +213,7 @@ Owner, in order: (1) Security rotations from the credential checklist (dev Neon 
 - No SSH into VPS unless explicitly necessary and approved.
 - Telegram/VPS changes require a reason tied to the current task.
 - Web app deploys go only to the existing Vercel project; stable URL must not change.
+- 2026-09-18: GitHub repo `Techkeyy/clinch` (public, branch `master`) connected to the EXISTING Vercel project via `vercel git connect`; no new project, no env/domain changes. Push `579a111` auto-produced production deployment `dpl_8fuhfTHhyUCECLkLANYrTcU5jgfN` within ~40s with zero manual deploys.
 
 ## 12. Security Invariants
 
