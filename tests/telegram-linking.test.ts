@@ -5,14 +5,16 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { unlinkSync } from "node:fs";
 
-const DB = join(tmpdir(), `clinch-telegram-link-${process.pid}.db`);
-process.env.SQLITE_PATH = DB;
+const DB_BASE = `clinch-telegram-link-${process.pid}`;
+let dbIndex = 0;
+function nextDb() {
+  dbIndex += 1;
+  process.env.SQLITE_PATH = join(tmpdir(), `${DB_BASE}-${dbIndex}.db`);
+}
 process.env.TELEGRAM_BOT_TOKEN = "test-bot-token";
 process.env.TELEGRAM_BOT_USERNAME = "ClinchhBot";
 process.env.TELEGRAM_WEBHOOK_SECRET = "test-webhook-secret";
-try { unlinkSync(DB); } catch { /* fresh */ }
 
 const testState = { accountUserId: null as string | null };
 
@@ -48,7 +50,8 @@ function webhookReq(body: unknown, secret: string | null) {
 }
 
 beforeEach(() => {
-  try { unlinkSync(DB); } catch { /* isolated store per test */ }
+  vi.resetModules();
+  nextDb();
   stubTransport();
 });
 afterEach(() => { vi.unstubAllGlobals(); });
@@ -93,36 +96,46 @@ describe("Telegram account linking", () => {
     const link = await store.getConnection("user-A", "TELEGRAM");
     expect(link?.status).toBe("CONNECTED");
     expect(link?.address).toBe("987654");
-    expect(telegramCalls.length).toBe(1);
+    expect(telegramCalls.length).toBe(2);
     const confirmation = telegramCalls[0].body as { chat_id?: string; text?: string };
     expect(confirmation.chat_id).toBe("987654");
     expect(confirmation.text).toContain("connected");
+    const home = telegramCalls[1].body as { text?: string; reply_markup?: unknown };
+    expect(home.text).toContain("Research the decision");
+    expect(JSON.stringify(home.reply_markup)).toContain("My Watches");
 
     const replay = await hookMod.POST(webhookReq(update, "test-webhook-secret"));
     expect(replay.status).toBe(200);
-    expect(telegramCalls.length).toBe(1);
+    expect(telegramCalls.length).toBe(3);
+    expect((await store.getConnection("user-A", "TELEGRAM"))?.address).toBe("987654");
 
     const unknown = await hookMod.POST(webhookReq(
       { message: { text: "/start aaaaaaaaaaaaaaaaaaaa", chat: { id: 987654, type: "private" } } },
       "test-webhook-secret",
     ));
     expect(unknown.status).toBe(200);
-    expect(telegramCalls.length).toBe(1);
+    expect(telegramCalls.length).toBe(4);
+    expect((await store.getConnection("user-A", "TELEGRAM"))?.address).toBe("987654");
     await store.close();
   });
 
-  it("non-link traffic is acknowledged without side effects", async () => {
+  it("non-link traffic is acknowledged with guidance and no state change", async () => {
     const hookMod: AnyMod = await import("@/app/api/telegram/webhook/route");
     const secret = "test-webhook-secret";
     for (const body of [
       { message: { text: "hello", chat: { id: 1, type: "private" } } },
       { message: { text: "/start", chat: { id: 1, type: "private" } } },
-      { edited_message: { text: "/start abcdefghijklmnopqrst", chat: { id: 1, type: "private" } } },
     ]) {
       const res = await hookMod.POST(webhookReq(body, secret));
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({ ok: true });
     }
-    expect(telegramCalls.length).toBe(0);
+    expect(telegramCalls.length).toBe(2);
+    const edited = await hookMod.POST(webhookReq(
+      { edited_message: { text: "/start abcdefghijklmnopqrst", chat: { id: 1, type: "private" } } },
+      secret,
+    ));
+    expect(edited.status).toBe(200);
+    expect(telegramCalls.length).toBe(2);
   });
 });

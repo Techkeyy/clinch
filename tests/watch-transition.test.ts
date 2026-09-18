@@ -5,13 +5,15 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { unlinkSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 
-const DB = join(tmpdir(), `clinch-watch-transition-${process.pid}.db`);
-process.env.SQLITE_PATH = DB;
+const DB_BASE = `clinch-watch-transition-${process.pid}`;
+let dbIndex = 0;
+function nextDb() {
+  dbIndex += 1;
+  process.env.SQLITE_PATH = join(tmpdir(), `${DB_BASE}-${dbIndex}.db`);
+}
 process.env.TELEGRAM_BOT_TOKEN = "test-bot-token";
-try { unlinkSync(DB); } catch { /* fresh */ }
 
 import { compileWatchPlan } from "@/domain/watch";
 import { processClaimedWatch, runWatchWorkerCycle } from "@/server/watch-runner";
@@ -86,7 +88,8 @@ async function seedWatch() {
 }
 
 beforeEach(() => {
-  try { unlinkSync(DB); } catch { /* fresh isolated store per test */ }
+  vi.resetModules();
+  nextDb();
   stubTransport();
 });
 afterEach(() => { vi.unstubAllGlobals(); });

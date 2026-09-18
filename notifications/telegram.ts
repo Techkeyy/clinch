@@ -47,6 +47,40 @@ async function sendMessage(chatId: string, message: string, fetchImpl: typeof fe
   return { accepted: true, retryable: false, providerMessageId: body.result?.message_id ? String(body.result.message_id) : undefined };
 }
 
+/** Acknowledge a callback query so the Telegram client stops spinning. Never throws. */
+export async function answerCallbackQuery(callbackQueryId: string, text?: string, fetchImpl: typeof fetch = fetch): Promise<boolean> {
+  const botToken = token();
+  if (!botToken) return false;
+  try {
+    const response = await fetchImpl(TELEGRAM_API + "/bot" + botToken + "/answerCallbackQuery", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ callback_query_id: callbackQueryId, text: text ?? undefined }),
+    });
+    const body = (await response.json().catch(() => ({}))) as { ok?: boolean };
+    return response.ok && body.ok === true;
+  } catch {
+    return false;
+  }
+}
+
+/** Send an arbitrary companion text (menus, lists). Returns transport success; never throws. */
+export async function sendTelegramText(chatId: string, text: string, replyMarkup: unknown, fetchImpl: typeof fetch = fetch): Promise<boolean> {
+  const botToken = token();
+  if (!botToken) return false;
+  try {
+    const response = await fetchImpl(TELEGRAM_API + "/bot" + botToken + "/sendMessage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true, reply_markup: replyMarkup ?? undefined }),
+    });
+    const body = (await response.json().catch(() => ({}))) as { ok?: boolean };
+    return response.ok && body.ok === true;
+  } catch {
+    return false;
+  }
+}
+
 export class TelegramChannel implements NotificationChannel {
   readonly id = "TELEGRAM" as const;
 

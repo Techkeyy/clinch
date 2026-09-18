@@ -37,6 +37,8 @@ export interface WatchStore {
   releaseLease(id: string, workerId: string, expectedVersion: number): Promise<WatchRow | null>;
   recordWorkerHeartbeat(row: Omit<WorkerHeartbeat, "updatedAt">): Promise<WorkerHeartbeat>;
   getConnection(accountUserId: string, channel: WatchChannel): Promise<ConnectionRow | null>;
+  /** Reverse lookup for inbound channel traffic: chat address -> linked account. */
+  findConnectionByAddress(channel: WatchChannel, address: string): Promise<ConnectionRow | null>;
   upsertConnection(row: Omit<ConnectionRow, "id" | "createdAt" | "updatedAt">): Promise<ConnectionRow>;
   createConnectionToken(row: Omit<ConnectionTokenRow, "createdAt" | "usedAt">): Promise<ConnectionTokenRow>;
   consumeConnectionToken(tokenHash: string, now: Date): Promise<ConnectionTokenRow | null>;
@@ -147,6 +149,12 @@ export function openPostgresWatchStore(url: string): WatchStore {
     },
     async getConnection(accountUserId, channel) {
       const rows = await db.select().from(notificationConnections).where(and(eq(notificationConnections.accountUserId, accountUserId), eq(notificationConnections.channel, channel))).limit(1);
+      return rows.length ? toConnection(rows[0]) : null;
+    },
+    async findConnectionByAddress(channel, address) {
+      const rows = await db.select().from(notificationConnections)
+        .where(and(eq(notificationConnections.channel, channel), eq(notificationConnections.address, address)))
+        .orderBy(sql`updated_at DESC`).limit(1);
       return rows.length ? toConnection(rows[0]) : null;
     },
     async upsertConnection(row) {
@@ -319,6 +327,10 @@ export function openWatchStore(url?: string): WatchStore {
     },
     async getConnection(accountUserId, channel) {
       const row = db.prepare("SELECT * FROM notification_connections WHERE account_user_id = ? AND channel = ?").get(accountUserId, channel) as Record<string, unknown> | undefined;
+      return row ? sqliteConnectionRow(row) : null;
+    },
+    async findConnectionByAddress(channel, address) {
+      const row = db.prepare("SELECT * FROM notification_connections WHERE channel = ? AND address = ? ORDER BY updated_at DESC LIMIT 1").get(channel, address) as Record<string, unknown> | undefined;
       return row ? sqliteConnectionRow(row) : null;
     },
     async upsertConnection(row) {
