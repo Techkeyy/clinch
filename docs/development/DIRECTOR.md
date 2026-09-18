@@ -156,7 +156,7 @@ Owner verification completed 09:38 UTC (`claimed = 8`); auth rows above are PASS
 
 ## 7. Exact Next Action
 
-Owner, in order: (1) Security rotations from the credential checklist (dev Neon password, dev Clerk test keys, dev peppers plus dedupe, sponsored-key scope check, BotFather token only if local matches prod). (2) Record demo video (docs/hackathon/DEMO_SCRIPT.md), add LICENSE decision, post X, submit form by the 9/21 operational deadline.
+Owner, in order: (1) Security rotations from the credential checklist (dev Neon password, dev Clerk test keys, dev peppers plus dedupe, sponsored-key scope check, BotFather token only if local matches prod). (2) Record demo video, post X, submit form by the 9/21 operational deadline. (DONE: public repo + Vercel auto-deploy proven; MIT LICENSE present; repo organized.)
 
 ## 8. Production UAT Ledger
 
