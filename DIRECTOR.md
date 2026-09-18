@@ -78,7 +78,7 @@ Deterministic kernel compiles evidence into reads (`leaning-in` / `holding-off` 
 - VPS worker: WORKING (deployed, heartbeat/lease/reclaim/restart proven; bundle proven functionally current on all worker paths; DO NOT TOUCH)
 - Telegram linking: WORKING (owner linked 2026-09-17, CONNECTED persisted; reverse discovery path added 2026-09-18)
 - Telegram outbound notification: PARTIALLY WORKING (connection confirmation received; decision-flow message pending a real transition)
-- Telegram companion (home/watches/actions/recent/help): DEPLOYED 2026-09-18, owner UAT A–G pending
+- Telegram companion (home/watches/actions/recent/help): DEPLOYED 2026-09-18, owner UAT A–G PASS
 - Production deployment: WORKING
 
 ## 5. Completed and Proven Work
@@ -156,7 +156,7 @@ Owner verification completed 09:38 UTC (`claimed = 8`); auth rows above are PASS
 
 ## 7. Exact Next Action
 
-Owner, in order: (1) Security rotations from the credential checklist (dev Neon password, dev Clerk test keys, dev peppers plus dedupe, sponsored-key scope check, BotFather token only if local matches prod). (2) Telegram UAT C–G if not yet done (pause → web PAUSED; resume → web ACTIVE; Open Research; Recent Research; Open CLINCH). (3) Record demo video (DEMO_SCRIPT.md), add LICENSE decision, post X, submit form by the 9/21 operational deadline.
+Owner, in order: (1) Security rotations from the credential checklist (dev Neon password, dev Clerk test keys, dev peppers plus dedupe, sponsored-key scope check, BotFather token only if local matches prod). (2) Record demo video (DEMO_SCRIPT.md), add LICENSE decision, post X, submit form by the 9/21 operational deadline.
 
 ## 8. Production UAT Ledger
 
@@ -202,7 +202,7 @@ Owner, in order: (1) Security rotations from the credential checklist (dev Neon 
 - 2026-09-17 ~09:35 UTC (Ab28PtHouxmWZosLrg9Qpfx7Hs1Q) — trim publishable key in proxy options + suffix regression tests — result: suffixed-only probe flipped `session-token-and-uat-missing` → `token-invalid`, proving server/browser suffix sync restored.
 - 2026-09-17 09:38 UTC — owner Save-to-account UAT on Ab28PtHouxmWZosLrg9Qpfx7Hs1Q — result: `authPresent = true`, `proxyAuthStatus = signed-in`, `claimed = 8`; blocker resolved.
 - 2026-09-17 ~10:25 UTC (CaHAsHYUi4BZZxSEhE2w2J6A3Cna) — watch transition/linking tests + WatchList last-checked line — result: deployed clean; catalog 1653/0 re-verified.
-- 2026-09-18 (88BmjhpTpXHYdgeYWejybiUpi9kh) — Telegram companion (home/watches/actions/recent/help/callbacks) — result: deployed clean; catalog 1653/0 + research sanity re-verified; owner UAT A–G pending.
+- 2026-09-18 (88BmjhpTpXHYdgeYWejybiUpi9kh) — Telegram companion (home/watches/actions/recent/help/callbacks) — result: deployed clean; catalog 1653/0 + research sanity re-verified; owner UAT A–G PASS.
 - 2026-09-18 (EhVrzTfkhtwHGBSm8wqoqtsouSBQ) — favicon fix — result: deployed clean; icon 200, catalog 1653/0 re-verified.
 
 ## 11. Infrastructure Safety Constraints
