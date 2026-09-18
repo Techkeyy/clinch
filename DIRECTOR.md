@@ -156,7 +156,7 @@ Owner verification completed 09:38 UTC (`claimed = 8`); auth rows above are PASS
 
 ## 7. Exact Next Action
 
-Owner Telegram UAT in the bot (no code changes): A /start → home menu; B My Watches → Tesla card fields; C pause → web PAUSED; D resume → web ACTIVE; E Open Research → correct research; F Recent Research → account list; G Open CLINCH → production app. Use pause/resume only; do not stop the Tesla watch. Report each result verbatim.
+Owner, in order: (1) Telegram UAT C–G (pause → web PAUSED; resume → web ACTIVE; Open Research; Recent Research; Open CLINCH); report verbatim. (2) Security rotations from the builder's safe action list (dev Neon password, dev Clerk test keys, dev peppers + dedupe, sponsored-key scope check, BotFather token only if local matches prod). (3) Record demo video (DEMO_SCRIPT.md), create public repo + push, add LICENSE, submit form before 9/27 UTC+8 with X post quoting the official status.
 
 ## 8. Production UAT Ledger
 
@@ -172,6 +172,7 @@ Owner Telegram UAT in the bot (no code changes): A /start → home menu; B My Wa
 - Telegram connection-confirmation transport: PASS (owner received "CLINCH notifications are connected for this account via TELEGRAM.")
 - Watch transition (deterministic harness): PASS (`watch-transition` tests: heartbeat, lease-once, real-code transition → TRIGGERED, dedupe, no-channel PAUSED)
 - Telegram companion regression: PASS (`telegram-companion` 13 tests: resolution scoping, watches output, pause/resume/stop incl. foreign rejection, recent scoping, start variants, secret + ack discipline)
+- Telegram companion UAT: PARTIAL PASS 2026-09-18 (owner-confirmed: /start home, My Watches works, watch data visible, companion path live). Pause/resume/open/recent button checks still pending explicit confirmation.
 - Live worker heartbeat/process: PASS (owner 2026-09-17: Tesla card shows Last checked Sep 17, 10:38 AM, screenshot ~10:39; status ACTIVE, no decision message — correct no-op cycle)
 - Real market transition: PENDING (requires genuine movement; never fabricated)
 - Decision Watch Telegram notification: PENDING (only on a real transition)
@@ -202,6 +203,7 @@ Owner Telegram UAT in the bot (no code changes): A /start → home menu; B My Wa
 - 2026-09-17 09:38 UTC — owner Save-to-account UAT on Ab28PtHouxmWZosLrg9Qpfx7Hs1Q — result: `authPresent = true`, `proxyAuthStatus = signed-in`, `claimed = 8`; blocker resolved.
 - 2026-09-17 ~10:25 UTC (CaHAsHYUi4BZZxSEhE2w2J6A3Cna) — watch transition/linking tests + WatchList last-checked line — result: deployed clean; catalog 1653/0 re-verified.
 - 2026-09-18 (88BmjhpTpXHYdgeYWejybiUpi9kh) — Telegram companion (home/watches/actions/recent/help/callbacks) — result: deployed clean; catalog 1653/0 + research sanity re-verified; owner UAT A–G pending.
+- 2026-09-18 (EhVrzTfkhtwHGBSm8wqoqtsouSBQ) — favicon fix — result: deployed clean; icon 200, catalog 1653/0 re-verified.
 
 ## 11. Infrastructure Safety Constraints
 
@@ -238,6 +240,8 @@ Owner Telegram UAT in the bot (no code changes): A /start → home menu; B My Wa
 - 2026-09-17 — Watch E2E honesty rule: heartbeat/transition/notification each proven separately; never fabricate market movement or test alerts in production data.
 - 2026-09-18 — Telegram is a linked client, never identity: chat→account resolution only via token-bound connection; callbacks carry id only, version read fresh; mutations reuse web authorization rules.
 - 2026-09-17 — Clerk cookie suffix is `SHA-1(publishableKey)` verbatim while key parsing tolerates whitespace: always trim keys server-side; desync is silent (no errors, just `signed-out`).
+- 2026-09-18 — Credential hygiene: dev-only secrets shown in a debugging transcript are treated as exposed; rotate dev Neon password, dev Clerk test keys, and dev peppers, dedupe the doubled `SESSION_PEPPER` line in `.env.local`, and confirm the sponsored gateway key scope before touching it. Never commit values; names only.
+- 2026-09-18 — S2 deadline is 9/27 UTC+8 per live guide direct-read (supersedes the earlier 9/21 note); cutoff hour unpublished, submit by 9/26. Open Theme: 2 slots per track, top 1 each. X post must quote the official status link plus tags.
 
 ## 15. Takeover Checklist
 
