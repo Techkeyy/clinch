@@ -1,5 +1,0 @@
-: ping - 2026-09-11 23:08:25.244521+00:00
-
-event: message
-data: {"jsonrpc":"2.0","id":12,"result":{"content":[{"type":"text","text":"{\"error\": \"\"}"}],"isError":false}}
-

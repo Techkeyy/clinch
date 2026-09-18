@@ -1,3 +1,0 @@
-event: message
-data: {"jsonrpc":"2.0","id":6,"result":{"content":[{"type":"text","text":"Error executing tool cross_asset: 'list' object has no attribute 'split'"}],"isError":true}}
-

@@ -1,5 +1,0 @@
-: ping - 2026-09-11 23:08:03.171980+00:00
-
-event: message
-data: {"jsonrpc":"2.0","id":10,"result":{"content":[{"type":"text","text":"{\"cpi\": {\"error\": \"\"}, \"nonfarm_payrolls\": {\"error\": \"\"}, \"gdp_growth\": {\"error\": \"\"}, \"unemployment\": {\"error\": \"\"}}"}],"isError":false}}
-
