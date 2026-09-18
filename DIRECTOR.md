@@ -156,7 +156,7 @@ Owner verification completed 09:38 UTC (`claimed = 8`); auth rows above are PASS
 
 ## 7. Exact Next Action
 
-Owner, in order: (1) Telegram UAT C–G (pause → web PAUSED; resume → web ACTIVE; Open Research; Recent Research; Open CLINCH); report verbatim. (2) Security rotations from the builder's safe action list (dev Neon password, dev Clerk test keys, dev peppers + dedupe, sponsored-key scope check, BotFather token only if local matches prod). (3) Record demo video (DEMO_SCRIPT.md), create public repo + push, add LICENSE, submit form before 9/27 UTC+8 with X post quoting the official status.
+Owner, in order: (1) Security rotations from the credential checklist (dev Neon password, dev Clerk test keys, dev peppers plus dedupe, sponsored-key scope check, BotFather token only if local matches prod). (2) Record demo video (DEMO_SCRIPT.md), create public repo + push, add LICENSE, submit form by the 9/21 operational deadline with X post quoting the official status.
 
 ## 8. Production UAT Ledger
 
@@ -172,11 +172,11 @@ Owner, in order: (1) Telegram UAT C–G (pause → web PAUSED; resume → web AC
 - Telegram connection-confirmation transport: PASS (owner received "CLINCH notifications are connected for this account via TELEGRAM.")
 - Watch transition (deterministic harness): PASS (`watch-transition` tests: heartbeat, lease-once, real-code transition → TRIGGERED, dedupe, no-channel PAUSED)
 - Telegram companion regression: PASS (`telegram-companion` 13 tests: resolution scoping, watches output, pause/resume/stop incl. foreign rejection, recent scoping, start variants, secret + ack discipline)
-- Telegram companion UAT: PARTIAL PASS 2026-09-18 (owner-confirmed: /start home, My Watches works, watch data visible, companion path live). Pause/resume/open/recent button checks still pending explicit confirmation.
+- Telegram companion UAT: PASS 2026-09-18 (owner-confirmed all: /start home, My Watches + watch data, pause → web PAUSED, resume → web ACTIVE, Open Research, Recent Research, Open CLINCH). Stop not required and not exercised.
 - Live worker heartbeat/process: PASS (owner 2026-09-17: Tesla card shows Last checked Sep 17, 10:38 AM, screenshot ~10:39; status ACTIVE, no decision message — correct no-op cycle)
 - Real market transition: PENDING (requires genuine movement; never fabricated)
 - Decision Watch Telegram notification: PENDING (only on a real transition)
-- Telegram companion UAT A–G: NOT RUN (owner pending; deployed 2026-09-18)
+- Telegram companion UAT A–G: PASS (owner 2026-09-18, all eight checks; deployed 2026-09-18)
 
 ## 9. Important Commits
 
@@ -223,6 +223,7 @@ Owner, in order: (1) Telegram UAT C–G (pause → web PAUSED; resume → web AC
 - No secrets, tokens, user IDs, or verifier material in logs, responses, or this file.
 - No insecure fake "Connect Bitget" or invented support.
 - Account-owned data requires matching authenticated Clerk user on every access.
+- SECURITY GATE OPEN (2026-09-18): dev-only values from `.env.local` appeared in a debugging transcript (never in repo/history, verified clean). Owner rotations pending: dev Neon password, dev Clerk test keys, dev `SESSION_PEPPER` values plus removal of the doubled key line, sponsored gateway key scope confirmation, Telegram bot token only if the local value equals the production token. Production secrets were never printed and need no action unless the checks below implicate them.
 
 ## 13. Known Deferred Work
 
@@ -241,7 +242,7 @@ Owner, in order: (1) Telegram UAT C–G (pause → web PAUSED; resume → web AC
 - 2026-09-18 — Telegram is a linked client, never identity: chat→account resolution only via token-bound connection; callbacks carry id only, version read fresh; mutations reuse web authorization rules.
 - 2026-09-17 — Clerk cookie suffix is `SHA-1(publishableKey)` verbatim while key parsing tolerates whitespace: always trim keys server-side; desync is silent (no errors, just `signed-out`).
 - 2026-09-18 — Credential hygiene: dev-only secrets shown in a debugging transcript are treated as exposed; rotate dev Neon password, dev Clerk test keys, and dev peppers, dedupe the doubled `SESSION_PEPPER` line in `.env.local`, and confirm the sponsored gateway key scope before touching it. Never commit values; names only.
-- 2026-09-18 — S2 deadline is 9/27 UTC+8 per live guide direct-read (supersedes the earlier 9/21 note); cutoff hour unpublished, submit by 9/26. Open Theme: 2 slots per track, top 1 each. X post must quote the official status link plus tags.
+- 2026-09-18 — DEADLINE STATUS: CONFLICT. Landing page says 9/21, S2 guide says 9/27 UTC+8, cutoff hour unpublished. Operational deadline: SUBMIT BY 9/21. Never present either date as the resolved rule.
 
 ## 15. Takeover Checklist
 
