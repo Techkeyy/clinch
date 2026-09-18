@@ -6,7 +6,7 @@ Research the decision, not the entire market.
 
 *Demo video: recording script in `DEMO_SCRIPT.md`; link will be added after recording.*
 
-*Bitget AI Genesis Season 2 · Track: AI Trading Desk · Lane: Open Theme*
+*Bitget AI Genesis Season 2 · Track: AI Trading Desk · Sub-theme: Open Theme*
 
 > *"I'm considering TSLA, but what is the one thing I still need to know before I decide?"*
 
@@ -38,7 +38,7 @@ YOUR DILEMMA                what generic tools give you
 6. **Update** the decision state from deterministic finding classification, never from prose.
 7. **Skip** irrelevant research explicitly, with reasons shown.
 8. **Stop** with a brief when remaining checks cannot matter; unresolved paths stay unresolved honestly.
-9. **Decide**, human. CLINCH researches the decision. It never places the trade.
+9. **Decide**, human. CLINCH researches the decision. It never places the trade. (Signed-in research saves privately to your CLINCH account via email OTP and persists across devices.)
 10. **Monitor** (optional): a Decision Watch re-checks one state change on a 10-minute cadence and notifies once via Telegram. It is a state-change alert, never a buy signal.
 11. **Control** from Telegram: inspect watches, pause/resume/stop, review recent research, open the desk.
 
@@ -59,6 +59,10 @@ YOUR DILEMMA                what generic tools give you
 ## Telegram Companion
 
 Linked chats (bound to a Clerk account via one-time token; Telegram is never identity) get: `/start` home, `/watches` with per-watch cards, `/recent` (latest 5), `/help`, inline Pause/Resume/Stop with the same authorization rules as the web UI, Open Research deep links, and Open CLINCH. Unknown callbacks are acknowledged without mutation.
+
+## Security and ownership
+
+Clerk user IDs own account data, never emails. Guest research is owned by a secure cookie plus HMAC verifier and can be claimed after sign-in, never by session-ID possession. Mutations require same-origin requests. The Telegram webhook requires its shared secret; callbacks re-prove watch ownership on every action. No secrets appear in logs or responses.
 
 ## Architecture
 
@@ -135,6 +139,7 @@ npm run build
 | Stale Clerk cookie namespace after key rotation | Server reads current session | Trimmed key syncs suffix; probes prove flip | `clerk-cookie-suffix` tests, production probes |
 | Guest claims another account's research | Cross-account claim rejected | `CLAIM_ALREADY_OWNED_BY_OTHER_ACCOUNT`, row unchanged | `account-claim` tests |
 | Foreign Telegram chat reads watches | No private data without link | Link prompt only, zero rows exposed | `telegram-companion` tests |
+| Foreign Telegram chat drives a watch callback | Ownership re-proven server-side | Rejected, owner's watch unchanged | `telegram-companion` tests |
 | Two workers race one due watch | Exclusive lease | Second claim gets nothing until expiry | `watch-worker` tests |
 | Same transition delivered twice | Dedupe | Second dispatch returns deduped, one send | `watch-transition` tests |
 | Missing Telegram connection at dispatch | No send, watch paused safely | `unavailable` path, no Telegram call | `watch-transition` tests |
