@@ -1,8 +1,8 @@
 # CLINCH — Director Handoff
 
-Last updated: 2026-09-17
+Last updated: 2026-09-18
 Current branch: master
-Current HEAD (code): df21d67
+Current HEAD (code): 3a9845f
 Production URL: https://clinch-nine.vercel.app
 
 ## 1. Product
@@ -74,10 +74,11 @@ Deterministic kernel compiles evidence into reads (`leaning-in` / `holding-off` 
 - Recent Research: WORKING (owner-confirmed: claimed research visible in account history)
 - Authenticated research ownership: WORKING (owner-confirmed: fresh signed-in research account-owned immediately, no Save CTA)
 - Persistence across sign-out/in: WORKING (owner-confirmed: sign-out hides, sign-in restores)
-- Decision Watch: PARTIALLY WORKING (creation + linking live 2026-09-17; worker transition pending genuine market movement)
+- Decision Watch: PARTIALLY WORKING (creation + linking + heartbeat live; Telegram companion actions live; genuine transition pending)
 - VPS worker: WORKING (deployed, heartbeat/lease/reclaim/restart proven; bundle proven functionally current on all worker paths; DO NOT TOUCH)
-- Telegram linking: WORKING (owner linked 2026-09-17, CONNECTED persisted)
+- Telegram linking: WORKING (owner linked 2026-09-17, CONNECTED persisted; reverse discovery path added 2026-09-18)
 - Telegram outbound notification: PARTIALLY WORKING (connection confirmation received; decision-flow message pending a real transition)
+- Telegram companion (home/watches/actions/recent/help): DEPLOYED 2026-09-18, owner UAT A–G pending
 - Production deployment: WORKING
 
 ## 5. Completed and Proven Work
@@ -113,7 +114,7 @@ Deterministic kernel compiles evidence into reads (`leaning-in` / `holding-off` 
 
 ## 6. Current Blocking Issue
 
-IN PROGRESS 2026-09-17: Decision Watch + Telegram production E2E. Owner Phase 1+2 DONE (Tesla watch created 10:18 UTC; Telegram linked 10:17 UTC with confirmation received). Worker bundle proven functionally current on all worker paths (source-path analysis; checked-in bundle predates catalog work but none of the touched modules execute in the worker path). Next: heartbeat observation + genuine market transition (never fabricated).
+IN PROGRESS 2026-09-18: Telegram companion final sprint. Owner Phase 1+2 DONE (Tesla watch created 10:18 UTC 09-17; Telegram linked with confirmation received). Companion (home, /watches with pause/resume/stop, /recent, /help, callback queries, Telegram-first link guidance) deployed, covered by 13 companion + 4 linking tests. Next: owner Telegram UAT A–G, then genuine-transition observation (never fabricated).
 
 ### Clerk server-side authentication (RESOLVED history — do not regress)
 
@@ -155,7 +156,7 @@ Owner verification completed 09:38 UTC (`claimed = 8`); auth rows above are PASS
 
 ## 7. Exact Next Action
 
-Live observation continues: owner watches the Tesla card. A genuine market move may flip it to TARGET REACHED + real Telegram message; report either outcome verbatim. If the card stays ACTIVE with advancing "Last checked", the worker is healthy and the market simply hasn't moved. Never fabricate a transition, never send test alerts as watch notifications.
+Owner Telegram UAT in the bot (no code changes): A /start → home menu; B My Watches → Tesla card fields; C pause → web PAUSED; D resume → web ACTIVE; E Open Research → correct research; F Recent Research → account list; G Open CLINCH → production app. Use pause/resume only; do not stop the Tesla watch. Report each result verbatim.
 
 ## 8. Production UAT Ledger
 
@@ -170,12 +171,15 @@ Live observation continues: owner watches the Tesla card. A genuine market move 
 - Telegram account linking: PASS (owner 2026-09-17: connect 200 → webhook 200 → CONNECTED; wrong/missing secret correctly 401)
 - Telegram connection-confirmation transport: PASS (owner received "CLINCH notifications are connected for this account via TELEGRAM.")
 - Watch transition (deterministic harness): PASS (`watch-transition` tests: heartbeat, lease-once, real-code transition → TRIGGERED, dedupe, no-channel PAUSED)
+- Telegram companion regression: PASS (`telegram-companion` 13 tests: resolution scoping, watches output, pause/resume/stop incl. foreign rejection, recent scoping, start variants, secret + ack discipline)
 - Live worker heartbeat/process: PASS (owner 2026-09-17: Tesla card shows Last checked Sep 17, 10:38 AM, screenshot ~10:39; status ACTIVE, no decision message — correct no-op cycle)
 - Real market transition: PENDING (requires genuine movement; never fabricated)
 - Decision Watch Telegram notification: PENDING (only on a real transition)
+- Telegram companion UAT A–G: NOT RUN (owner pending; deployed 2026-09-18)
 
 ## 9. Important Commits
 
+- `3a9845f` — feat: Telegram companion with chat-scoped watches, actions, and recent research — home/watches/actions/recent/help + callbacks + reverse link path + 13 tests
 - `df21d67` — feat: prove watch transition dispatch and telegram linking with regression tests — 8 permanent tests + WatchList last-checked line
 - `1f6f91b` — fix: trim Clerk publishable key to sync server cookie suffix with browser — suffix-desync root cause + probe proof + 4 tests
 - `d22d2bc` — fix: harden guest research claim contract with stable codes and idempotency — claim rewrite + diagnostics + 9 tests
@@ -197,6 +201,7 @@ Live observation continues: owner watches the Tesla card. A genuine market move 
 - 2026-09-17 ~09:35 UTC (Ab28PtHouxmWZosLrg9Qpfx7Hs1Q) — trim publishable key in proxy options + suffix regression tests — result: suffixed-only probe flipped `session-token-and-uat-missing` → `token-invalid`, proving server/browser suffix sync restored.
 - 2026-09-17 09:38 UTC — owner Save-to-account UAT on Ab28PtHouxmWZosLrg9Qpfx7Hs1Q — result: `authPresent = true`, `proxyAuthStatus = signed-in`, `claimed = 8`; blocker resolved.
 - 2026-09-17 ~10:25 UTC (CaHAsHYUi4BZZxSEhE2w2J6A3Cna) — watch transition/linking tests + WatchList last-checked line — result: deployed clean; catalog 1653/0 re-verified.
+- 2026-09-18 (88BmjhpTpXHYdgeYWejybiUpi9kh) — Telegram companion (home/watches/actions/recent/help/callbacks) — result: deployed clean; catalog 1653/0 + research sanity re-verified; owner UAT A–G pending.
 
 ## 11. Infrastructure Safety Constraints
 
@@ -231,6 +236,7 @@ Live observation continues: owner watches the Tesla card. A genuine market move 
 - 2026-09-17 — Claim failures must carry stable machine codes; transient/provider faults must never read as `UNSUPPORTED_ASSET`-style user blame.
 - 2026-09-17 — Diagnosis before fix: the claim 401 was proven at `currentAccountUserId()`, not in claim logic; instrumentation first, auth surgery never without evidence.
 - 2026-09-17 — Watch E2E honesty rule: heartbeat/transition/notification each proven separately; never fabricate market movement or test alerts in production data.
+- 2026-09-18 — Telegram is a linked client, never identity: chat→account resolution only via token-bound connection; callbacks carry id only, version read fresh; mutations reuse web authorization rules.
 - 2026-09-17 — Clerk cookie suffix is `SHA-1(publishableKey)` verbatim while key parsing tolerates whitespace: always trim keys server-side; desync is silent (no errors, just `signed-out`).
 
 ## 15. Takeover Checklist
