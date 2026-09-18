@@ -156,7 +156,7 @@ Owner verification completed 09:38 UTC (`claimed = 8`); auth rows above are PASS
 
 ## 7. Exact Next Action
 
-Owner, in order: (1) Security rotations from the credential checklist (dev Neon password, dev Clerk test keys, dev peppers plus dedupe, sponsored-key scope check, BotFather token only if local matches prod). (2) Record demo video (DEMO_SCRIPT.md), add LICENSE decision, post X, submit form by the 9/21 operational deadline.
+Owner, in order: (1) Security rotations from the credential checklist (dev Neon password, dev Clerk test keys, dev peppers plus dedupe, sponsored-key scope check, BotFather token only if local matches prod). (2) Record demo video (docs/hackathon/DEMO_SCRIPT.md), add LICENSE decision, post X, submit form by the 9/21 operational deadline.
 
 ## 8. Production UAT Ledger
 
@@ -241,6 +241,7 @@ Owner, in order: (1) Security rotations from the credential checklist (dev Neon 
 - 2026-09-17 — Diagnosis before fix: the claim 401 was proven at `currentAccountUserId()`, not in claim logic; instrumentation first, auth surgery never without evidence.
 - 2026-09-17 — Watch E2E honesty rule: heartbeat/transition/notification each proven separately; never fabricate market movement or test alerts in production data.
 - 2026-09-18 — Telegram is a linked client, never identity: chat→account resolution only via token-bound connection; callbacks carry id only, version read fresh; mutations reuse web authorization rules.
+- 2026-09-18 — Public repo organization: root keeps product entry points only; submission evidence lives in `docs/hackathon/`, development trail in `docs/development/`; moves preserve Git history, nothing deleted.
 - 2026-09-17 — Clerk cookie suffix is `SHA-1(publishableKey)` verbatim while key parsing tolerates whitespace: always trim keys server-side; desync is silent (no errors, just `signed-out`).
 - 2026-09-18 — Credential hygiene: dev-only secrets shown in a debugging transcript are treated as exposed; rotate dev Neon password, dev Clerk test keys, and dev peppers, dedupe the doubled `SESSION_PEPPER` line in `.env.local`, and confirm the sponsored gateway key scope before touching it. Never commit values; names only.
 - 2026-09-18 — DEADLINE STATUS: CONFLICT. Landing page says 9/21, S2 guide says 9/27 UTC+8, cutoff hour unpublished. Operational deadline: SUBMIT BY 9/21. Never present either date as the resolved rule.

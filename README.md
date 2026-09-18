@@ -4,6 +4,8 @@ Research the decision, not the entire market.
 
 **[Live Demo](https://clinch-nine.vercel.app)** · **[GitHub](https://github.com/Techkeyy/clinch)**
 
+*Bitget AI Genesis Season 2 · Track: AI Trading Desk · Sub-theme: Open Theme*
+
 > *"I'm considering TSLA, but what is the one thing I still need to know before I decide?"*
 
 Most AI trading tools answer that question with more information: more signals, more charts, more noise. CLINCH does the opposite. It finds the single unanswered question most capable of changing your decision, researches only that with live market evidence, and stops when further research is unlikely to matter. The human always decides. CLINCH never places a trade.
@@ -156,7 +158,7 @@ Trust architecture in one sentence: deterministic rules decide support, reads, a
 - No genuine market-triggered watch transition occurred during the production soak (non-blocking; path covered deterministically).
 - Telegram is a companion and control surface, not a duplicated research engine.
 - rToken off-hours liquidity is thin; depth/shape readings carry that caveat.
-- Demo video not yet recorded (script in `DEMO_SCRIPT.md`).
+- Demo video not yet recorded (script in `docs/hackathon/DEMO_SCRIPT.md`).
 
 ## Tests and proof
 
@@ -167,4 +169,6 @@ Trust architecture in one sentence: deterministic rules decide support, reads, a
 
 ## License
 
-Not yet assigned; owner to add a LICENSE file before submission.
+CLINCH is licensed under the MIT License. See [LICENSE](./LICENSE).
+
+Third-party dependencies and brand reference assets keep their own licenses; the MIT license above covers CLINCH's own code and docs, not theirs.
